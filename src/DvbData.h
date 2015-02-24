@@ -5,8 +5,8 @@
 
 #include "client.h"
 #include "RecordingReader.h"
-#include "platform/util/StdString.h"
-#include "platform/threads/threads.h"
+#include "kodi/util/StdString.h"
+#include "kodi/threads/threads.h"
 #include <list>
 
 #define CHANNELDAT_HEADER_SIZE       (7)

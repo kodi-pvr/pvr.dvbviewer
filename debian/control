@@ -1,0 +1,22 @@
+Source: kodi-pvr-dvbviewer
+Priority: extra
+Maintainer: Arne Morten Kvarving <arne.morten.kvarving@sintef.no>
+Build-Depends: debhelper (>= 9.0.0), cmake, kodi-pvr-dev,
+               libkodiplatform-dev, kodi-addon-dev
+Standards-Version: 3.9.4
+Section: libs
+
+Package: kodi-pvr-dvbviewer
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: DVBViewer PVR for Kodi
+ DVBViewer PVR for Kodi
+
+Package: kodi-pvr-dvbviewer-dbg
+Section: debug
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: debug symbols for DVBViewer PVR for Kodi
+ debug symbols for DVBViewer PVR for Kodi
+

@@ -24,10 +24,10 @@
 #ifndef PVR_DVBVIEWER_CLIENT_H
 #define PVR_DVBVIEWER_CLIENT_H
 
-#include "libXBMC_addon.h"
-#include "libXBMC_pvr.h"
-#include "libXBMC_gui.h"
-#include "platform/util/StdString.h"
+#include "kodi/libXBMC_addon.h"
+#include "kodi/libXBMC_pvr.h"
+#include "kodi/libXBMC_gui.h"
+#include "kodi/util/StdString.h"
 
 #ifndef _UNUSED
 #if defined(__GNUC__)

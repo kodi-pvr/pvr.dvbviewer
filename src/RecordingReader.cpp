@@ -1,7 +1,7 @@
 #include "RecordingReader.h"
 #include "client.h"
-#include "platform/util/util.h"
-#include "platform/threads/mutex.h"
+#include "kodi/util/util.h"
+#include "kodi/threads/mutex.h"
 
 #define REOPEN_INTERVAL      30
 #define REOPEN_INTERVAL_FAST 10

@@ -1,6 +1,6 @@
 #include "TimeshiftBuffer.h"
 #include "client.h"
-#include "platform/util/util.h"
+#include "kodi/util/util.h"
 
 #define STREAM_READ_BUFFER_SIZE   32768
 #define BUFFER_READ_TIMEOUT       10000
