@@ -30,8 +30,8 @@ Dvb::~Dvb()
 {
   StopThread();
 
-  for (DvbChannels_t::iterator channel = m_channels.begin();
-      channel != m_channels.end(); ++channel)
+  for (auto channel = m_channels.begin(); channel != m_channels.end();
+      ++channel)
     delete *channel;
 }
 
@@ -103,8 +103,7 @@ unsigned int Dvb::GetCurrentClientChannel(void)
 
 bool Dvb::GetChannels(ADDON_HANDLE handle, bool radio)
 {
-  for (DvbChannels_t::iterator it = m_channels.begin();
-      it != m_channels.end(); ++it)
+  for (auto it = m_channels.begin(); it != m_channels.end(); ++it)
   {
     DvbChannel *channel = *it;
     if (channel->hidden)
@@ -233,8 +232,7 @@ unsigned int Dvb::GetChannelsAmount()
 
 bool Dvb::GetChannelGroups(ADDON_HANDLE handle, bool radio)
 {
-  for (DvbGroups_t::iterator group = m_groups.begin();
-      group != m_groups.end(); ++group)
+  for (auto group = m_groups.begin(); group != m_groups.end(); ++group)
   {
     if (group->hidden)
       continue;
@@ -256,14 +254,12 @@ bool Dvb::GetChannelGroupMembers(ADDON_HANDLE handle,
 {
   unsigned int channelNumberInGroup = 1;
 
-  for (DvbGroups_t::iterator group = m_groups.begin();
-      group != m_groups.end(); ++group)
+  for (auto group = m_groups.begin(); group != m_groups.end(); ++group)
   {
     if (group->name != pvrGroup.strGroupName)
       continue;
 
-    for (std::list<DvbChannel *>::iterator it = group->channels.begin();
-        it != group->channels.end(); ++it)
+    for (auto it = group->channels.begin(); it != group->channels.end(); ++it)
     {
       DvbChannel *channel = *it;
 
@@ -291,8 +287,7 @@ unsigned int Dvb::GetChannelGroupsAmount()
 
 bool Dvb::GetTimers(ADDON_HANDLE handle)
 {
-  for (DvbTimers_t::iterator timer = m_timers.begin();
-      timer != m_timers.end(); ++timer)
+  for (auto timer = m_timers.begin(); timer != m_timers.end(); ++timer)
   {
     PVR_TIMER tag;
     memset(&tag, 0, sizeof(PVR_TIMER));
@@ -343,7 +338,10 @@ bool Dvb::AddTimer(const PVR_TIMER& timer, bool update)
         channelId, date, start, stop, timer.iPriority, repeat, URLEncodeInline(timer.strTitle).c_str());
   else
   {
-    DvbTimer *t = GetTimer(timer);
+    DvbTimer *t = GetTimer([&] (const DvbTimer &t)
+        {
+          return (t.id == timer.iClientIndex);
+        });
     if (!t)
       return false;
 
@@ -360,7 +358,10 @@ bool Dvb::AddTimer(const PVR_TIMER& timer, bool update)
 
 bool Dvb::DeleteTimer(const PVR_TIMER& timer)
 {
-  DvbTimer *t = GetTimer(timer);
+  DvbTimer *t = GetTimer([&] (const DvbTimer &t)
+      {
+        return (t.id == timer.iClientIndex);
+      });
   if (!t)
     return false;
 
@@ -415,7 +416,6 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
     DvbRecording recording;
     recording.id = xRecording->Attribute("id");
     xRecording->QueryUnsignedAttribute("content", &recording.genre);
-    XMLUtils::GetString(xRecording, "channel", recording.channelName);
     XMLUtils::GetString(xRecording, "title",   recording.title);
     XMLUtils::GetString(xRecording, "info",    recording.plotOutline);
     XMLUtils::GetString(xRecording, "desc",    recording.plot);
@@ -429,6 +429,15 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
       recording.plot.insert(0, recording.plotOutline + "\n");
       recording.plotOutline.clear();
     }
+
+    /* fetch correct channel name */
+    XMLUtils::GetString(xRecording, "channel", recording.channelName);
+    DvbChannel *channel = GetChannel([&] (const DvbChannel *channel)
+        {
+          return (channel->backendName == recording.channelName);
+        });
+    if (channel)
+      recording.channelName = channel->name;
 
     CStdString thumbnail;
     if (!g_lowPerformance && XMLUtils::GetString(xRecording, "image", thumbnail))
@@ -460,8 +469,8 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
       case DvbRecording::GROUP_BY_DIRECTORY:
         XMLUtils::GetString(xRecording, "file", tmp);
         tmp.ToLower();
-        for (std::vector<CStdString>::reverse_iterator recf = m_recfolders.rbegin();
-            recf != m_recfolders.rend(); ++recf)
+        for (auto recf = m_recfolders.rbegin(); recf != m_recfolders.rend();
+            ++recf)
         {
           if (tmp.compare(0, recf->length(), *recf) != 0)
             continue;
@@ -522,17 +531,14 @@ RecordingReader *Dvb::OpenRecordedStream(const PVR_RECORDING &recinfo)
 {
   time_t now = time(NULL), end = 0;
   CStdString channelName = recinfo.strChannelName;
-  for (DvbTimers_t::iterator timer = m_timers.begin();
-      timer != m_timers.end(); ++timer)
-  {
-    if (timer->start <= now && now <= timer->end
-        && timer->state != PVR_TIMER_STATE_CANCELLED
-        && timer->channel->name.compare(0, channelName.length(), channelName) == 0)
-    {
-      end = timer->end;
-      break;
-    }
-  }
+  DvbTimer *timer = GetTimer([&] (const DvbTimer &timer)
+      {
+        return (timer.start <= now && now <= timer.end
+          && timer.state != PVR_TIMER_STATE_CANCELLED
+          && timer.channel->name == channelName);
+      });
+  if (timer)
+    end = timer->end;
 
   return new RecordingReader(BuildExtURL(m_recordingURL, "%s.ts",
         recinfo.strRecordingId), end);
@@ -674,7 +680,7 @@ bool Dvb::LoadChannels()
     {
       m_groups.push_back(DvbGroup());
       DvbGroup *group = &m_groups.back();
-      group->name     = xGroup->Attribute("name");
+      group->name     = group->backendName = xGroup->Attribute("name");
       group->hidden   = g_useFavourites;
       group->radio    = true;
       if (!group->hidden)
@@ -688,7 +694,7 @@ bool Dvb::LoadChannels()
         xChannel->QueryUnsignedAttribute("flags", &flags);
         channel->radio      = !(flags & VIDEO_FLAG);
         channel->encrypted  = (flags & ENCRYPTED_FLAG);
-        channel->name       = xChannel->Attribute("name");
+        channel->name       = channel->backendName = xChannel->Attribute("name");
         channel->hidden     = g_useFavourites;
         channel->frontendNr = (!g_useFavourites) ? m_channels.size() + 1 : 0;
         xChannel->QueryUnsignedAttribute("nr", &channel->backendNr);
@@ -804,13 +810,12 @@ bool Dvb::LoadChannels()
         if (!backendId)
           continue;
 
-        for (DvbChannels_t::iterator it = m_channels.begin();
-            it != m_channels.end(); ++it)
+        for (auto it = m_channels.begin(); it != m_channels.end(); ++it)
         {
           DvbChannel *channel = *it;
           bool found = false;
 
-          for (std::list<uint64_t>::iterator it2 = channel->backendIds.begin();
+          for (auto it2 = channel->backendIds.begin();
               it2 != channel->backendIds.end(); ++it2)
           {
             /* legacy support for old 32bit channel ids */
@@ -849,8 +854,7 @@ bool Dvb::LoadChannels()
 
     // assign channel number to remaining channels
     unsigned int channelNumber = m_channelAmount;
-    for (DvbChannels_t::iterator it = m_channels.begin();
-        it != m_channels.end(); ++it)
+    for (auto it = m_channels.begin(); it != m_channels.end(); ++it)
     {
       if (!(*it)->frontendNr)
         (*it)->frontendNr = ++channelNumber;
@@ -899,7 +903,12 @@ DvbTimers_t Dvb::LoadTimers()
     if (!backendId)
       continue;
 
-    timer.channel = GetChannelByBackendId(backendId);
+    timer.channel = GetChannel([&] (const DvbChannel *channel)
+        {
+          return (std::find(channel->backendIds.begin(),
+                channel->backendIds.end(), backendId)
+              != channel->backendIds.end());
+        });
     if (!timer.channel)
       continue;
 
@@ -938,17 +947,15 @@ DvbTimers_t Dvb::LoadTimers()
 
 void Dvb::TimerUpdates()
 {
-  for (DvbTimers_t::iterator timer = m_timers.begin();
-      timer != m_timers.end(); ++timer)
+  for (auto timer = m_timers.begin(); timer != m_timers.end(); ++timer)
     timer->updateState = DvbTimer::STATE_NONE;
 
   DvbTimers_t newtimers = LoadTimers();
   unsigned int updated = 0, unchanged = 0;
-  for (DvbTimers_t::iterator newtimer = newtimers.begin();
-      newtimer != newtimers.end(); ++newtimer)
+  for (auto newtimer = newtimers.begin(); newtimer != newtimers.end();
+      ++newtimer)
   {
-    for (DvbTimers_t::iterator timer = m_timers.begin();
-        timer != m_timers.end(); ++timer)
+    for (auto timer = m_timers.begin(); timer != m_timers.end(); ++timer)
     {
       if (timer->guid != newtimer->guid)
         continue;
@@ -967,7 +974,7 @@ void Dvb::TimerUpdates()
   }
 
   unsigned int removed = 0;
-  for (DvbTimers_t::iterator it = m_timers.begin(); it != m_timers.end();)
+  for (auto it = m_timers.begin(); it != m_timers.end();)
   {
     if (it->updateState == DvbTimer::STATE_NONE)
     {
@@ -981,7 +988,7 @@ void Dvb::TimerUpdates()
   }
 
   unsigned int added = 0;
-  for (DvbTimers_t::iterator it = newtimers.begin(); it != newtimers.end(); ++it)
+  for (auto it = newtimers.begin(); it != newtimers.end(); ++it)
   {
     if (it->updateState == DvbTimer::STATE_NEW)
     {
@@ -1004,11 +1011,21 @@ void Dvb::TimerUpdates()
   }
 }
 
-DvbTimer *Dvb::GetTimer(const PVR_TIMER& timer)
+DvbChannel *Dvb::GetChannel(std::function<bool (const DvbChannel*)> func)
 {
-  for (DvbTimers_t::iterator it = m_timers.begin(); it != m_timers.end(); ++it)
+  for (auto it = m_channels.begin(); it != m_channels.end(); ++it)
   {
-    if (it->id == timer.iClientIndex)
+    if (func(*it))
+      return *it;
+  }
+  return NULL;
+}
+
+DvbTimer *Dvb::GetTimer(std::function<bool (const DvbTimer&)> func)
+{
+  for (auto it = m_timers.begin(); it != m_timers.end(); ++it)
+  {
+    if (func(*it))
       return &*it;
   }
   return NULL;
@@ -1134,22 +1151,6 @@ time_t Dvb::ParseDateTime(const CStdString& date, bool iso8601)
   timeinfo.tm_isdst = -1;
 
   return mktime(&timeinfo);
-}
-
-DvbChannel *Dvb::GetChannelByBackendId(const uint64_t backendId)
-{
-  for (DvbChannels_t::iterator it = m_channels.begin();
-      it != m_channels.end(); ++it)
-  {
-    DvbChannel *channel = *it;
-    for (std::list<uint64_t>::iterator it2 = channel->backendIds.begin();
-        it2 != channel->backendIds.end(); it2++)
-    {
-      if (backendId == *it2)
-        return channel;
-    }
-  }
-  return NULL;
 }
 
 CStdString Dvb::BuildURL(const char* path, ...)
