@@ -1,6 +1,6 @@
 Source: kodi-pvr-dvbviewer
 Priority: extra
-Maintainer: Nobody <nobody@kodi.tv>
+Maintainer: Manuel Mausz <manuel-kodi@mausz.at>
 Build-Depends: debhelper (>= 9.0.0), cmake, kodi-pvr-dev,
                libkodiplatform-dev, kodi-addon-dev
 Standards-Version: 3.9.4
