@@ -33,19 +33,19 @@ using namespace ADDON;
  * Default values are defined inside client.h
  * and exported to the other source files.
  */
-CStdString g_hostname             = DEFAULT_HOST;
-int        g_webPort              = DEFAULT_WEB_PORT;
-CStdString g_username             = "";
-CStdString g_password             = "";
-bool       g_useFavourites        = false;
-bool       g_useFavouritesFile    = false;
-CStdString g_favouritesFile       = "";
-int        g_groupRecordings      = DvbRecording::GROUPING_DISABLED;
-bool       g_useTimeshift         = false;
-CStdString g_timeshiftBufferPath  = DEFAULT_TSBUFFERPATH;
-bool       g_useRTSP              = false;
-int        g_prependOutline       = PrependOutline::IN_EPG;
-bool       g_lowPerformance       = false;
+CStdString     g_hostname             = DEFAULT_HOST;
+int            g_webPort              = DEFAULT_WEB_PORT;
+CStdString     g_username             = "";
+CStdString     g_password             = "";
+bool           g_useFavourites        = false;
+bool           g_useFavouritesFile    = false;
+CStdString     g_favouritesFile       = "";
+DvbRecording::Grouping g_groupRecordings = DvbRecording::Grouping::DISABLED;
+bool           g_useTimeshift         = false;
+CStdString     g_timeshiftBufferPath  = DEFAULT_TSBUFFERPATH;
+bool           g_useRTSP              = false;
+PrependOutline g_prependOutline       = PrependOutline::IN_EPG;
+bool           g_lowPerformance       = false;
 
 ADDON_STATUS m_curStatus    = ADDON_STATUS_UNKNOWN;
 CHelper_libXBMC_addon *XBMC = NULL;
@@ -82,7 +82,7 @@ void ADDON_ReadSettings(void)
     g_favouritesFile = buffer;
 
   if (!XBMC->GetSetting("grouprecordings", &g_groupRecordings))
-    g_groupRecordings = DvbRecording::GROUPING_DISABLED;
+    g_groupRecordings = DvbRecording::Grouping::DISABLED;
 
   if (!XBMC->GetSetting("usetimeshift", &g_useTimeshift))
     g_useTimeshift = false;
@@ -111,7 +111,7 @@ void ADDON_ReadSettings(void)
   XBMC->Log(LOG_DEBUG, "Use favourites: %s", (g_useFavourites) ? "yes" : "no");
   if (g_useFavouritesFile)
     XBMC->Log(LOG_DEBUG, "Favourites file: %s", g_favouritesFile.c_str());
-  if (g_groupRecordings != DvbRecording::GROUPING_DISABLED)
+  if (g_groupRecordings != DvbRecording::Grouping::DISABLED)
     XBMC->Log(LOG_DEBUG, "Group recordings: %d", g_groupRecordings);
   XBMC->Log(LOG_DEBUG, "Timeshift: %s", (g_useTimeshift) ? "enabled" : "disabled");
   if (g_useTimeshift)
@@ -261,7 +261,7 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
   }
   else if (sname == "prependoutline")
   {
-    PrependOutline::options newValue = *(const PrependOutline::options *)settingValue;
+    PrependOutline newValue = *(const PrependOutline *)settingValue;
     if (g_prependOutline != newValue)
     {
       g_prependOutline = newValue;
@@ -338,14 +338,14 @@ PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
 
 const char *GetBackendName(void)
 {
-  static const CStdString name = DvbData ? DvbData->GetBackendName()
+  static const CStdString& name = DvbData ? DvbData->GetBackendName()
     : "unknown";
   return name.c_str();
 }
 
 const char *GetBackendVersion(void)
 {
-  static const CStdString version = DvbData ? DvbData->GetBackendVersion()
+  static const CStdString& version = DvbData ? DvbData->GetBackendVersion()
     : "UNKNOWN";
   return version.c_str();
 }

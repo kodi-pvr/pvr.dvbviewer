@@ -3,8 +3,8 @@
 #ifndef PVR_DVBVIEWER_DVBDATA_H
 #define PVR_DVBVIEWER_DVBDATA_H
 
-#include "client.h"
 #include "RecordingReader.h"
+#include "kodi/libXBMC_pvr.h"
 #include "p8-platform/util/StdString.h"
 #include "p8-platform/threads/threads.h"
 #include <list>
@@ -40,7 +40,7 @@ public:
   {}
 
 public:
-  /*!< @brief unique id passed to xbmc database.
+  /*!< @brief unique id passed to kodi's database.
    * starts at 1 and increases by each channel regardless of hidden state.
    * see FIXME for more details
    */
@@ -94,16 +94,17 @@ public:
 class DvbTimer
 {
 public:
-  enum State
+  enum class State
+    : uint8_t
   {
-    STATE_NONE,
-    STATE_NEW,
-    STATE_FOUND,
-    STATE_UPDATED
+    NONE,
+    NEW,
+    FOUND,
+    UPDATED
   };
 
   DvbTimer()
-    : updateState(STATE_NEW)
+    : updateState(State::NEW)
   {}
 
 #define TIMER_UPDATE_MEMBER(member) \
@@ -127,7 +128,7 @@ public:
   }
 
 public:
-  /*!< @brief unique id passed to xbmc database
+  /*!< @brief unique id passed to kodi's database
    * starts at 1 and increases by each new timer. never decreases.
    */
   unsigned int id;
@@ -150,14 +151,15 @@ public:
 class DvbRecording
 {
 public:
-  enum Grouping
+  enum class Grouping
+    : int // same type as addon settings
   {
-    GROUPING_DISABLED = 0,
-    GROUP_BY_DIRECTORY,
-    GROUP_BY_DATE,
-    GROUP_BY_FIRST_LETTER,
-    GROUP_BY_TV_CHANNEL,
-    GROUP_BY_SERIES
+    DISABLED = 0,
+    BY_DIRECTORY,
+    BY_DATE,
+    BY_FIRST_LETTER,
+    BY_TV_CHANNEL,
+    BY_SERIES
   };
 
 public:
@@ -219,7 +221,7 @@ public:
 
   bool OpenLiveStream(const PVR_CHANNEL& channelinfo);
   void CloseLiveStream();
-  CStdString& GetLiveStreamURL(const PVR_CHANNEL& channelinfo);
+  const CStdString& GetLiveStreamURL(const PVR_CHANNEL& channelinfo);
 
 protected:
   virtual void *Process(void);

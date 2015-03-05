@@ -190,7 +190,8 @@ bool Dvb::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL& channelinfo,
         entry.plot = entry.plotOutline;
         entry.plotOutline.clear();
       }
-      else if (PrependOutline::test(PrependOutline::IN_EPG))
+      else if (g_prependOutline == PrependOutline::IN_EPG
+        || g_prependOutline == PrependOutline::ALWAYS)
       {
         entry.plot.insert(0, entry.plotOutline + "\n");
         entry.plotOutline.clear();
@@ -428,7 +429,8 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
       recording.plot = recording.plotOutline;
       recording.plotOutline.clear();
     }
-    else if (PrependOutline::test(PrependOutline::IN_RECORDINGS))
+    else if (g_prependOutline == PrependOutline::IN_RECORDINGS
+        || g_prependOutline == PrependOutline::ALWAYS)
     {
       recording.plot.insert(0, recording.plotOutline + "\n");
       recording.plotOutline.clear();
@@ -470,7 +472,7 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
     CStdString tmp;
     switch(g_groupRecordings)
     {
-      case DvbRecording::GROUP_BY_DIRECTORY:
+      case DvbRecording::Grouping::BY_DIRECTORY:
         XMLUtils::GetString(xRecording, "file", tmp);
         tmp.ToLower();
         for (auto recf = m_recfolders.rbegin(); recf != m_recfolders.rend();
@@ -484,18 +486,18 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
           break;
         }
         break;
-      case DvbRecording::GROUP_BY_DATE:
+      case DvbRecording::Grouping::BY_DATE:
         tmp.Format("%s/%s", startTime.substr(0, 4), startTime.substr(4, 2));
         PVR_STRCPY(recinfo.strDirectory, tmp.c_str());
         break;
-      case DvbRecording::GROUP_BY_FIRST_LETTER:
+      case DvbRecording::Grouping::BY_FIRST_LETTER:
         recinfo.strDirectory[0] = recording.title[0];
         recinfo.strDirectory[1] = '\0';
         break;
-      case DvbRecording::GROUP_BY_TV_CHANNEL:
+      case DvbRecording::Grouping::BY_TV_CHANNEL:
         PVR_STRCPY(recinfo.strDirectory, recording.channelName.c_str());
         break;
-      case DvbRecording::GROUP_BY_SERIES:
+      case DvbRecording::Grouping::BY_SERIES:
         tmp = "Unknown";
         XMLUtils::GetString(xRecording, "series", tmp);
         PVR_STRCPY(recinfo.strDirectory, tmp.c_str());
@@ -565,7 +567,7 @@ void Dvb::CloseLiveStream(void)
   m_currentChannel = 0;
 }
 
-CStdString& Dvb::GetLiveStreamURL(const PVR_CHANNEL& channelinfo)
+const CStdString& Dvb::GetLiveStreamURL(const PVR_CHANNEL& channelinfo)
 {
   return m_channels[channelinfo.iUniqueId - 1]->streamURL;
 }
@@ -930,7 +932,7 @@ DvbTimers_t Dvb::LoadTimers()
     }
 
     timer.priority    = atoi(xTimer->Attribute("Priority"));
-    timer.updateState = DvbTimer::STATE_NEW;
+    timer.updateState = DvbTimer::State::NEW;
     timer.state       = PVR_TIMER_STATE_SCHEDULED;
     if (xTimer->Attribute("Enabled")[0] == '0')
       timer.state = PVR_TIMER_STATE_CANCELLED;
@@ -952,7 +954,7 @@ DvbTimers_t Dvb::LoadTimers()
 void Dvb::TimerUpdates()
 {
   for (auto timer = m_timers.begin(); timer != m_timers.end(); ++timer)
-    timer->updateState = DvbTimer::STATE_NONE;
+    timer->updateState = DvbTimer::State::NONE;
 
   DvbTimers_t newtimers = LoadTimers();
   unsigned int updated = 0, unchanged = 0;
@@ -966,12 +968,12 @@ void Dvb::TimerUpdates()
 
       if (timer->updateFrom(*newtimer))
       {
-        timer->updateState = newtimer->updateState = DvbTimer::STATE_UPDATED;
+        timer->updateState = newtimer->updateState = DvbTimer::State::UPDATED;
         ++updated;
       }
       else
       {
-        timer->updateState = newtimer->updateState = DvbTimer::STATE_FOUND;
+        timer->updateState = newtimer->updateState = DvbTimer::State::FOUND;
         ++unchanged;
       }
     }
@@ -980,7 +982,7 @@ void Dvb::TimerUpdates()
   unsigned int removed = 0;
   for (auto it = m_timers.begin(); it != m_timers.end();)
   {
-    if (it->updateState == DvbTimer::STATE_NONE)
+    if (it->updateState == DvbTimer::State::NONE)
     {
       XBMC->Log(LOG_DEBUG, "%s: Removed timer '%s': id=%u", __FUNCTION__,
           it->title.c_str(), it->id);
@@ -994,7 +996,7 @@ void Dvb::TimerUpdates()
   unsigned int added = 0;
   for (auto it = newtimers.begin(); it != newtimers.end(); ++it)
   {
-    if (it->updateState == DvbTimer::STATE_NEW)
+    if (it->updateState == DvbTimer::State::NEW)
     {
       it->id = m_nextTimerId;
       XBMC->Log(LOG_DEBUG, "%s: New timer '%s': id=%u", __FUNCTION__,
@@ -1127,11 +1129,11 @@ bool Dvb::UpdateBackendStatus(bool updateSettings)
       m_diskspace.used += (size - free) / 1024;
     }
 
-    if (updateSettings && g_groupRecordings != DvbRecording::GROUPING_DISABLED)
+    if (updateSettings && g_groupRecordings != DvbRecording::Grouping::DISABLED)
       m_recfolders.push_back(CStdString(xFolder->GetText()).ToLower());
   }
 
-  if (updateSettings && g_groupRecordings != DvbRecording::GROUPING_DISABLED)
+  if (updateSettings && g_groupRecordings != DvbRecording::Grouping::DISABLED)
     std::sort(m_recfolders.begin(), m_recfolders.end(), StringGreaterThan);
 
   return true;

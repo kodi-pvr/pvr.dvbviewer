@@ -22,6 +22,7 @@
 #ifndef PVR_DVBVIEWER_CLIENT_H
 #define PVR_DVBVIEWER_CLIENT_H
 
+#include "DvbData.h"
 #include "kodi/libXBMC_addon.h"
 #include "kodi/libXBMC_pvr.h"
 #include "p8-platform/util/StdString.h"
@@ -60,32 +61,30 @@
 #define DEFAULT_WEB_PORT         8089
 #define DEFAULT_TSBUFFERPATH     "special://userdata/addon_data/pvr.dvbviewer"
 
-extern CStdString    g_hostname;
-extern int           g_webPort;
-extern CStdString    g_username;
-extern CStdString    g_password;
-extern bool          g_useFavourites;
-extern bool          g_useFavouritesFile;
-extern CStdString    g_favouritesFile;
-extern int           g_groupRecordings;
-extern bool          g_useTimeshift;
-extern CStdString    g_timeshiftBufferPath;
-extern bool          g_useRTSP;
-extern int           g_prependOutline;
-extern bool          g_lowPerformance;
+enum class PrependOutline
+  : int // same type as addon settings
+{
+  NEVER = 0,
+  IN_EPG,
+  IN_RECORDINGS,
+  ALWAYS
+};
+
+extern CStdString     g_hostname;
+extern int            g_webPort;
+extern CStdString     g_username;
+extern CStdString     g_password;
+extern bool           g_useFavourites;
+extern bool           g_useFavouritesFile;
+extern CStdString     g_favouritesFile;
+extern DvbRecording::Grouping g_groupRecordings;
+extern bool           g_useTimeshift;
+extern CStdString     g_timeshiftBufferPath;
+extern bool           g_useRTSP;
+extern PrependOutline g_prependOutline;
+extern bool           g_lowPerformance;
 
 extern ADDON::CHelper_libXBMC_addon *XBMC;
 extern CHelper_libXBMC_pvr *PVR;
-
-//TODO: convert to enum class as soon as c++11 is available
-class PrependOutline
-{
-public:
-  enum options { NEVER = 0, IN_EPG, IN_RECORDINGS, ALWAYS };
-  static bool test(options flag)
-  {
-    return (g_prependOutline == flag || g_prependOutline == ALWAYS);
-  }
-};
 
 #endif
