@@ -26,7 +26,6 @@
 
 #include "kodi/libXBMC_addon.h"
 #include "kodi/libXBMC_pvr.h"
-#include "kodi/libXBMC_gui.h"
 #include "kodi/util/StdString.h"
 
 #ifndef _UNUSED
