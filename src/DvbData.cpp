@@ -123,11 +123,6 @@ bool Dvb::GetChannels(ADDON_HANDLE handle, bool radio)
     PVR_STRCPY(xbmcChannel.strChannelName, channel->name.c_str());
     PVR_STRCPY(xbmcChannel.strIconPath,    channel->logoURL.c_str());
 
-    if (!channel->radio && !g_useRTSP)
-      PVR_STRCPY(xbmcChannel.strInputFormat, "video/mp2t");
-    else
-      PVR_STRCPY(xbmcChannel.strInputFormat, "");
-
     if (!g_useTimeshift)
     {
       // self referencing so GetLiveStreamURL() gets triggered
