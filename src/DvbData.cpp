@@ -93,7 +93,8 @@ bool Dvb::SwitchChannel(const PVR_CHANNEL &channelinfo)
 {
   CLockObject lock(m_mutex);
   m_currentChannel = channelinfo.iUniqueId;
-  m_updateEPG = true;
+  if (!g_lowPerformance)
+    m_updateEPG = true;
   return true;
 }
 
@@ -581,6 +582,7 @@ void *Dvb::Process()
 {
   XBMC->Log(LOG_DEBUG, "%s: Running...", __FUNCTION__);
   int update = 0;
+  int interval = (!g_lowPerformance) ? 60 : 300;
 
   while (!IsStopped())
   {
@@ -609,7 +611,7 @@ void *Dvb::Process()
       update = 0;
     }
 
-    if (update >= 60)
+    if (update >= interval)
     {
       update = 0;
       XBMC->Log(LOG_INFO, "Performing timer/recording updates!");
