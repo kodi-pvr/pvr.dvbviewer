@@ -28,7 +28,7 @@ Dvb::Dvb()
 
 Dvb::~Dvb()
 {
-  StopThread();
+  StopThread(0);
 
   for (auto channel : m_channels)
     delete channel;
@@ -81,6 +81,7 @@ CStdString Dvb::GetBackendVersion()
 
 bool Dvb::GetDriveSpace(long long *total, long long *used)
 {
+  CLockObject lock(m_mutex);
   if (!UpdateBackendStatus())
     return false;
   *total = m_diskspace.total;
@@ -90,6 +91,7 @@ bool Dvb::GetDriveSpace(long long *total, long long *used)
 
 bool Dvb::SwitchChannel(const PVR_CHANNEL &channelinfo)
 {
+  CLockObject lock(m_mutex);
   m_currentChannel = channelinfo.iUniqueId;
   m_updateEPG = true;
   return true;
@@ -97,6 +99,7 @@ bool Dvb::SwitchChannel(const PVR_CHANNEL &channelinfo)
 
 unsigned int Dvb::GetCurrentClientChannel(void)
 {
+  CLockObject lock(m_mutex);
   return m_currentChannel;
 }
 
@@ -285,6 +288,7 @@ unsigned int Dvb::GetChannelGroupsAmount()
 
 bool Dvb::GetTimers(ADDON_HANDLE handle)
 {
+  CLockObject lock(m_mutex);
   for (auto &timer : m_timers)
   {
     PVR_TIMER tag;
@@ -313,6 +317,7 @@ bool Dvb::AddTimer(const PVR_TIMER &timer, bool update)
 {
   XBMC->Log(LOG_DEBUG, "%s: channel=%u, title='%s'",
       __FUNCTION__, timer.iClientChannelUid, timer.strTitle);
+  CLockObject lock(m_mutex);
 
   time_t startTime = timer.startTime - timer.iMarginStart * 60;
   time_t endTime   = timer.endTime   + timer.iMarginEnd * 60;
@@ -352,12 +357,14 @@ bool Dvb::AddTimer(const PVR_TIMER &timer, bool update)
   }
 
   //TODO: instead of syncing all timers, we could only sync the new/modified
+  // in case the timer has already started we should check the recordings too
   m_updateTimers = true;
   return true;
 }
 
 bool Dvb::DeleteTimer(const PVR_TIMER &timer)
 {
+  CLockObject lock(m_mutex);
   auto t = GetTimer([&] (const DvbTimer &t)
       {
         return (t.id == timer.iClientIndex);
@@ -366,8 +373,6 @@ bool Dvb::DeleteTimer(const PVR_TIMER &timer)
     return false;
 
   GetHttpXML(BuildURL("api/timerdelete.html?id=%u", t->backendId));
-  if (timer.state == PVR_TIMER_STATE_RECORDING)
-    PVR->TriggerRecordingUpdate();
 
   //TODO: instead of syncing all timers, we could only sync the new/modified
   m_updateTimers = true;
@@ -376,12 +381,14 @@ bool Dvb::DeleteTimer(const PVR_TIMER &timer)
 
 unsigned int Dvb::GetTimersAmount()
 {
+  CLockObject lock(m_mutex);
   return m_timers.size();
 }
 
 
 bool Dvb::GetRecordings(ADDON_HANDLE handle)
 {
+  CLockObject lock(m_mutex);
   CStdString &&req = GetHttpXML(BuildURL("api/recordings.html?images=1"));
   RemoveNullChars(req);
 
@@ -408,10 +415,9 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
   for (TiXmlNode *xNode = root->LastChild("recording");
       xNode; xNode = xNode->PreviousSibling("recording"))
   {
-    if (!xNode->ToElement())
-      continue;
-
     TiXmlElement *xRecording = xNode->ToElement();
+    if (!xRecording)
+      continue;
 
     DvbRecording recording;
     recording.id = xRecording->Attribute("id");
@@ -524,11 +530,13 @@ bool Dvb::DeleteRecording(const PVR_RECORDING &recinfo)
 
 unsigned int Dvb::GetRecordingsAmount()
 {
+  CLockObject lock(m_mutex);
   return m_recordingAmount;
 }
 
 RecordingReader *Dvb::OpenRecordedStream(const PVR_RECORDING &recinfo)
 {
+  CLockObject lock(m_mutex);
   time_t now = time(NULL), end = 0;
   CStdString channelName = recinfo.strChannelName;
   auto timer = GetTimer([&] (const DvbTimer &timer)
@@ -548,6 +556,7 @@ RecordingReader *Dvb::OpenRecordedStream(const PVR_RECORDING &recinfo)
 bool Dvb::OpenLiveStream(const PVR_CHANNEL &channelinfo)
 {
   XBMC->Log(LOG_DEBUG, "%s: channel=%u", __FUNCTION__, channelinfo.iUniqueId);
+  CLockObject lock(m_mutex);
 
   if (channelinfo.iUniqueId == m_currentChannel)
     return true;
@@ -558,6 +567,7 @@ bool Dvb::OpenLiveStream(const PVR_CHANNEL &channelinfo)
 
 void Dvb::CloseLiveStream(void)
 {
+  CLockObject lock(m_mutex);
   m_currentChannel = 0;
 }
 
@@ -569,40 +579,45 @@ const CStdString &Dvb::GetLiveStreamURL(const PVR_CHANNEL &channelinfo)
 
 void *Dvb::Process()
 {
-  int updateTimer = 0;
   XBMC->Log(LOG_DEBUG, "%s: Running...", __FUNCTION__);
+  int update = 0;
 
   while (!IsStopped())
   {
     Sleep(1000);
-    ++updateTimer;
+    ++update;
 
+    CLockObject lock(m_mutex);
     if (m_updateEPG)
     {
-      Sleep(8000); /* Sleep enough time to let the recording service grab the EPG data */
-      PVR->TriggerEpgUpdate(m_currentChannel);
       m_updateEPG = false;
+      m_mutex.Unlock();
+      Sleep(8000); /* Sleep enough time to let the recording service grab the EPG data */
+      m_mutex.Lock();
+      XBMC->Log(LOG_INFO, "Performing forced EPG update!");
+      PVR->TriggerEpgUpdate(m_currentChannel);
     }
 
-    if (updateTimer > 60 || m_updateTimers)
+    if (m_updateTimers)
     {
-      updateTimer = 0;
+      m_updateTimers = false;
+      m_mutex.Unlock();
+      Sleep(1000);
+      m_mutex.Lock();
+      XBMC->Log(LOG_INFO, "Performing forced timer updates!");
+      TimerUpdates();
+      update = 0;
+    }
 
-      // Trigger Timer and Recording updates acording to the addon settings
-      CLockObject lock(m_mutex);
+    if (update >= 60)
+    {
+      update = 0;
       XBMC->Log(LOG_INFO, "Performing timer/recording updates!");
-
-      if (m_updateTimers)
-      {
-        Sleep(500);
-        m_updateTimers = false;
-      }
       TimerUpdates();
       PVR->TriggerRecordingUpdate();
     }
   }
 
-  CLockObject lock(m_mutex);
   m_started.Broadcast();
   return nullptr;
 }
@@ -663,7 +678,6 @@ bool Dvb::LoadChannels()
   }
 
   TiXmlElement *root = doc.RootElement();
-
   CStdString streamURL;
   XMLUtils::GetString(root, (g_useRTSP) ? "rtspURL" : "upnpURL", streamURL);
 
@@ -672,7 +686,7 @@ bool Dvb::LoadChannels()
   m_groups.clear();
   m_groupAmount = 0;
 
-  for (TiXmlElement *xRoot = doc.RootElement()->FirstChildElement("root");
+  for (TiXmlElement *xRoot = root->FirstChildElement("root");
       xRoot; xRoot = xRoot->NextSiblingElement("root"))
   {
     for (TiXmlElement *xGroup = xRoot->FirstChildElement("group");
@@ -1088,8 +1102,6 @@ bool Dvb::UpdateBackendStatus(bool updateSettings)
     return false;
   }
 
-  TiXmlElement *root = doc.RootElement();
-
   if (updateSettings)
   {
     // RS doesn't update the timezone during daylight saving
@@ -1101,11 +1113,11 @@ bool Dvb::UpdateBackendStatus(bool updateSettings)
   }
 
   // compute disk space. duplicates are detected by their identical values
+  TiXmlElement *root = doc.RootElement();
   typedef std::pair<long long, long long> Recfolder_t;
   std::set<Recfolder_t> folders;
   m_diskspace.total = m_diskspace.used = 0;
-  for (TiXmlElement *xFolder = TiXmlHandle(root).FirstChild("recfolders")
-      .FirstChild("folder").ToElement();
+  for (TiXmlElement *xFolder = root->FirstChild("recfolders")->FirstChildElement("folder");
       xFolder; xFolder = xFolder->NextSiblingElement("folder"))
   {
     long long size = 0, free = 0;

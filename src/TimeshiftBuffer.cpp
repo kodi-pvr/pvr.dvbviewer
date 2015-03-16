@@ -26,9 +26,7 @@ TimeshiftBuffer::TimeshiftBuffer(const CStdString &streamURL,
 
 TimeshiftBuffer::~TimeshiftBuffer(void)
 {
-  Stop();
-  if (IsRunning())
-    StopThread();
+  StopThread(0);
 
   if (m_filebufferWriteHandle)
     XBMC->CloseFile(m_filebufferWriteHandle);
@@ -45,17 +43,12 @@ bool TimeshiftBuffer::IsValid()
       && m_filebufferReadHandle != NULL);
 }
 
-void TimeshiftBuffer::Stop()
-{
-  m_start = 0;
-}
-
 void *TimeshiftBuffer::Process()
 {
   XBMC->Log(LOG_DEBUG, "Timeshift: Thread started");
   byte buffer[STREAM_READ_BUFFER_SIZE];
 
-  while (m_start)
+  while (!IsStopped())
   {
     unsigned int read = XBMC->ReadFile(m_streamHandle, buffer, sizeof(buffer));
     XBMC->WriteFile(m_filebufferWriteHandle, buffer, read);
@@ -126,5 +119,5 @@ time_t TimeshiftBuffer::TimeStart()
 
 time_t TimeshiftBuffer::TimeEnd()
 {
-  return (m_start) ? time(NULL) : 0;
+  return time(NULL);
 }

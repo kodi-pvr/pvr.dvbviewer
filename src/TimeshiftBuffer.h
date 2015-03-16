@@ -17,7 +17,6 @@ public:
   long long Seek(long long position, int whence);
   long long Position();
   long long Length();
-  void Stop(void);
   time_t TimeStart();
   time_t TimeEnd();
 
