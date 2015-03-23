@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.dvbviewer"
-  version="1.10.30"
+  version="1.10.31"
   name="DVBViewer Client"
   provider-name="A600, Manuel Mausz">
   <requires>
     <c-pluff version="0.1"/>
-    <import addon="xbmc.pvr" version="1.9.5"/>
+    <import addon="xbmc.pvr" version="1.9.6"/>
   </requires>
   <extension
     point="xbmc.pvrclient"

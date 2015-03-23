@@ -1,3 +1,8 @@
+1.10.31
+[fixed] Authentication credentials with symbols.
+[fixed] Playback of ongoing recordings didn't work if the channel has been renamed
+[updated] to PVR API v1.9.6
+
 1.10.30
 [updated] to PVR API v1.9.5
 
