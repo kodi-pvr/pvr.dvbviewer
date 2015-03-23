@@ -19,7 +19,7 @@ Dvb::Dvb()
   // simply add user@pass in front of the URL if username/password is set
   CStdString auth("");
   if (!g_username.empty() && !g_password.empty())
-    auth.Format("%s:%s@", g_username.c_str(), g_password.c_str());
+    auth.Format("%s:%s@", URLEncodeInline(g_username).c_str(), URLEncodeInline(g_password).c_str());
   m_url.Format("http://%s%s:%u/", auth.c_str(), g_hostname.c_str(), g_webPort);
 
   m_updateTimers = false;
@@ -1170,7 +1170,7 @@ CStdString Dvb::BuildExtURL(const CStdString& baseURL, const char* path, ...)
   if (!g_username.empty() && !g_password.empty())
   {
     CStdString auth;
-    auth.Format("%s:%s@", g_username.c_str(), g_password.c_str());
+    auth.Format("%s:%s@", URLEncodeInline(g_username).c_str(), URLEncodeInline(g_password).c_str());
     CStdString::size_type pos = url.find("://");
     if (pos != CStdString::npos)
       url.insert(pos + strlen("://"), auth);
