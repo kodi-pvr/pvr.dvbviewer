@@ -299,14 +299,12 @@ void ADDON_Announce(const char *_UNUSED(flag), const char *sender,
 
 const char* GetPVRAPIVersion(void)
 {
-  static const char *apiVersion = XBMC_PVR_API_VERSION;
-  return apiVersion;
+  return XBMC_PVR_API_VERSION;
 }
 
 const char* GetMininumPVRAPIVersion(void)
 {
-  static const char *minApiVersion = XBMC_PVR_MIN_API_VERSION;
-  return minApiVersion;
+  return XBMC_PVR_MIN_API_VERSION;
 }
 
 const char* GetGUIAPIVersion(void)
