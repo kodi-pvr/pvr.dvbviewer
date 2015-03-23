@@ -338,14 +338,14 @@ PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
 
 const char *GetBackendName(void)
 {
-  static const CStdString& name = DvbData ? DvbData->GetBackendName()
+  static const CStdString &name = DvbData ? DvbData->GetBackendName()
     : "unknown";
   return name.c_str();
 }
 
 const char *GetBackendVersion(void)
 {
-  static const CStdString& version = DvbData ? DvbData->GetBackendVersion()
+  static const CStdString &version = DvbData ? DvbData->GetBackendVersion()
     : "UNKNOWN";
   return version.c_str();
 }
@@ -438,7 +438,8 @@ PVR_ERROR GetChannelGroups(ADDON_HANDLE handle, bool radio)
     ? PVR_ERROR_NO_ERROR : PVR_ERROR_SERVER_ERROR;
 }
 
-PVR_ERROR GetChannelGroupMembers(ADDON_HANDLE handle, const PVR_CHANNEL_GROUP &group)
+PVR_ERROR GetChannelGroupMembers(ADDON_HANDLE handle,
+    const PVR_CHANNEL_GROUP &group)
 {
   return (DvbData && DvbData->IsConnected()
       && DvbData->GetChannelGroupMembers(handle, group))

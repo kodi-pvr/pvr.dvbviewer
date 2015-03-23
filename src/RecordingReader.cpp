@@ -8,7 +8,7 @@
 
 using namespace ADDON;
 
-RecordingReader::RecordingReader(CStdString streamURL, time_t end)
+RecordingReader::RecordingReader(const CStdString &streamURL, time_t end)
   : m_streamURL(streamURL), m_end(end), m_fastReopen(false), m_playback(false)
 {
   m_readHandle = XBMC->OpenFile(m_streamURL, 0);

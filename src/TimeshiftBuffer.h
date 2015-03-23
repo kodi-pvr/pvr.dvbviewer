@@ -10,7 +10,7 @@ class TimeshiftBuffer
   : public P8PLATFORM::CThread
 {
 public:
-  TimeshiftBuffer(CStdString streamURL, CStdString bufferPath);
+  TimeshiftBuffer(const CStdString &streamURL, const CStdString &bufferPath);
   ~TimeshiftBuffer(void);
   bool IsValid();
   int ReadData(unsigned char *buffer, unsigned int size);

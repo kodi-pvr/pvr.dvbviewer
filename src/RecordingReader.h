@@ -8,7 +8,7 @@
 class RecordingReader
 {
 public:
-  RecordingReader(CStdString streamURL, time_t end);
+  RecordingReader(const CStdString &streamURL, time_t end);
   ~RecordingReader(void);
   int ReadData(unsigned char *buffer, unsigned int size);
   bool IsValid();

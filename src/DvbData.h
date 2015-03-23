@@ -197,31 +197,31 @@ public:
   CStdString GetBackendVersion();
   bool GetDriveSpace(long long *total, long long *used);
 
-  bool SwitchChannel(const PVR_CHANNEL& channelinfo);
+  bool SwitchChannel(const PVR_CHANNEL &channelinfo);
   unsigned int GetCurrentClientChannel(void);
   bool GetChannels(ADDON_HANDLE handle, bool radio);
-  bool GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL& channelinfo,
+  bool GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channelinfo,
       time_t start, time_t end);
   unsigned int GetChannelsAmount(void);
 
   bool GetChannelGroups(ADDON_HANDLE handle, bool radio);
   bool GetChannelGroupMembers(ADDON_HANDLE handle,
-      const PVR_CHANNEL_GROUP& group);
+      const PVR_CHANNEL_GROUP &group);
   unsigned int GetChannelGroupsAmount(void);
 
   bool GetTimers(ADDON_HANDLE handle);
-  bool AddTimer(const PVR_TIMER& timer, bool update = false);
-  bool DeleteTimer(const PVR_TIMER& timer);
+  bool AddTimer(const PVR_TIMER &timer, bool update = false);
+  bool DeleteTimer(const PVR_TIMER &timer);
   unsigned int GetTimersAmount(void);
 
   bool GetRecordings(ADDON_HANDLE handle);
-  bool DeleteRecording(const PVR_RECORDING& recinfo);
+  bool DeleteRecording(const PVR_RECORDING &recinfo);
   unsigned int GetRecordingsAmount();
   RecordingReader *OpenRecordedStream(const PVR_RECORDING &recinfo);
 
-  bool OpenLiveStream(const PVR_CHANNEL& channelinfo);
+  bool OpenLiveStream(const PVR_CHANNEL &channelinfo);
   void CloseLiveStream();
-  const CStdString& GetLiveStreamURL(const PVR_CHANNEL& channelinfo);
+  const CStdString &GetLiveStreamURL(const PVR_CHANNEL &channelinfo);
 
 protected:
   virtual void *Process(void);

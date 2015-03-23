@@ -8,7 +8,8 @@
 
 using namespace ADDON;
 
-TimeshiftBuffer::TimeshiftBuffer(CStdString streamURL, CStdString bufferPath)
+TimeshiftBuffer::TimeshiftBuffer(const CStdString &streamURL,
+    const CStdString &bufferPath)
   : m_bufferPath(bufferPath)
 {
   m_streamHandle = XBMC->OpenFile(streamURL, READ_NO_CACHE);
