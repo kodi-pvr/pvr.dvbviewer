@@ -8,6 +8,7 @@
 #include "kodi/util/StdString.h"
 #include "kodi/threads/threads.h"
 #include <list>
+#include <functional>
 
 #define CHANNELDAT_HEADER_SIZE       (7)
 #define ENCRYPTED_FLAG               (1 << 0)
@@ -52,6 +53,8 @@ public:
   std::list<uint64_t> backendIds;
   uint64_t epgId;
   CStdString name;
+  /*!< @brief name of the channel on the backend */
+  CStdString backendName;
   CStdString streamURL;
   CStdString logoURL;
   bool radio;
@@ -63,6 +66,8 @@ class DvbGroup
 {
 public:
   CStdString name;
+  /*!< @brief name of the channel on the backend */
+  CStdString backendName;
   std::list<DvbChannel *> channels;
   bool radio;
   bool hidden;
@@ -226,14 +231,14 @@ private:
   bool LoadChannels();
   DvbTimers_t LoadTimers();
   void TimerUpdates();
-  DvbTimer *GetTimer(const PVR_TIMER& timer);
+  DvbChannel *GetChannel(std::function<bool (const DvbChannel*)> func);
+  DvbTimer *GetTimer(std::function<bool (const DvbTimer&)> func);
 
   // helper functions
   void RemoveNullChars(CStdString& str);
   bool CheckBackendVersion();
   bool UpdateBackendStatus(bool updateSettings = false);
   time_t ParseDateTime(const CStdString& strDate, bool iso8601 = true);
-  DvbChannel *GetChannelByBackendId(const uint64_t backendId);
   CStdString BuildURL(const char* path, ...);
   CStdString BuildExtURL(const CStdString& baseURL, const char* path, ...);
   CStdString ConvertToUtf8(const CStdString& src);

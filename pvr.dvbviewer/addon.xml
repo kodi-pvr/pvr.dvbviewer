@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.dvbviewer"
-  version="1.10.30"
+  version="1.10.31"
   name="DVBViewer Client"
-  provider-name="jdembski, A600, Manuel Mausz, Portisch">
+  provider-name="A600, Manuel Mausz">
   <requires>
     <c-pluff version="0.1"/>
-    <import addon="xbmc.pvr" version="1.9.5"/>
+    <import addon="xbmc.pvr" version="1.9.6"/>
   </requires>
   <extension
     point="xbmc.pvrclient"
@@ -75,7 +75,7 @@
     <description lang="da">DVBViewer Recording Service frontend; Understøtter streaming af Direkte TV, Timere, Optagelser og EPG. For parsing af XML output fra RS webinterface bruges xmlParser biblioteket, der er udviklet af Frank Vanden Berghen (http://www.applied-mathematics.net/tools/xmlParser.html). Mange tak for dette!&#10;</description>
     <description lang="de">Oberfläche für den DVBViewer-Aufnahmedienst; Unterstützt Live TV &amp; Aufnahmen, Timer und EPG. Für das Parsen der XML-Ausgabe der RS-Weboberfläche nutzt es die xmlParser-Bibliothek, entwickelt von Frank Vanden Berghen (http://www.applied-mathematics.net/tools/xmlParser.html). Vielen Dank dafür!⏎&#10;</description>
     <description lang="el">Frontend για την Υπηρεσία Εγγραφών του DVBViewer. Υποστηρίζει ροές LiveTV, Χρονοδιακόπτες, Εγγραφές &amp; EPG.&#10;</description>
-    <description lang="en">DVBViewer Recording Service frontend; supporting streaming of LiveTV, Timers, Recordings &amp; EPG.&#10;</description>
+    <description lang="en">DVBViewer Recording Service frontend; supporting streaming of Live TV &amp; Recordings, EPG, Timers.</description>
     <description lang="en_AU">DVBViewer Recording Service frontend; supporting streaming of LiveTV, Timers, Recordings &amp; EPG.&#10;</description>
     <description lang="en_NZ">DVBViewer Recording Service frontend; supporting streaming of LiveTV, Timers, Recordings &amp; EPG. For parsing the XML output from the RS webinterface it uses the xmlParser library developed by Frank Vanden Berghen (http://www.applied-mathematics.net/tools/xmlParser.html). Many thanks for this!&#10;</description>
     <description lang="en_US">DVBViewer Recording Service frontend; supporting streaming of LiveTV, Timers, Recordings &amp; EPG.&#10;</description>
