@@ -3,8 +3,8 @@
 #ifndef PVR_DVBVIEWER_TIMESHIFTBUFFER_H
 #define PVR_DVBVIEWER_TIMESHIFTBUFFER_H
 
-#include "kodi/util/StdString.h"
-#include "kodi/threads/threads.h"
+#include "platform/util/StdString.h"
+#include "platform/threads/threads.h"
 
 class TimeshiftBuffer
   : public PLATFORM::CThread
