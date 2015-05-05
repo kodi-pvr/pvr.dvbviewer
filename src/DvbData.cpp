@@ -1,6 +1,6 @@
 #include "DvbData.h"
 #include "client.h"
-#include "kodi/util/util.h"
+#include "platform/util/util.h"
 #include "kodi/util/XMLUtils.h"
 #include <tinyxml.h>
 #include <inttypes.h>

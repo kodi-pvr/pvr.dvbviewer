@@ -5,8 +5,8 @@
 
 #include "client.h"
 #include "RecordingReader.h"
-#include "kodi/util/StdString.h"
-#include "kodi/threads/threads.h"
+#include "platform/util/StdString.h"
+#include "platform/threads/threads.h"
 #include <list>
 #include <functional>
 
