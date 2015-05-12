@@ -23,7 +23,9 @@ set(DVBVIEWER_SOURCES src/client.cpp
                       src/RecordingReader.cpp
                       src/TimeshiftBuffer.cpp)
 
-set(DEPLIBS ${platform_LIBRARIES} ${TINYXML_LIBRARIES})
+set(DEPLIBS ${kodiplatform_LIBRARIES}
+            ${platform_LIBRARIES}
+            ${TINYXML_LIBRARIES})
 
 build_addon(pvr.dvbviewer DVBVIEWER DEPLIBS)
 
