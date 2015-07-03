@@ -1,5 +1,7 @@
-1.10.33
+1.11.0
+[updated] to PVR API v1.9.7
 
+1.10.33
 [updated] Language files from Transifex
 
 1.10.32

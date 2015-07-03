@@ -446,6 +446,13 @@ PVR_ERROR GetChannelGroupMembers(ADDON_HANDLE handle, const PVR_CHANNEL_GROUP &g
 }
 
 /* timer functions */
+
+PVR_ERROR GetTimerTypes(PVR_TIMER_TYPE types[], int *size)
+{
+  /* TODO: Implement this to get support for the timer features introduced with PVR API 1.9.7 */
+  return PVR_ERROR_NOT_IMPLEMENTED;
+}
+
 int GetTimersAmount(void)
 {
   if (!DvbData || !DvbData->IsConnected())
@@ -456,6 +463,7 @@ int GetTimersAmount(void)
 
 PVR_ERROR GetTimers(ADDON_HANDLE handle)
 {
+  /* TODO: Change implementation to get support for the timer features introduced with PVR API 1.9.7 */
   return (DvbData && DvbData->IsConnected() && DvbData->GetTimers(handle))
     ? PVR_ERROR_NO_ERROR : PVR_ERROR_SERVER_ERROR;
 }
@@ -472,8 +480,9 @@ PVR_ERROR UpdateTimer(const PVR_TIMER &timer)
     ? PVR_ERROR_NO_ERROR : PVR_ERROR_SERVER_ERROR;
 }
 
-PVR_ERROR DeleteTimer(const PVR_TIMER &timer, bool _UNUSED(bForceDelete))
+PVR_ERROR DeleteTimer(const PVR_TIMER &timer, bool _UNUSED(bForceDelete), bool _UNUSED(bDeleteScheduled))
 {
+  /* TODO: Change implementation to support bDeleteScheduled (introduced with PVR API 1.9.7 */
   return (DvbData && DvbData->IsConnected() && DvbData->DeleteTimer(timer))
     ? PVR_ERROR_NO_ERROR : PVR_ERROR_SERVER_ERROR;
 }

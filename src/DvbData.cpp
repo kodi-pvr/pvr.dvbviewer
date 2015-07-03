@@ -291,6 +291,10 @@ bool Dvb::GetTimers(ADDON_HANDLE handle)
   {
     PVR_TIMER tag;
     memset(&tag, 0, sizeof(PVR_TIMER));
+
+    /* TODO: Implement own timer types to get support for the timer features introduced with PVR API 1.9.7 */
+    tag.iTimerType = PVR_TIMER_TYPE_NONE;
+
     PVR_STRCPY(tag.strTitle,   timer->title.c_str());
     tag.iClientIndex      = timer->id;
     tag.iClientChannelUid = timer->channel->id;
@@ -298,7 +302,6 @@ bool Dvb::GetTimers(ADDON_HANDLE handle)
     tag.endTime           = timer->end;
     tag.state             = timer->state;
     tag.iPriority         = timer->priority;
-    tag.bIsRepeating      = (timer->weekdays != 0);
     tag.firstDay          = (timer->weekdays != 0) ? timer->start : 0;
     tag.iWeekdays         = timer->weekdays;
 
