@@ -1,3 +1,6 @@
+1.11.1
+[updated] to PVR API v2.0.0
+
 1.11.0
 [updated] to PVR API v1.9.7
 
