@@ -480,9 +480,8 @@ PVR_ERROR UpdateTimer(const PVR_TIMER &timer)
     ? PVR_ERROR_NO_ERROR : PVR_ERROR_SERVER_ERROR;
 }
 
-PVR_ERROR DeleteTimer(const PVR_TIMER &timer, bool _UNUSED(bForceDelete), bool _UNUSED(bDeleteScheduled))
+PVR_ERROR DeleteTimer(const PVR_TIMER &timer, bool _UNUSED(bForceDelete))
 {
-  /* TODO: Change implementation to support bDeleteScheduled (introduced with PVR API 1.9.7 */
   return (DvbData && DvbData->IsConnected() && DvbData->DeleteTimer(timer))
     ? PVR_ERROR_NO_ERROR : PVR_ERROR_SERVER_ERROR;
 }
