@@ -210,6 +210,7 @@ bool Dvb::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL& channelinfo,
     broadcast.strPlot             = entry.plot.c_str();
     broadcast.iGenreType          = entry.genre & 0xF0;
     broadcast.iGenreSubType       = entry.genre & 0x0F;
+    broadcast.iFlags              = EPG_TAG_FLAG_UNDEFINED;
 
     PVR->TransferEpgEntry(handle, &broadcast);
     ++numEPG;

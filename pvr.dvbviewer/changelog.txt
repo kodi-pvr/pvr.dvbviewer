@@ -1,13 +1,16 @@
-1.11.6 (09-09-2015)
+1.11.7
+[updated] to PVR API v4.1.0
+
+1.11.6
 [updated] to PVR API v4.0.0
 
-1.11.5 (14-08-2015)
+1.11.5
 [updated] to PVR API v3.0.0 (API 1.9.7 compatibility mode)
 
-1.11.4 (05-08-2015)
+1.11.4
 [updated] Automatically fill in platform and library name
 
-1.11.3 (19-07-2015)
+1.11.3
 [updated] to PVR API v2.1.0
 
 1.11.2
