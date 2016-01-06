@@ -1,6 +1,6 @@
 #include "DvbData.h"
 #include "client.h"
-#include "platform/util/util.h"
+#include "p8-platform/util/util.h"
 #include "kodi/util/XMLUtils.h"
 #include <tinyxml.h>
 #include <inttypes.h>
@@ -10,7 +10,7 @@
 #include <algorithm>
 
 using namespace ADDON;
-using namespace PLATFORM;
+using namespace P8PLATFORM;
 
 Dvb::Dvb()
   : m_connected(false), m_backendVersion(0), m_currentChannel(0),

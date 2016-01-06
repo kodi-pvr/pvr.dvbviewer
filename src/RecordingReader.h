@@ -3,7 +3,7 @@
 #ifndef PVR_DVBVIEWER_RECORDINGREADER_H
 #define PVR_DVBVIEWER_RECORDINGREADER_H
 
-#include "platform/util/StdString.h"
+#include "p8-platform/util/StdString.h"
 
 class RecordingReader
 {
