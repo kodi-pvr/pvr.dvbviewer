@@ -3,11 +3,11 @@
 #ifndef PVR_DVBVIEWER_TIMESHIFTBUFFER_H
 #define PVR_DVBVIEWER_TIMESHIFTBUFFER_H
 
-#include "platform/util/StdString.h"
-#include "platform/threads/threads.h"
+#include "p8-platform/util/StdString.h"
+#include "p8-platform/threads/threads.h"
 
 class TimeshiftBuffer
-  : public PLATFORM::CThread
+  : public P8PLATFORM::CThread
 {
 public:
   TimeshiftBuffer(CStdString streamURL, CStdString bufferPath);
@@ -30,7 +30,7 @@ private:
   void *m_filebufferWriteHandle;
   time_t m_start;
 #ifndef TARGET_POSIX
-  PLATFORM::CMutex m_mutex;
+  P8PLATFORM::CMutex m_mutex;
   uint64_t m_writePos;
 #endif
 };

@@ -1,7 +1,7 @@
 #include "RecordingReader.h"
 #include "client.h"
-#include "platform/util/util.h"
-#include "platform/threads/mutex.h"
+#include "p8-platform/util/util.h"
+#include "p8-platform/threads/mutex.h"
 
 #define REOPEN_INTERVAL      30
 #define REOPEN_INTERVAL_FAST 10
@@ -61,7 +61,7 @@ FORCE_REOPEN:
         sleep = std::min(sleep, static_cast<int>(m_nextReopen - now + 1));
       XBMC->Log(LOG_DEBUG, "RecordingReader: End reached. Sleeping %d secs",
           sleep);
-      PLATFORM::CEvent::Sleep(sleep * 1000);
+      P8PLATFORM::CEvent::Sleep(sleep * 1000);
       now += sleep;
       m_fastReopen = true;
       goto FORCE_REOPEN;
