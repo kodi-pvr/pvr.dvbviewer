@@ -1,5 +1,7 @@
-2.0.1
+2.0.2
+Updated to PVR API v4.2.0
 
+2.0.1
 [updated] Language files from Transifex
 
 2.0.0
