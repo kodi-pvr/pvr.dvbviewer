@@ -688,4 +688,7 @@ void PauseStream(bool _UNUSED(bPaused)) {}
 bool SeekTime(int, bool, double*) { return false; }
 void SetSpeed(int) {};
 bool IsTimeshifting(void) { return false; }
+/* Minimum support for API 4.2.0 */
+/* This add-on supports some form of timeshifting and needs to be adapted to cope with that */
+bool IsRealTimeStream(void) { return true; }
 }
