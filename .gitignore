@@ -1,0 +1,23 @@
+# build artifacts
+build/
+debian/changelog
+debian/files
+debian/kodi-pvr-dvbviewer-dbg.debhelper.log
+debian/kodi-pvr-dvbviewer-dbg.substvars
+debian/kodi-pvr-dvbviewer-dbg/
+debian/kodi-pvr-dvbviewer.debhelper.log
+debian/kodi-pvr-dvbviewer.postinst.debhelper
+debian/kodi-pvr-dvbviewer.postrm.debhelper
+debian/kodi-pvr-dvbviewer.substvars
+debian/kodi-pvr-dvbviewer/
+debian/tmp/
+obj-x86_64-linux-gnu/
+pvr.dvbviewer/addon.xml
+
+# clion
+.idea/
+
+# Eclipse/CDT
+.cproject
+.project
+.settings/
