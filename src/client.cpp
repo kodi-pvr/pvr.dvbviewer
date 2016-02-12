@@ -688,4 +688,5 @@ void PauseStream(bool _UNUSED(bPaused)) {}
 bool SeekTime(int, bool, double*) { return false; }
 void SetSpeed(int) {};
 bool IsTimeshifting(void) { return false; }
+bool IsRealTimeStream(void) { return true; }
 }
