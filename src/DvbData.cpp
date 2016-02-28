@@ -504,6 +504,9 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
         break;
     }
 
+    // TODO?
+    recinfo.iChannelUid = PVR_CHANNEL_INVALID_UID;
+
     PVR->TransferRecordingEntry(handle, &recinfo);
     ++m_recordingAmount;
 
