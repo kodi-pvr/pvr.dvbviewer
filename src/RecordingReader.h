@@ -10,11 +10,11 @@ class RecordingReader
 public:
   RecordingReader(const CStdString &streamURL, time_t end);
   ~RecordingReader(void);
-  int ReadData(unsigned char *buffer, unsigned int size);
+  ssize_t ReadData(unsigned char *buffer, unsigned int size);
   bool IsValid();
-  long long Seek(long long position, int whence);
-  long long Position();
-  long long Length();
+  int64_t Seek(long long position, int whence);
+  int64_t Position();
+  int64_t Length();
   void Announce(const char *message);
 
 private:

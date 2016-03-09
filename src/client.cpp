@@ -23,7 +23,6 @@
 #include "TimeshiftBuffer.h"
 #include "RecordingReader.h"
 #include "kodi/xbmc_pvr_dll.h"
-#include "kodi/libKODI_guilib.h"
 #include "p8-platform/util/util.h"
 #include <stdlib.h>
 
@@ -48,11 +47,11 @@ PrependOutline g_prependOutline       = PrependOutline::IN_EPG;
 bool           g_lowPerformance       = false;
 
 ADDON_STATUS m_curStatus    = ADDON_STATUS_UNKNOWN;
-CHelper_libXBMC_addon *XBMC = NULL;
-CHelper_libXBMC_pvr   *PVR  = NULL;
-Dvb *DvbData                = NULL;
-TimeshiftBuffer *tsBuffer   = NULL;
-RecordingReader *recReader  = NULL;
+CHelper_libXBMC_addon *XBMC = nullptr;
+CHelper_libXBMC_pvr   *PVR  = nullptr;
+Dvb *DvbData                = nullptr;
+TimeshiftBuffer *tsBuffer   = nullptr;
+RecordingReader *recReader  = nullptr;
 
 extern "C"
 {
@@ -289,7 +288,7 @@ void ADDON_FreeSettings()
 void ADDON_Announce(const char *_UNUSED(flag), const char *sender,
     const char *message, const void *_UNUSED(data))
 {
-  if (recReader != NULL && strcmp(sender, "xbmc") == 0)
+  if (recReader != nullptr && strcmp(sender, "xbmc") == 0)
     recReader->Announce(message);
 }
 
@@ -309,26 +308,26 @@ const char* GetMininumPVRAPIVersion(void)
 
 const char* GetGUIAPIVersion(void)
 {
-  return KODI_GUILIB_API_VERSION;
+  return ""; // GUI API not used
 }
 
 const char* GetMininumGUIAPIVersion(void)
 {
-  return KODI_GUILIB_MIN_API_VERSION;
+  return ""; // GUI API not used
 }
 
 PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
 {
-  pCapabilities->bSupportsEPG             = true;
-  pCapabilities->bSupportsTV              = true;
-  pCapabilities->bSupportsRadio           = true;
-  pCapabilities->bSupportsRecordings      = true;
+  pCapabilities->bSupportsEPG                = true;
+  pCapabilities->bSupportsTV                 = true;
+  pCapabilities->bSupportsRadio              = true;
+  pCapabilities->bSupportsRecordings         = true;
   pCapabilities->bSupportsRecordingsUndelete = false;
-  pCapabilities->bSupportsTimers          = true;
-  pCapabilities->bSupportsChannelGroups   = true;
-  pCapabilities->bSupportsChannelScan     = false;
-  pCapabilities->bHandlesInputStream      = false;
-  pCapabilities->bHandlesDemuxing         = false;
+  pCapabilities->bSupportsTimers             = true;
+  pCapabilities->bSupportsChannelGroups      = true;
+  pCapabilities->bSupportsChannelScan        = false;
+  pCapabilities->bHandlesInputStream         = true;
+  pCapabilities->bHandlesDemuxing            = false;
   pCapabilities->bSupportsLastPlayedPosition = false;
 
   return PVR_ERROR_NO_ERROR;
@@ -404,20 +403,17 @@ int GetChannelsAmount(void)
   return DvbData->GetChannelsAmount();
 }
 
-int GetCurrentClientChannel(void)
-{
-  if (!DvbData || !DvbData->IsConnected())
-    return PVR_ERROR_SERVER_ERROR;
-
-  return DvbData->GetCurrentClientChannel();
-}
-
 bool SwitchChannel(const PVR_CHANNEL &channel)
 {
   if (!DvbData || !DvbData->IsConnected())
     return false;
 
-  return DvbData->SwitchChannel(channel);
+  if (channel.iUniqueId == DvbData->GetCurrentClientChannel())
+    return true;
+
+  /* as of late we need to close and reopen ourself */
+  CloseLiveStream();
+  return OpenLiveStream(channel);
 }
 
 /* channel group functions */
@@ -491,9 +487,6 @@ bool OpenLiveStream(const PVR_CHANNEL &channel)
   if (!DvbData || !DvbData->IsConnected())
     return false;
 
-  if (channel.iUniqueId == DvbData->GetCurrentClientChannel())
-    return true;
-
   if (!DvbData->OpenLiveStream(channel))
     return false;
   if (!g_useTimeshift)
@@ -521,6 +514,16 @@ const char *GetLiveStreamURL(const PVR_CHANNEL &channel)
 
   DvbData->SwitchChannel(channel);
   return DvbData->GetLiveStreamURL(channel).c_str();
+}
+
+bool IsRealTimeStream()
+{
+  if (!tsBuffer)
+    return true;
+  //FIXME as soon as we return false here the players current time value starts
+  // flickering/jumping
+  //return tsBuffer->NearEnd();
+  return true;
 }
 
 bool CanPauseStream(void)
@@ -569,6 +572,11 @@ long long LengthLiveStream(void)
     return -1;
 
   return tsBuffer->Length();
+}
+
+bool IsTimeshifting(void)
+{
+  return (tsBuffer != nullptr);
 }
 
 time_t GetBufferTimeStart()
@@ -682,9 +690,9 @@ PVR_ERROR RenameRecording(const PVR_RECORDING &_UNUSED(recording)) { return PVR_
 PVR_ERROR GetRecordingEdl(const PVR_RECORDING&, PVR_EDL_ENTRY[], int*) { return PVR_ERROR_NOT_IMPLEMENTED; };
 PVR_ERROR UndeleteRecording(const PVR_RECORDING& _UNUSED(recording)) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR DeleteAllRecordingsFromTrash() { return PVR_ERROR_NOT_IMPLEMENTED; }
+PVR_ERROR SetEPGTimeFrame(int iDays) { return PVR_ERROR_NOT_IMPLEMENTED; }
 unsigned int GetChannelSwitchDelay(void) { return 0; }
 void PauseStream(bool _UNUSED(bPaused)) {}
-bool SeekTime(int, bool, double*) { return false; }
-void SetSpeed(int) {};
-bool IsTimeshifting(void) { return false; }
+bool SeekTime(int time, bool backwards, double *startpts) { return false; }
+void SetSpeed(int speed) {};
 }
