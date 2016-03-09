@@ -1,3 +1,9 @@
+2.1.0
+[updated] to PVR API v5.1.0
+[updated] extend low performance mode
+[fixed] fixed channel switching with timeshift enabled
+[fixed] various thread saftey and code fixes
+
 2.0.1
 
 [updated] Language files from Transifex
