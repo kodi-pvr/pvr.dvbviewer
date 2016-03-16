@@ -8,7 +8,8 @@
 
 using namespace ADDON;
 
-TimeshiftBuffer::TimeshiftBuffer(CStdString streamURL, CStdString bufferPath)
+TimeshiftBuffer::TimeshiftBuffer(const CStdString &streamURL,
+    const CStdString &bufferPath)
   : m_bufferPath(bufferPath)
 {
   m_streamHandle = XBMC->OpenFile(streamURL, READ_NO_CACHE);
@@ -25,9 +26,7 @@ TimeshiftBuffer::TimeshiftBuffer(CStdString streamURL, CStdString bufferPath)
 
 TimeshiftBuffer::~TimeshiftBuffer(void)
 {
-  Stop();
-  if (IsRunning())
-    StopThread();
+  StopThread(0);
 
   if (m_filebufferWriteHandle)
     XBMC->CloseFile(m_filebufferWriteHandle);
@@ -39,14 +38,9 @@ TimeshiftBuffer::~TimeshiftBuffer(void)
 
 bool TimeshiftBuffer::IsValid()
 {
-  return (m_streamHandle != NULL
-      && m_filebufferWriteHandle != NULL
-      && m_filebufferReadHandle != NULL);
-}
-
-void TimeshiftBuffer::Stop()
-{
-  m_start = 0;
+  return (m_streamHandle != nullptr
+      && m_filebufferWriteHandle != nullptr
+      && m_filebufferReadHandle != nullptr);
 }
 
 void *TimeshiftBuffer::Process()
@@ -54,7 +48,7 @@ void *TimeshiftBuffer::Process()
   XBMC->Log(LOG_DEBUG, "Timeshift: Thread started");
   byte buffer[STREAM_READ_BUFFER_SIZE];
 
-  while (m_start)
+  while (!IsStopped())
   {
     unsigned int read = XBMC->ReadFile(m_streamHandle, buffer, sizeof(buffer));
     XBMC->WriteFile(m_filebufferWriteHandle, buffer, read);
@@ -69,20 +63,20 @@ void *TimeshiftBuffer::Process()
   return NULL;
 }
 
-long long TimeshiftBuffer::Seek(long long position, int whence)
+int64_t TimeshiftBuffer::Seek(long long position, int whence)
 {
   return XBMC->SeekFile(m_filebufferReadHandle, position, whence);
 }
 
-long long TimeshiftBuffer::Position()
+int64_t TimeshiftBuffer::Position()
 {
   return XBMC->GetFilePosition(m_filebufferReadHandle);
 }
 
-long long TimeshiftBuffer::Length()
+int64_t TimeshiftBuffer::Length()
 {
   // We can't use GetFileLength here as it's value will be cached
-  // by XBMC until we read or seek above it.
+  // by Kodi until we read or seek above it.
   // see xbm/xbmc/filesystem/HDFile.cpp CHDFile::GetLength()
   //return XBMC->GetFileLength(m_filebufferReadHandle);
 
@@ -99,7 +93,7 @@ long long TimeshiftBuffer::Length()
   return writePos;
 }
 
-int TimeshiftBuffer::ReadData(unsigned char *buffer, unsigned int size)
+ssize_t TimeshiftBuffer::ReadData(unsigned char *buffer, unsigned int size)
 {
   /* make sure we never read above the current write position */
   int64_t readPos = XBMC->GetFilePosition(m_filebufferReadHandle);
@@ -125,5 +119,12 @@ time_t TimeshiftBuffer::TimeStart()
 
 time_t TimeshiftBuffer::TimeEnd()
 {
-  return (m_start) ? time(NULL) : 0;
+  return time(NULL);
+}
+
+bool TimeshiftBuffer::NearEnd()
+{
+  // other PVRs use 10 seconds here, but we aren't doing any demuxing
+  // we'll therefore just asume 1 secs needs about 1mb
+  return Length() - Position() <= 10 * 1048576;
 }

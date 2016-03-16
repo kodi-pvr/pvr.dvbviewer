@@ -8,7 +8,7 @@
 
 using namespace ADDON;
 
-RecordingReader::RecordingReader(CStdString streamURL, time_t end)
+RecordingReader::RecordingReader(const CStdString &streamURL, time_t end)
   : m_streamURL(streamURL), m_end(end), m_fastReopen(false), m_playback(false)
 {
   m_readHandle = XBMC->OpenFile(m_streamURL, 0);
@@ -28,10 +28,10 @@ RecordingReader::~RecordingReader(void)
 
 bool RecordingReader::IsValid()
 {
-  return (m_readHandle != NULL);
+  return (m_readHandle != nullptr);
 }
 
-int RecordingReader::ReadData(unsigned char *buffer, unsigned int size)
+ssize_t RecordingReader::ReadData(unsigned char *buffer, unsigned int size)
 {
   /* check for playback of ongoing recording */
   if (m_playback && m_end)
@@ -68,12 +68,12 @@ FORCE_REOPEN:
     }
   }
 
-  unsigned int read = XBMC->ReadFile(m_readHandle, buffer, size);
+  ssize_t read = XBMC->ReadFile(m_readHandle, buffer, size);
   m_pos += read;
   return read;
 }
 
-long long RecordingReader::Seek(long long position, int whence)
+int64_t RecordingReader::Seek(long long position, int whence)
 {
   int64_t ret = XBMC->SeekFile(m_readHandle, position, whence);
   // for unknown reason seek sometimes doesn't return the correct position
@@ -83,12 +83,12 @@ long long RecordingReader::Seek(long long position, int whence)
   return ret;
 }
 
-long long RecordingReader::Position()
+int64_t RecordingReader::Position()
 {
   return m_pos;
 }
 
-long long RecordingReader::Length()
+int64_t RecordingReader::Length()
 {
   return m_len;
 }

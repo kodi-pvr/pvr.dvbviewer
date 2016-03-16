@@ -10,16 +10,16 @@ class TimeshiftBuffer
   : public P8PLATFORM::CThread
 {
 public:
-  TimeshiftBuffer(CStdString streamURL, CStdString bufferPath);
+  TimeshiftBuffer(const CStdString &streamURL, const CStdString &bufferPath);
   ~TimeshiftBuffer(void);
   bool IsValid();
-  int ReadData(unsigned char *buffer, unsigned int size);
-  long long Seek(long long position, int whence);
-  long long Position();
-  long long Length();
-  void Stop(void);
+  ssize_t ReadData(unsigned char *buffer, unsigned int size);
+  int64_t Seek(long long position, int whence);
+  int64_t Position();
+  int64_t Length();
   time_t TimeStart();
   time_t TimeEnd();
+  bool NearEnd();
 
 private:
   virtual void *Process(void);
