@@ -8,7 +8,7 @@
 class RecordingReader
 {
 public:
-  RecordingReader(const CStdString &streamURL, time_t end);
+  RecordingReader(const std::string &streamURL, time_t end);
   ~RecordingReader(void);
   ssize_t ReadData(unsigned char *buffer, unsigned int size);
   bool IsValid();
@@ -18,7 +18,7 @@ public:
   void Announce(const char *message);
 
 private:
-  CStdString m_streamURL;
+  std::string m_streamURL;
   void *m_readHandle;
 
   /*!< @brief end time of the recording in case this an ongoing recording */

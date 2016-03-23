@@ -24,6 +24,7 @@
 #include "RecordingReader.h"
 #include "kodi/xbmc_pvr_dll.h"
 #include "p8-platform/util/util.h"
+#include "p8-platform/util/StringUtils.h"
 #include <stdlib.h>
 
 using namespace ADDON;
@@ -32,16 +33,16 @@ using namespace ADDON;
  * Default values are defined inside client.h
  * and exported to the other source files.
  */
-CStdString     g_hostname             = DEFAULT_HOST;
+std::string    g_hostname             = DEFAULT_HOST;
 int            g_webPort              = DEFAULT_WEB_PORT;
-CStdString     g_username             = "";
-CStdString     g_password             = "";
+std::string    g_username             = "";
+std::string    g_password             = "";
 bool           g_useFavourites        = false;
 bool           g_useFavouritesFile    = false;
-CStdString     g_favouritesFile       = "";
+std::string    g_favouritesFile       = "";
 DvbRecording::Grouping g_groupRecordings = DvbRecording::Grouping::DISABLED;
 bool           g_useTimeshift         = false;
-CStdString     g_timeshiftBufferPath  = DEFAULT_TSBUFFERPATH;
+std::string    g_timeshiftBufferPath  = DEFAULT_TSBUFFERPATH;
 bool           g_useRTSP              = false;
 PrependOutline g_prependOutline       = PrependOutline::IN_EPG;
 bool           g_lowPerformance       = false;
@@ -196,7 +197,7 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
   if (!XBMC)
     return ADDON_STATUS_OK;
 
-  CStdString sname(settingName);
+  std::string sname(settingName);
   if (sname == "host")
   {
     if (g_hostname.compare((const char *)settingValue) != 0)
@@ -244,7 +245,7 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
   }
   else if (sname == "timeshiftpath")
   {
-    CStdString newValue = (const char *)settingValue;
+    std::string newValue = (const char *)settingValue;
     if (g_timeshiftBufferPath != newValue)
     {
       XBMC->Log(LOG_DEBUG, "%s: Changed setting '%s' from '%s' to '%s'",
@@ -335,25 +336,26 @@ PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
 
 const char *GetBackendName(void)
 {
-  static const CStdString &name = DvbData ? DvbData->GetBackendName()
+  static const std::string &name = DvbData ? DvbData->GetBackendName()
     : "unknown";
   return name.c_str();
 }
 
 const char *GetBackendVersion(void)
 {
-  static const CStdString &version = DvbData ? DvbData->GetBackendVersion()
+  static const std::string &version = DvbData ? DvbData->GetBackendVersion()
     : "UNKNOWN";
   return version.c_str();
 }
 
 const char *GetConnectionString(void)
 {
-  static CStdString conn;
+  static std::string conn;
   if (DvbData)
-    conn.Format("%s%s", g_hostname, DvbData->IsConnected() ? "" : " (Not connected!)");
+    conn = StringUtils::Format("%s%s", g_hostname.c_str(),
+      DvbData->IsConnected() ? "" : " (Not connected!)");
   else
-    conn.Format("%s (addon error!)", g_hostname);
+    conn = StringUtils::Format("%s (addon error!)", g_hostname.c_str());
   return conn.c_str();
 }
 
@@ -492,7 +494,7 @@ bool OpenLiveStream(const PVR_CHANNEL &channel)
   if (!g_useTimeshift)
     return true;
 
-  CStdString streamURL = DvbData->GetLiveStreamURL(channel);
+  std::string streamURL = DvbData->GetLiveStreamURL(channel);
   XBMC->Log(LOG_INFO, "Timeshift starts; url=%s", streamURL.c_str());
   if (tsBuffer)
     SAFE_DELETE(tsBuffer);

@@ -1,7 +1,8 @@
 #include "DvbData.h"
 #include "client.h"
-#include "p8-platform/util/util.h"
 #include "kodi/util/XMLUtils.h"
+#include "p8-platform/util/util.h"
+#include "p8-platform/util/StringUtils.h"
 #include <tinyxml.h>
 #include <inttypes.h>
 #include <set>
@@ -12,15 +13,32 @@
 using namespace ADDON;
 using namespace P8PLATFORM;
 
+/* private copy until https://github.com/xbmc/kodi-platform/pull/2 get merged */
+static bool XMLUtils_GetString(const TiXmlNode* pRootNode, const char* strTag, std::string& strStringValue)
+{
+  const TiXmlElement* pElement = pRootNode->FirstChildElement(strTag);
+  if (!pElement) return false;
+  const TiXmlNode* pNode = pElement->FirstChild();
+  if (pNode != NULL)
+  {
+    strStringValue = pNode->ValueStr();
+    return true;
+  }
+  strStringValue.clear();
+  return true;
+}
+
 Dvb::Dvb()
   : m_connected(false), m_backendVersion(0), m_currentChannel(0),
   m_nextTimerId(0)
 {
   // simply add user@pass in front of the URL if username/password is set
-  CStdString auth("");
+  std::string auth("");
   if (!g_username.empty() && !g_password.empty())
-    auth.Format("%s:%s@", URLEncodeInline(g_username).c_str(), URLEncodeInline(g_password).c_str());
-  m_url.Format("http://%s%s:%u/", auth.c_str(), g_hostname.c_str(), g_webPort);
+    auth = StringUtils::Format("%s:%s@", URLEncode(g_username).c_str(),
+      URLEncode(g_password).c_str());
+  m_url = StringUtils::Format("http://%s%s:%u/", auth.c_str(), g_hostname.c_str(),
+    g_webPort);
 
   m_updateTimers = false;
   m_updateEPG    = false;
@@ -62,16 +80,15 @@ bool Dvb::IsConnected()
   return m_connected;
 }
 
-CStdString Dvb::GetBackendName()
+std::string Dvb::GetBackendName()
 {
   // RS api doesn't provide a reliable way to extract the server name
   return "DVBViewer";
 }
 
-CStdString Dvb::GetBackendVersion()
+std::string Dvb::GetBackendVersion()
 {
-  CStdString version;
-  version.Format("%u.%u.%u.%u",
+  std::string version = StringUtils::Format("%u.%u.%u.%u",
       m_backendVersion >> 24 & 0xFF,
       m_backendVersion >> 16 & 0xFF,
       m_backendVersion >> 8 & 0xFF,
@@ -126,8 +143,8 @@ bool Dvb::GetChannels(ADDON_HANDLE handle, bool radio)
     if (!g_useTimeshift)
     {
       // self referencing so GetLiveStreamURL() gets triggered
-      CStdString streamURL;
-      streamURL.Format("pvr://stream/tv/%u.ts", channel->backendNr);
+      std::string streamURL = StringUtils::Format("pvr://stream/tv/%u.ts",
+        channel->backendNr);
       PVR_STRCPY(xbmcChannel.strStreamURL, streamURL.c_str());
     }
 
@@ -141,12 +158,12 @@ bool Dvb::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channelinfo,
 {
   DvbChannel *channel = m_channels[channelinfo.iUniqueId - 1];
 
-  const CStdString &url = BuildURL("api/epg.html?lvl=2&channel=%" PRIu64 "&start=%f&end=%f",
+  const std::string &url = BuildURL("api/epg.html?lvl=2&channel=%" PRIu64 "&start=%f&end=%f",
       channel->epgId, start/86400.0 + DELPHI_DATE, end/86400.0 + DELPHI_DATE);
-  const CStdString &req = GetHttpXML(url);
+  const std::string &req = GetHttpXML(url);
 
   TiXmlDocument doc;
-  doc.Parse(req);
+  doc.Parse(req.c_str());
   if (doc.Error())
   {
     XBMC->Log(LOG_ERROR, "Unable to parse EPG. Error: %s",
@@ -171,17 +188,17 @@ bool Dvb::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channelinfo,
 
     // since RS 1.26.0 the correct language is already merged into the elements
     TiXmlNode *xTitles = xEntry->FirstChild("titles");
-    if (!xTitles || !XMLUtils::GetString(xTitles, "title", entry.title))
+    if (!xTitles || !XMLUtils_GetString(xTitles, "title", entry.title))
       continue;
 
     TiXmlNode *xDescriptions = xEntry->FirstChild("descriptions");
     if (xDescriptions)
-      XMLUtils::GetString(xDescriptions, "description", entry.plot);
+      XMLUtils_GetString(xDescriptions, "description", entry.plot);
 
     TiXmlNode *xEvents = xEntry->FirstChild("events");
     if (xEvents)
     {
-      XMLUtils::GetString(xEvents, "event", entry.plotOutline);
+      XMLUtils_GetString(xEvents, "event", entry.plotOutline);
       if (entry.plot.empty())
       {
         entry.plot = entry.plotOutline;
@@ -335,7 +352,7 @@ bool Dvb::AddTimer(const PVR_TIMER &timer, bool update)
   uint64_t backendId = m_channels[timer.iClientChannelUid - 1]->backendIds.front();
   if (!update)
     GetHttpXML(BuildURL("api/timeradd.html?ch=%" PRIu64 "&dor=%u&enable=1&start=%u&stop=%u&prio=%d&days=%s&title=%s&encoding=255",
-        backendId, date, start, stop, timer.iPriority, repeat, URLEncodeInline(timer.strTitle).c_str()));
+        backendId, date, start, stop, timer.iPriority, repeat, URLEncode(timer.strTitle).c_str()));
   else
   {
     auto t = GetTimer([&] (const DvbTimer &t)
@@ -347,7 +364,7 @@ bool Dvb::AddTimer(const PVR_TIMER &timer, bool update)
 
     short enabled = (timer.state == PVR_TIMER_STATE_CANCELLED) ? 0 : 1;
     GetHttpXML(BuildURL("api/timeredit.html?id=%d&ch=%" PRIu64 "&dor=%u&enable=%d&start=%u&stop=%u&prio=%d&days=%s&title=%s&encoding=255",
-        t->backendId, backendId, date, enabled, start, stop, timer.iPriority, repeat, URLEncodeInline(timer.strTitle).c_str()));
+        t->backendId, backendId, date, enabled, start, stop, timer.iPriority, repeat, URLEncode(timer.strTitle).c_str()));
   }
 
   //TODO: instead of syncing all timers, we could only sync the new/modified
@@ -383,11 +400,11 @@ unsigned int Dvb::GetTimersAmount()
 bool Dvb::GetRecordings(ADDON_HANDLE handle)
 {
   CLockObject lock(m_mutex);
-  CStdString &&req = GetHttpXML(BuildURL("api/recordings.html?images=1"));
+  std::string &&req = GetHttpXML(BuildURL("api/recordings.html?images=1"));
   RemoveNullChars(req);
 
   TiXmlDocument doc;
-  doc.Parse(req);
+  doc.Parse(req.c_str());
   if (doc.Error())
   {
     XBMC->Log(LOG_ERROR, "Unable to parse recordings. Error: %s",
@@ -395,11 +412,11 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
     return false;
   }
 
-  CStdString imageURL;
+  std::string imageURL;
   TiXmlElement *root = doc.RootElement();
   // refresh in case this has changed
-  XMLUtils::GetString(root, "serverURL", m_recordingURL);
-  XMLUtils::GetString(root, "imageURL",  imageURL);
+  XMLUtils_GetString(root, "serverURL", m_recordingURL);
+  XMLUtils_GetString(root, "imageURL",  imageURL);
 
   // there's no need to merge new recordings in older ones as XBMC does this
   // already for us (using strRecordingId). so just parse all recordings again
@@ -416,9 +433,9 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
     DvbRecording recording;
     recording.id = xRecording->Attribute("id");
     xRecording->QueryUnsignedAttribute("content", &recording.genre);
-    XMLUtils::GetString(xRecording, "title",   recording.title);
-    XMLUtils::GetString(xRecording, "info",    recording.plotOutline);
-    XMLUtils::GetString(xRecording, "desc",    recording.plot);
+    XMLUtils_GetString(xRecording, "title",   recording.title);
+    XMLUtils_GetString(xRecording, "info",    recording.plotOutline);
+    XMLUtils_GetString(xRecording, "desc",    recording.plot);
     if (recording.plot.empty())
     {
       recording.plot = recording.plotOutline;
@@ -432,7 +449,7 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
     }
 
     /* fetch correct channel name */
-    XMLUtils::GetString(xRecording, "channel", recording.channelName);
+    XMLUtils_GetString(xRecording, "channel", recording.channelName);
     auto channel = GetChannel([&] (const DvbChannel *channel)
         {
           return (channel->backendName == recording.channelName);
@@ -440,11 +457,11 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
     if (channel)
       recording.channelName = channel->name;
 
-    CStdString thumbnail;
-    if (!g_lowPerformance && XMLUtils::GetString(xRecording, "image", thumbnail))
+    std::string thumbnail;
+    if (!g_lowPerformance && XMLUtils_GetString(xRecording, "image", thumbnail))
       recording.thumbnailPath = BuildExtURL(imageURL, "%s", thumbnail.c_str());
 
-    CStdString startTime = xRecording->Attribute("start");
+    std::string startTime = xRecording->Attribute("start");
     recording.start = ParseDateTime(startTime);
 
     int hours, mins, secs;
@@ -466,24 +483,25 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
     recinfo.iChannelUid   = PVR_CHANNEL_INVALID_UID; // TODO: try searching by name
     recinfo.channelType   = PVR_RECORDING_CHANNEL_TYPE_TV;
 
-    CStdString tmp;
+    std::string tmp;
     switch(g_groupRecordings)
     {
       case DvbRecording::Grouping::BY_DIRECTORY:
-        XMLUtils::GetString(xRecording, "file", tmp);
-        tmp.ToLower();
+        XMLUtils_GetString(xRecording, "file", tmp);
+        StringUtils::ToLower(tmp);
         for (auto &recf : m_recfolders)
         {
-          if (tmp.compare(0, recf.length(), recf) != 0)
+          if (!StringUtils::StartsWith(tmp, recf))
             continue;
-          tmp = tmp.substr(recf.length(), tmp.ReverseFind('\\') - recf.length());
-          tmp.Replace('\\', '/');
+          tmp = tmp.substr(recf.length(), tmp.rfind('\\') - recf.length());
+          StringUtils::Replace(tmp, '\\', '/');
           PVR_STRCPY(recinfo.strDirectory, tmp.c_str() + 1);
           break;
         }
         break;
       case DvbRecording::Grouping::BY_DATE:
-        tmp.Format("%s/%s", startTime.substr(0, 4), startTime.substr(4, 2));
+        tmp = StringUtils::Format("%s/%s", startTime.substr(0, 4).c_str(),
+          startTime.substr(4, 2).c_str());
         PVR_STRCPY(recinfo.strDirectory, tmp.c_str());
         break;
       case DvbRecording::Grouping::BY_FIRST_LETTER:
@@ -495,7 +513,7 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
         break;
       case DvbRecording::Grouping::BY_SERIES:
         tmp = "Unknown";
-        XMLUtils::GetString(xRecording, "series", tmp);
+        XMLUtils_GetString(xRecording, "series", tmp);
         PVR_STRCPY(recinfo.strDirectory, tmp.c_str());
         break;
       default:
@@ -534,7 +552,7 @@ RecordingReader *Dvb::OpenRecordedStream(const PVR_RECORDING &recinfo)
 {
   CLockObject lock(m_mutex);
   time_t now = time(NULL), end = 0;
-  CStdString channelName = recinfo.strChannelName;
+  std::string channelName = recinfo.strChannelName;
   auto timer = GetTimer([&] (const DvbTimer &timer)
       {
         return (timer.start <= now && now <= timer.end
@@ -567,7 +585,7 @@ void Dvb::CloseLiveStream(void)
   m_currentChannel = 0;
 }
 
-const CStdString &Dvb::GetLiveStreamURL(const PVR_CHANNEL &channelinfo)
+const std::string &Dvb::GetLiveStreamURL(const PVR_CHANNEL &channelinfo)
 {
   return m_channels[channelinfo.iUniqueId - 1]->streamURL;
 }
@@ -620,10 +638,10 @@ void *Dvb::Process()
 }
 
 
-CStdString Dvb::GetHttpXML(const CStdString& url)
+std::string Dvb::GetHttpXML(const std::string& url)
 {
-  CStdString result;
-  void *fileHandle = XBMC->OpenFile(url, READ_NO_CACHE);
+  std::string result;
+  void *fileHandle = XBMC->OpenFile(url.c_str(), READ_NO_CACHE);
   if (fileHandle)
   {
     char buffer[1024];
@@ -634,37 +652,36 @@ CStdString Dvb::GetHttpXML(const CStdString& url)
   return result;
 }
 
-CStdString Dvb::URLEncodeInline(const CStdString& data)
+/* Copied from xbmc/URL.cpp */
+std::string Dvb::URLEncode(const std::string& data)
 {
-  /* Copied from xbmc/URL.cpp */
-  CStdString result;
+  std::string result;
 
   /* wonder what a good value is here is, depends on how often it occurs */
   result.reserve(data.length() * 2);
 
-  for (unsigned int i = 0; i < data.length(); ++i)
+  for (size_t i = 0; i < data.size(); ++i)
   {
-    int kar = (unsigned char)data[i];
-    //if (kar == ' ') result += '+'; // obsolete
-    if (isalnum(kar) || strchr("-_.!()" , kar) ) // Don't URL encode these according to RFC1738
-      result += kar;
+    const char kar = data[i];
+
+    // Don't URL encode "-_.!()" according to RFC1738
+    // TODO: Update it to "-_.~" after Gotham according to RFC3986
+    if (StringUtils::isasciialphanum(kar) || kar == '-' || kar == '.' || kar == '_' || kar == '!' || kar == '(' || kar == ')')
+      result.push_back(kar);
     else
-    {
-      CStdString tmp;
-      tmp.Format("%%%02.2x", kar);
-      result += tmp;
-    }
+      result += StringUtils::Format("%%%2.2X", (unsigned int)((unsigned char)kar));
   }
+
   return result;
 }
 
 bool Dvb::LoadChannels()
 {
-  const CStdString &req = GetHttpXML(BuildURL("api/getchannelsxml.html?subchannels=1"
-        "&rtsp=1&upnp=1&logo=1"));
+  const std::string &req = GetHttpXML(BuildURL("api/getchannelsxml.html"
+        "?subchannels=1&rtsp=1&upnp=1&logo=1"));
 
   TiXmlDocument doc;
-  doc.Parse(req);
+  doc.Parse(req.c_str());
   if (doc.Error())
   {
     XBMC->Log(LOG_ERROR, "Unable to parse channels. Error: %s",
@@ -675,8 +692,8 @@ bool Dvb::LoadChannels()
   }
 
   TiXmlElement *root = doc.RootElement();
-  CStdString streamURL;
-  XMLUtils::GetString(root, (g_useRTSP) ? "rtspURL" : "upnpURL", streamURL);
+  std::string streamURL;
+  XMLUtils_GetString(root, (g_useRTSP) ? "rtspURL" : "upnpURL", streamURL);
 
   m_channels.clear();
   m_channelAmount = 0;
@@ -715,14 +732,14 @@ bool Dvb::LoadChannels()
         xChannel->QueryValueAttribute<uint64_t>("ID", &backendId);
         channel->backendIds.push_back(backendId);
 
-        CStdString logoURL;
-        if (!g_lowPerformance && XMLUtils::GetString(xChannel, "logo", logoURL))
+        std::string logoURL;
+        if (!g_lowPerformance && XMLUtils_GetString(xChannel, "logo", logoURL))
           channel->logoURL = BuildURL("%s", logoURL.c_str());
 
         if (g_useRTSP)
         {
-          CStdString urlParams;
-          XMLUtils::GetString(xChannel, "rtsp", urlParams);
+          std::string urlParams;
+          XMLUtils_GetString(xChannel, "rtsp", urlParams);
           channel->streamURL = BuildExtURL(streamURL, "%s", urlParams.c_str());
         }
         else
@@ -752,10 +769,10 @@ bool Dvb::LoadChannels()
 
   if (g_useFavourites)
   {
-    CStdString &&url = BuildURL("api/getfavourites.html");
+    std::string &&url = BuildURL("api/getfavourites.html");
     if (g_useFavouritesFile)
     {
-      if (!XBMC->FileExists(g_favouritesFile, false))
+      if (!XBMC->FileExists(g_favouritesFile.c_str(), false))
       {
         XBMC->Log(LOG_ERROR, "Unable to open local favourites.xml");
         XBMC->QueueNotification(QUEUE_ERROR, XBMC->GetLocalizedString(30504));
@@ -764,11 +781,11 @@ bool Dvb::LoadChannels()
       url = g_favouritesFile;
     }
 
-    CStdString &&req = GetHttpXML(url);
+    std::string &&req = GetHttpXML(url);
     RemoveNullChars(req);
 
     TiXmlDocument doc;
-    doc.Parse(req);
+    doc.Parse(req.c_str());
     if (doc.Error())
     {
       XBMC->Log(LOG_ERROR, "Unable to parse favourites.xml. Error: %s",
@@ -803,7 +820,7 @@ bool Dvb::LoadChannels()
       {
         // name="Header" doesn't indicate a group alone. we must have at least
         // one additional child. see example above
-        if (!group && CStdString(xEntry->Attribute("name")) == "Header"
+        if (!group && std::string(xEntry->Attribute("name")) == "Header"
             && xEntry->NextSiblingElement("entry"))
         {
           m_groups.push_back(DvbGroup());
@@ -844,7 +861,7 @@ bool Dvb::LoadChannels()
             if (!ss.eof())
             {
               ss.ignore(1);
-              CStdString channelName;
+              std::string channelName;
               getline(ss, channelName);
               channel->name = ConvertToUtf8(channelName);
             }
@@ -881,11 +898,11 @@ DvbTimers_t Dvb::LoadTimers()
 {
   DvbTimers_t timers;
 
-  CStdString &&req = GetHttpXML(BuildURL("api/timerlist.html?utf8"));
+  std::string &&req = GetHttpXML(BuildURL("api/timerlist.html?utf8"));
   RemoveNullChars(req);
 
   TiXmlDocument doc;
-  doc.Parse(req);
+  doc.Parse(req.c_str());
   if (doc.Error())
   {
     XBMC->Log(LOG_ERROR, "Unable to parse timers. Error: %s",
@@ -900,10 +917,10 @@ DvbTimers_t Dvb::LoadTimers()
   {
     DvbTimer timer;
 
-    if (!XMLUtils::GetString(xTimer, "GUID", timer.guid))
+    if (!XMLUtils_GetString(xTimer, "GUID", timer.guid))
       continue;
     XMLUtils::GetUInt(xTimer, "ID", timer.backendId);
-    XMLUtils::GetString(xTimer, "Descr", timer.title);
+    XMLUtils_GetString(xTimer, "Descr", timer.title);
 
     uint64_t backendId = 0;
     std::istringstream ss(xTimer->FirstChildElement("Channel")->Attribute("ID"));
@@ -920,12 +937,12 @@ DvbTimers_t Dvb::LoadTimers()
     if (!timer.channel)
       continue;
 
-    CStdString startDate = xTimer->Attribute("Date");
+    std::string startDate = xTimer->Attribute("Date");
     startDate += xTimer->Attribute("Start");
     timer.start = ParseDateTime(startDate, false);
     timer.end   = timer.start + atoi(xTimer->Attribute("Dur")) * 60;
 
-    CStdString weekdays = xTimer->Attribute("Days");
+    std::string weekdays = xTimer->Attribute("Days");
     timer.weekdays = 0;
     for (unsigned int j = 0; j < weekdays.length(); ++j)
     {
@@ -1040,7 +1057,7 @@ DvbTimer *Dvb::GetTimer(std::function<bool (const DvbTimer&)> func)
 }
 
 
-void Dvb::RemoveNullChars(CStdString& str)
+void Dvb::RemoveNullChars(std::string& str)
 {
   /* favourites.xml and timers.xml sometimes have null chars that screw the xml */
   str.erase(std::remove(str.begin(), str.end(), '\0'), str.end());
@@ -1048,10 +1065,10 @@ void Dvb::RemoveNullChars(CStdString& str)
 
 bool Dvb::CheckBackendVersion()
 {
-  const CStdString &req = GetHttpXML(BuildURL("api/version.html"));
+  const std::string &req = GetHttpXML(BuildURL("api/version.html"));
 
   TiXmlDocument doc;
-  doc.Parse(req);
+  doc.Parse(req.c_str());
   if (doc.Error())
   {
     XBMC->Log(LOG_ERROR, "Unable to connect to the backend service. Error: %s",
@@ -1081,17 +1098,17 @@ bool Dvb::CheckBackendVersion()
   return true;
 }
 
-static bool StringGreaterThan(const CStdString& a, const CStdString& b)
+static bool StringGreaterThan(const std::string& a, const std::string& b)
 {
   return (a.length() < b.length());
 }
 
 bool Dvb::UpdateBackendStatus(bool updateSettings)
 {
-  const CStdString &req = GetHttpXML(BuildURL("api/status.html"));
+  const std::string &req = GetHttpXML(BuildURL("api/status.html"));
 
   TiXmlDocument doc;
-  doc.Parse(req);
+  doc.Parse(req.c_str());
   if (doc.Error())
   {
     XBMC->Log(LOG_ERROR, "Unable to get backend status. Error: %s",
@@ -1128,7 +1145,11 @@ bool Dvb::UpdateBackendStatus(bool updateSettings)
     }
 
     if (updateSettings && g_groupRecordings != DvbRecording::Grouping::DISABLED)
-      m_recfolders.push_back(CStdString(xFolder->GetText()).ToLower());
+    {
+      std::string recf = xFolder->GetText();
+      StringUtils::ToLower(recf);
+      m_recfolders.push_back(recf);
+    }
   }
 
   if (updateSettings && g_groupRecordings != DvbRecording::Grouping::DISABLED)
@@ -1137,17 +1158,17 @@ bool Dvb::UpdateBackendStatus(bool updateSettings)
   return true;
 }
 
-time_t Dvb::ParseDateTime(const CStdString& date, bool iso8601)
+time_t Dvb::ParseDateTime(const std::string& date, bool iso8601)
 {
   struct tm timeinfo;
 
   memset(&timeinfo, 0, sizeof(tm));
   if (iso8601)
-    sscanf(date, "%04d%02d%02d%02d%02d%02d", &timeinfo.tm_year,
+    sscanf(date.c_str(), "%04d%02d%02d%02d%02d%02d", &timeinfo.tm_year,
         &timeinfo.tm_mon, &timeinfo.tm_mday, &timeinfo.tm_hour,
         &timeinfo.tm_min, &timeinfo.tm_sec);
   else
-    sscanf(date, "%02d.%02d.%04d%02d:%02d:%02d", &timeinfo.tm_mday,
+    sscanf(date.c_str(), "%02d.%02d.%04d%02d:%02d:%02d", &timeinfo.tm_mday,
         &timeinfo.tm_mon, &timeinfo.tm_year, &timeinfo.tm_hour,
         &timeinfo.tm_min, &timeinfo.tm_sec);
   timeinfo.tm_mon  -= 1;
@@ -1157,39 +1178,39 @@ time_t Dvb::ParseDateTime(const CStdString& date, bool iso8601)
   return mktime(&timeinfo);
 }
 
-CStdString Dvb::BuildURL(const char* path, ...)
+std::string Dvb::BuildURL(const char* path, ...)
 {
-  CStdString url(m_url);
+  std::string url(m_url);
   va_list argList;
   va_start(argList, path);
-  url.AppendFormatV(path, argList);
+  url += StringUtils::FormatV(path, argList);
   va_end(argList);
   return url;
 }
 
-CStdString Dvb::BuildExtURL(const CStdString& baseURL, const char* path, ...)
+std::string Dvb::BuildExtURL(const std::string& baseURL, const char* path, ...)
 {
-  CStdString url(baseURL);
+  std::string url(baseURL);
   // simply add user@pass in front of the URL if username/password is set
   if (!g_username.empty() && !g_password.empty())
   {
-    CStdString auth;
-    auth.Format("%s:%s@", URLEncodeInline(g_username).c_str(), URLEncodeInline(g_password).c_str());
-    CStdString::size_type pos = url.find("://");
-    if (pos != CStdString::npos)
+    std::string auth = StringUtils::Format("%s:%s@",
+      URLEncode(g_username).c_str(), URLEncode(g_password).c_str());
+    std::string::size_type pos = url.find("://");
+    if (pos != std::string::npos)
       url.insert(pos + strlen("://"), auth);
   }
   va_list argList;
   va_start(argList, path);
-  url.AppendFormatV(path, argList);
+  url += StringUtils::FormatV(path, argList);
   va_end(argList);
   return url;
 }
 
-CStdString Dvb::ConvertToUtf8(const CStdString& src)
+std::string Dvb::ConvertToUtf8(const std::string& src)
 {
-  char *tmp = XBMC->UnknownToUTF8(src);
-  CStdString dest(tmp);
+  char *tmp = XBMC->UnknownToUTF8(src.c_str());
+  std::string dest(tmp);
   XBMC->FreeString(tmp);
   return dest;
 }

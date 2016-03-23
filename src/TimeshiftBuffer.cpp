@@ -8,18 +8,18 @@
 
 using namespace ADDON;
 
-TimeshiftBuffer::TimeshiftBuffer(const CStdString &streamURL,
-    const CStdString &bufferPath)
+TimeshiftBuffer::TimeshiftBuffer(const std::string &streamURL,
+    const std::string &bufferPath)
   : m_bufferPath(bufferPath)
 {
-  m_streamHandle = XBMC->OpenFile(streamURL, READ_NO_CACHE);
+  m_streamHandle = XBMC->OpenFile(streamURL.c_str(), READ_NO_CACHE);
   m_bufferPath += "/tsbuffer.ts";
-  m_filebufferWriteHandle = XBMC->OpenFileForWrite(m_bufferPath, true);
+  m_filebufferWriteHandle = XBMC->OpenFileForWrite(m_bufferPath.c_str(), true);
 #ifndef TARGET_POSIX
   m_writePos = 0;
 #endif
   Sleep(100);
-  m_filebufferReadHandle = XBMC->OpenFile(m_bufferPath, READ_NO_CACHE);
+  m_filebufferReadHandle = XBMC->OpenFile(m_bufferPath.c_str(), READ_NO_CACHE);
   m_start = time(NULL);
   CreateThread();
 }
