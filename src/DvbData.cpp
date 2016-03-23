@@ -1098,11 +1098,6 @@ bool Dvb::CheckBackendVersion()
   return true;
 }
 
-static bool StringGreaterThan(const std::string& a, const std::string& b)
-{
-  return (a.length() < b.length());
-}
-
 bool Dvb::UpdateBackendStatus(bool updateSettings)
 {
   const std::string &req = GetHttpXML(BuildURL("api/status.html"));
@@ -1144,7 +1139,7 @@ bool Dvb::UpdateBackendStatus(bool updateSettings)
       m_diskspace.used += (size - free) / 1024;
     }
 
-    if (updateSettings && g_groupRecordings != DvbRecording::Grouping::DISABLED)
+    if (updateSettings && g_groupRecordings == DvbRecording::Grouping::BY_DIRECTORY)
     {
       std::string recf = xFolder->GetText();
       StringUtils::ToLower(recf);
@@ -1152,8 +1147,12 @@ bool Dvb::UpdateBackendStatus(bool updateSettings)
     }
   }
 
-  if (updateSettings && g_groupRecordings != DvbRecording::Grouping::DISABLED)
-    std::sort(m_recfolders.begin(), m_recfolders.end(), StringGreaterThan);
+  if (updateSettings && g_groupRecordings == DvbRecording::Grouping::BY_DIRECTORY)
+    std::sort(m_recfolders.begin(), m_recfolders.end(),
+      [](const std::string& a, const std::string& b)
+      {
+        return (a.length() < b.length());
+      });
 
   return true;
 }
