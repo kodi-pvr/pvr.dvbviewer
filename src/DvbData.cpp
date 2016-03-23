@@ -14,10 +14,12 @@ using namespace ADDON;
 using namespace P8PLATFORM;
 
 /* private copy until https://github.com/xbmc/kodi-platform/pull/2 get merged */
-static bool XMLUtils_GetString(const TiXmlNode* pRootNode, const char* strTag, std::string& strStringValue)
+static bool XMLUtils_GetString(const TiXmlNode* pRootNode, const char* strTag,
+    std::string& strStringValue)
 {
   const TiXmlElement* pElement = pRootNode->FirstChildElement(strTag);
-  if (!pElement) return false;
+  if (!pElement)
+    return false;
   const TiXmlNode* pNode = pElement->FirstChild();
   if (pNode != NULL)
   {
@@ -36,9 +38,9 @@ Dvb::Dvb()
   std::string auth("");
   if (!g_username.empty() && !g_password.empty())
     auth = StringUtils::Format("%s:%s@", URLEncode(g_username).c_str(),
-      URLEncode(g_password).c_str());
+        URLEncode(g_password).c_str());
   m_url = StringUtils::Format("http://%s%s:%u/", auth.c_str(), g_hostname.c_str(),
-    g_webPort);
+      g_webPort);
 
   m_updateTimers = false;
   m_updateEPG    = false;
@@ -144,7 +146,7 @@ bool Dvb::GetChannels(ADDON_HANDLE handle, bool radio)
     {
       // self referencing so GetLiveStreamURL() gets triggered
       std::string streamURL = StringUtils::Format("pvr://stream/tv/%u.ts",
-        channel->backendNr);
+          channel->backendNr);
       PVR_STRCPY(xbmcChannel.strStreamURL, streamURL.c_str());
     }
 
@@ -158,8 +160,9 @@ bool Dvb::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channelinfo,
 {
   DvbChannel *channel = m_channels[channelinfo.iUniqueId - 1];
 
-  const std::string &url = BuildURL("api/epg.html?lvl=2&channel=%" PRIu64 "&start=%f&end=%f",
-      channel->epgId, start/86400.0 + DELPHI_DATE, end/86400.0 + DELPHI_DATE);
+  const std::string &url = BuildURL("api/epg.html?lvl=2&channel=%" PRIu64
+      "&start=%f&end=%f", channel->epgId, start/86400.0 + DELPHI_DATE,
+      end/86400.0 + DELPHI_DATE);
   const std::string &req = GetHttpXML(url);
 
   TiXmlDocument doc;
@@ -205,7 +208,7 @@ bool Dvb::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channelinfo,
         entry.plotOutline.clear();
       }
       else if (g_prependOutline == PrependOutline::IN_EPG
-        || g_prependOutline == PrependOutline::ALWAYS)
+          || g_prependOutline == PrependOutline::ALWAYS)
       {
         entry.plot.insert(0, entry.plotOutline + "\n");
         entry.plotOutline.clear();
@@ -351,8 +354,10 @@ bool Dvb::AddTimer(const PVR_TIMER &timer, bool update)
 
   uint64_t backendId = m_channels[timer.iClientChannelUid - 1]->backendIds.front();
   if (!update)
-    GetHttpXML(BuildURL("api/timeradd.html?ch=%" PRIu64 "&dor=%u&enable=1&start=%u&stop=%u&prio=%d&days=%s&title=%s&encoding=255",
-        backendId, date, start, stop, timer.iPriority, repeat, URLEncode(timer.strTitle).c_str()));
+    GetHttpXML(BuildURL("api/timeradd.html?ch=%" PRIu64 "&dor=%u&enable=1"
+        "&start=%u&stop=%u&prio=%d&days=%s&title=%s&encoding=255",
+        backendId, date, start, stop, timer.iPriority, repeat,
+        URLEncode(timer.strTitle).c_str()));
   else
   {
     auto t = GetTimer([&] (const DvbTimer &t)
@@ -363,8 +368,10 @@ bool Dvb::AddTimer(const PVR_TIMER &timer, bool update)
       return false;
 
     short enabled = (timer.state == PVR_TIMER_STATE_CANCELLED) ? 0 : 1;
-    GetHttpXML(BuildURL("api/timeredit.html?id=%d&ch=%" PRIu64 "&dor=%u&enable=%d&start=%u&stop=%u&prio=%d&days=%s&title=%s&encoding=255",
-        t->backendId, backendId, date, enabled, start, stop, timer.iPriority, repeat, URLEncode(timer.strTitle).c_str()));
+    GetHttpXML(BuildURL("api/timeredit.html?id=%d&ch=%" PRIu64 "&dor=%u"
+        "&enable=%d&start=%u&stop=%u&prio=%d&days=%s&title=%s&encoding=255",
+        t->backendId, backendId, date, enabled, start, stop, timer.iPriority,
+        repeat, URLEncode(timer.strTitle).c_str()));
   }
 
   //TODO: instead of syncing all timers, we could only sync the new/modified
@@ -400,7 +407,8 @@ unsigned int Dvb::GetTimersAmount()
 bool Dvb::GetRecordings(ADDON_HANDLE handle)
 {
   CLockObject lock(m_mutex);
-  std::string &&req = GetHttpXML(BuildURL("api/recordings.html?utf8=1&nofilename=1&images=1"));
+  std::string &&req = GetHttpXML(BuildURL("api/recordings.html?utf8=1"
+      "&nofilename=1&images=1"));
   RemoveNullChars(req);
 
   TiXmlDocument doc;
@@ -501,7 +509,7 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
         break;
       case DvbRecording::Grouping::BY_DATE:
         tmp = StringUtils::Format("%s/%s", startTime.substr(0, 4).c_str(),
-          startTime.substr(4, 2).c_str());
+            startTime.substr(4, 2).c_str());
         PVR_STRCPY(recinfo.strDirectory, tmp.c_str());
         break;
       case DvbRecording::Grouping::BY_FIRST_LETTER:
@@ -536,7 +544,7 @@ bool Dvb::DeleteRecording(const PVR_RECORDING &recinfo)
 {
   // RS api doesn't return a result
   GetHttpXML(BuildURL("api/recdelete.html?recid=%s&delfile=1",
-        recinfo.strRecordingId));
+      recinfo.strRecordingId));
 
   PVR->TriggerRecordingUpdate();
   return true;
@@ -556,8 +564,8 @@ RecordingReader *Dvb::OpenRecordedStream(const PVR_RECORDING &recinfo)
   auto timer = GetTimer([&] (const DvbTimer &timer)
       {
         return (timer.start <= now && now <= timer.end
-          && timer.state != PVR_TIMER_STATE_CANCELLED
-          && timer.channel->name == channelName);
+            && timer.state != PVR_TIMER_STATE_CANCELLED
+            && timer.channel->name == channelName);
       });
   if (timer)
     end = timer->end;
@@ -666,7 +674,8 @@ std::string Dvb::URLEncode(const std::string& data)
 
     // Don't URL encode "-_.!()" according to RFC1738
     // TODO: Update it to "-_.~" after Gotham according to RFC3986
-    if (StringUtils::isasciialphanum(kar) || kar == '-' || kar == '.' || kar == '_' || kar == '!' || kar == '(' || kar == ')')
+    if (StringUtils::isasciialphanum(kar) || kar == '-' || kar == '.'
+        || kar == '_' || kar == '!' || kar == '(' || kar == ')')
       result.push_back(kar);
     else
       result += StringUtils::Format("%%%2.2X", (unsigned int)((unsigned char)kar));
@@ -678,7 +687,7 @@ std::string Dvb::URLEncode(const std::string& data)
 bool Dvb::LoadChannels()
 {
   const std::string &req = GetHttpXML(BuildURL("api/getchannelsxml.html"
-        "?subchannels=1&rtsp=1&upnp=1&logo=1"));
+      "?subchannels=1&rtsp=1&upnp=1&logo=1"));
 
   TiXmlDocument doc;
   doc.Parse(req.c_str());
@@ -1149,10 +1158,10 @@ bool Dvb::UpdateBackendStatus(bool updateSettings)
 
   if (updateSettings && g_groupRecordings == DvbRecording::Grouping::BY_DIRECTORY)
     std::sort(m_recfolders.begin(), m_recfolders.end(),
-      [](const std::string& a, const std::string& b)
-      {
-        return (a.length() < b.length());
-      });
+        [](const std::string& a, const std::string& b)
+        {
+          return (a.length() < b.length());
+        });
 
   return true;
 }
@@ -1194,7 +1203,7 @@ std::string Dvb::BuildExtURL(const std::string& baseURL, const char* path, ...)
   if (!g_username.empty() && !g_password.empty())
   {
     std::string auth = StringUtils::Format("%s:%s@",
-      URLEncode(g_username).c_str(), URLEncode(g_password).c_str());
+        URLEncode(g_username).c_str(), URLEncode(g_password).c_str());
     std::string::size_type pos = url.find("://");
     if (pos != std::string::npos)
       url.insert(pos + strlen("://"), auth);

@@ -414,7 +414,7 @@ bool SwitchChannel(const PVR_CHANNEL &channel)
     return true;
 
   /* as of late we need to close and reopen ourself */
-  CloseLiveStream();
+  (void)CloseLiveStream();
   return OpenLiveStream(channel);
 }
 
