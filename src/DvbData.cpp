@@ -400,7 +400,7 @@ unsigned int Dvb::GetTimersAmount()
 bool Dvb::GetRecordings(ADDON_HANDLE handle)
 {
   CLockObject lock(m_mutex);
-  std::string &&req = GetHttpXML(BuildURL("api/recordings.html?images=1"));
+  std::string &&req = GetHttpXML(BuildURL("api/recordings.html?utf8=1&nofilename=1&images=1"));
   RemoveNullChars(req);
 
   TiXmlDocument doc;
@@ -898,7 +898,7 @@ DvbTimers_t Dvb::LoadTimers()
 {
   DvbTimers_t timers;
 
-  std::string &&req = GetHttpXML(BuildURL("api/timerlist.html?utf8"));
+  std::string &&req = GetHttpXML(BuildURL("api/timerlist.html?utf8=1"));
   RemoveNullChars(req);
 
   TiXmlDocument doc;
