@@ -199,7 +199,6 @@ public:
   std::string GetBackendVersion();
   bool GetDriveSpace(long long *total, long long *used);
 
-  bool SwitchChannel(const PVR_CHANNEL &channelinfo);
   unsigned int GetCurrentClientChannel(void);
   bool GetChannels(ADDON_HANDLE handle, bool radio);
   bool GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channelinfo,

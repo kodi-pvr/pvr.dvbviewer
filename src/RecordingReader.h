@@ -4,6 +4,7 @@
 #define PVR_DVBVIEWER_RECORDINGREADER_H
 
 #include <string>
+#include <cstdint>
 
 class RecordingReader
 {

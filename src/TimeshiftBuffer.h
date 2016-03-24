@@ -3,11 +3,11 @@
 #ifndef PVR_DVBVIEWER_TIMESHIFTBUFFER_H
 #define PVR_DVBVIEWER_TIMESHIFTBUFFER_H
 
+#include "IStreamReader.h"
 #include "p8-platform/threads/threads.h"
-#include <string>
 
 class TimeshiftBuffer
-  : public P8PLATFORM::CThread
+  : public IStreamReader, public P8PLATFORM::CThread
 {
 public:
   TimeshiftBuffer(const std::string &streamURL, const std::string &bufferPath);
