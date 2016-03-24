@@ -1101,7 +1101,7 @@ bool Dvb::CheckBackendVersion()
 
 bool Dvb::UpdateBackendStatus(bool updateSettings)
 {
-  const std::string &req = GetHttpXML(BuildURL("api/status.html"));
+  const std::string &req = GetHttpXML(BuildURL("api/status2.html"));
 
   TiXmlDocument doc;
   doc.Parse(req.c_str());
@@ -1114,11 +1114,7 @@ bool Dvb::UpdateBackendStatus(bool updateSettings)
 
   if (updateSettings)
   {
-    // RS doesn't update the timezone during daylight saving
-    //if (XMLUtils::GetLong(root, "timezone", m_timezone))
-    //  m_timezone *= 60;
     m_timezone = GetGMTOffset();
-
     m_recfolders.clear();
   }
 

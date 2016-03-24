@@ -20,8 +20,8 @@
 
 // minimum version required
 #define RS_VERSION_MAJOR   1
-#define RS_VERSION_MINOR   26
-#define RS_VERSION_PATCH1  0
+#define RS_VERSION_MINOR   30
+#define RS_VERSION_PATCH1  1
 #define RS_VERSION_PATCH2  0
 #define RS_VERSION_NUM  (RS_VERSION_MAJOR << 24 | RS_VERSION_MINOR << 16 | \
                           RS_VERSION_PATCH1 << 8 | RS_VERSION_PATCH2)
