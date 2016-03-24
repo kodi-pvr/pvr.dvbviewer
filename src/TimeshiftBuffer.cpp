@@ -48,7 +48,7 @@ bool TimeshiftBuffer::IsValid()
 void *TimeshiftBuffer::Process()
 {
   XBMC->Log(LOG_DEBUG, "Timeshift: Thread started");
-  byte buffer[STREAM_READ_BUFFER_SIZE];
+  uint8_t buffer[STREAM_READ_BUFFER_SIZE];
 
   while (!IsStopped())
   {

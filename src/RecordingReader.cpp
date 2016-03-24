@@ -2,6 +2,7 @@
 #include "client.h"
 #include "p8-platform/util/util.h"
 #include "p8-platform/threads/mutex.h"
+#include <algorithm>
 
 #define REOPEN_INTERVAL      30
 #define REOPEN_INTERVAL_FAST 10

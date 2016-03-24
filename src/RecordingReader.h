@@ -3,8 +3,7 @@
 #ifndef PVR_DVBVIEWER_RECORDINGREADER_H
 #define PVR_DVBVIEWER_RECORDINGREADER_H
 
-#include <string>
-#include <cstdint>
+#include "kodi/libXBMC_addon.h"
 
 class RecordingReader
 {
