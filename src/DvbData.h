@@ -5,7 +5,6 @@
 
 #include "RecordingReader.h"
 #include "kodi/libXBMC_pvr.h"
-#include "p8-platform/util/StdString.h"
 #include "p8-platform/threads/threads.h"
 #include <list>
 #include <functional>

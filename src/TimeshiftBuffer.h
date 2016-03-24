@@ -3,8 +3,8 @@
 #ifndef PVR_DVBVIEWER_TIMESHIFTBUFFER_H
 #define PVR_DVBVIEWER_TIMESHIFTBUFFER_H
 
-#include "p8-platform/util/StdString.h"
 #include "p8-platform/threads/threads.h"
+#include <string>
 
 class TimeshiftBuffer
   : public P8PLATFORM::CThread
