@@ -456,14 +456,14 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
       recording.plotOutline.clear();
     }
 
-    /* fetch correct channel name */
+    /* fetch and search channel */
     XMLUtils_GetString(xRecording, "channel", recording.channelName);
-    auto channel = GetChannel([&] (const DvbChannel *channel)
+    recording.channel = GetChannel([&] (const DvbChannel *channel)
         {
           return (channel->backendName == recording.channelName);
         });
-    if (channel)
-      recording.channelName = channel->name;
+    if (recording.channel)
+      recording.channelName = recording.channel->name;
 
     std::string thumbnail;
     if (!g_lowPerformance && XMLUtils_GetString(xRecording, "image", thumbnail))
@@ -488,8 +488,15 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
     recinfo.iDuration     = recording.duration;
     recinfo.iGenreType    = recording.genre & 0xF0;
     recinfo.iGenreSubType = recording.genre & 0x0F;
-    recinfo.iChannelUid   = PVR_CHANNEL_INVALID_UID; // TODO: try searching by name
-    recinfo.channelType   = PVR_RECORDING_CHANNEL_TYPE_TV;
+    recinfo.iChannelUid   = PVR_CHANNEL_INVALID_UID;
+    recinfo.channelType   = PVR_RECORDING_CHANNEL_TYPE_UNKNOWN;
+
+    if (recording.channel)
+    {
+      recinfo.iChannelUid = recording.channel->id;
+      recinfo.channelType = (recording.channel->radio)
+          ? PVR_RECORDING_CHANNEL_TYPE_RADIO : PVR_RECORDING_CHANNEL_TYPE_TV;
+    }
 
     std::string tmp;
     switch(g_groupRecordings)

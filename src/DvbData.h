@@ -175,8 +175,11 @@ public:
   std::string title;
   std::string plot;
   std::string plotOutline;
-  std::string channelName;
   std::string thumbnailPath;
+  /*!< @brief channel name provided by the backend */
+  std::string channelName;
+  /*!< @brief channel in case our search was successful */
+  DvbChannel *channel;
 };
 
 typedef std::vector<DvbChannel *> DvbChannels_t;
