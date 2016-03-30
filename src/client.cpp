@@ -88,7 +88,7 @@ void ADDON_ReadSettings(void)
   if (!XBMC->GetSetting("usetimeshift", &g_useTimeshift))
     g_useTimeshift = false;
 
-  if (XBMC->GetSetting("timeshiftpath", buffer))
+  if (XBMC->GetSetting("timeshiftpath", buffer) && !std::string(buffer).empty())
     g_timeshiftBufferPath = buffer;
 
   if (!XBMC->GetSetting("usertsp", &g_useRTSP) || g_useTimeshift)
