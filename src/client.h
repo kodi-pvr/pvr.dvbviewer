@@ -25,7 +25,6 @@
 #include "DvbData.h"
 #include "kodi/libXBMC_addon.h"
 #include "kodi/libXBMC_pvr.h"
-#include "p8-platform/util/StdString.h"
 
 #ifndef _UNUSED
 #if defined(__GNUC__)
@@ -70,16 +69,16 @@ enum class PrependOutline
   ALWAYS
 };
 
-extern CStdString     g_hostname;
+extern std::string    g_hostname;
 extern int            g_webPort;
-extern CStdString     g_username;
-extern CStdString     g_password;
+extern std::string    g_username;
+extern std::string    g_password;
 extern bool           g_useFavourites;
 extern bool           g_useFavouritesFile;
-extern CStdString     g_favouritesFile;
+extern std::string    g_favouritesFile;
 extern DvbRecording::Grouping g_groupRecordings;
 extern bool           g_useTimeshift;
-extern CStdString     g_timeshiftBufferPath;
+extern std::string    g_timeshiftBufferPath;
 extern bool           g_useRTSP;
 extern PrependOutline g_prependOutline;
 extern bool           g_lowPerformance;

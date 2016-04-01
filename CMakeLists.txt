@@ -20,6 +20,7 @@ add_definitions(-D__STDC_FORMAT_MACROS)
 
 set(DVBVIEWER_SOURCES src/client.cpp
                       src/DvbData.cpp
+                      src/StreamReader.cpp
                       src/RecordingReader.cpp
                       src/TimeshiftBuffer.cpp)
 

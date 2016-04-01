@@ -20,10 +20,12 @@
 
 #include "client.h"
 #include "DvbData.h"
+#include "StreamReader.h"
 #include "TimeshiftBuffer.h"
 #include "RecordingReader.h"
 #include "kodi/xbmc_pvr_dll.h"
 #include "p8-platform/util/util.h"
+#include "p8-platform/util/StringUtils.h"
 #include <stdlib.h>
 
 using namespace ADDON;
@@ -32,16 +34,16 @@ using namespace ADDON;
  * Default values are defined inside client.h
  * and exported to the other source files.
  */
-CStdString     g_hostname             = DEFAULT_HOST;
+std::string    g_hostname             = DEFAULT_HOST;
 int            g_webPort              = DEFAULT_WEB_PORT;
-CStdString     g_username             = "";
-CStdString     g_password             = "";
+std::string    g_username             = "";
+std::string    g_password             = "";
 bool           g_useFavourites        = false;
 bool           g_useFavouritesFile    = false;
-CStdString     g_favouritesFile       = "";
+std::string    g_favouritesFile       = "";
 DvbRecording::Grouping g_groupRecordings = DvbRecording::Grouping::DISABLED;
 bool           g_useTimeshift         = false;
-CStdString     g_timeshiftBufferPath  = DEFAULT_TSBUFFERPATH;
+std::string    g_timeshiftBufferPath  = DEFAULT_TSBUFFERPATH;
 bool           g_useRTSP              = false;
 PrependOutline g_prependOutline       = PrependOutline::IN_EPG;
 bool           g_lowPerformance       = false;
@@ -50,7 +52,7 @@ ADDON_STATUS m_curStatus    = ADDON_STATUS_UNKNOWN;
 CHelper_libXBMC_addon *XBMC = nullptr;
 CHelper_libXBMC_pvr   *PVR  = nullptr;
 Dvb *DvbData                = nullptr;
-TimeshiftBuffer *tsBuffer   = nullptr;
+IStreamReader   *strReader  = nullptr;
 RecordingReader *recReader  = nullptr;
 
 extern "C"
@@ -86,7 +88,7 @@ void ADDON_ReadSettings(void)
   if (!XBMC->GetSetting("usetimeshift", &g_useTimeshift))
     g_useTimeshift = false;
 
-  if (XBMC->GetSetting("timeshiftpath", buffer))
+  if (XBMC->GetSetting("timeshiftpath", buffer) && !std::string(buffer).empty())
     g_timeshiftBufferPath = buffer;
 
   if (!XBMC->GetSetting("usertsp", &g_useRTSP) || g_useTimeshift)
@@ -196,7 +198,7 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
   if (!XBMC)
     return ADDON_STATUS_OK;
 
-  CStdString sname(settingName);
+  std::string sname(settingName);
   if (sname == "host")
   {
     if (g_hostname.compare((const char *)settingValue) != 0)
@@ -244,7 +246,7 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
   }
   else if (sname == "timeshiftpath")
   {
-    CStdString newValue = (const char *)settingValue;
+    std::string newValue = (const char *)settingValue;
     if (g_timeshiftBufferPath != newValue)
     {
       XBMC->Log(LOG_DEBUG, "%s: Changed setting '%s' from '%s' to '%s'",
@@ -335,25 +337,26 @@ PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
 
 const char *GetBackendName(void)
 {
-  static const CStdString &name = DvbData ? DvbData->GetBackendName()
+  static const std::string &name = DvbData ? DvbData->GetBackendName()
     : "unknown";
   return name.c_str();
 }
 
 const char *GetBackendVersion(void)
 {
-  static const CStdString &version = DvbData ? DvbData->GetBackendVersion()
+  static const std::string &version = DvbData ? DvbData->GetBackendVersion()
     : "UNKNOWN";
   return version.c_str();
 }
 
 const char *GetConnectionString(void)
 {
-  static CStdString conn;
+  static std::string conn;
   if (DvbData)
-    conn.Format("%s%s", g_hostname, DvbData->IsConnected() ? "" : " (Not connected!)");
+    conn = StringUtils::Format("%s%s", g_hostname.c_str(),
+      DvbData->IsConnected() ? "" : " (Not connected!)");
   else
-    conn.Format("%s (addon error!)", g_hostname);
+    conn = StringUtils::Format("%s (addon error!)", g_hostname.c_str());
   return conn.c_str();
 }
 
@@ -403,19 +406,6 @@ int GetChannelsAmount(void)
   return DvbData->GetChannelsAmount();
 }
 
-bool SwitchChannel(const PVR_CHANNEL &channel)
-{
-  if (!DvbData || !DvbData->IsConnected())
-    return false;
-
-  if (channel.iUniqueId == DvbData->GetCurrentClientChannel())
-    return true;
-
-  /* as of late we need to close and reopen ourself */
-  CloseLiveStream();
-  return OpenLiveStream(channel);
-}
-
 /* channel group functions */
 int GetChannelGroupsAmount(void)
 {
@@ -441,7 +431,6 @@ PVR_ERROR GetChannelGroupMembers(ADDON_HANDLE handle,
 }
 
 /* timer functions */
-
 PVR_ERROR GetTimerTypes(PVR_TIMER_TYPE types[], int *size)
 {
   /* TODO: Implement this to get support for the timer features introduced with PVR API 1.9.7 */
@@ -489,110 +478,79 @@ bool OpenLiveStream(const PVR_CHANNEL &channel)
 
   if (!DvbData->OpenLiveStream(channel))
     return false;
-  if (!g_useTimeshift)
-    return true;
 
-  CStdString streamURL = DvbData->GetLiveStreamURL(channel);
-  XBMC->Log(LOG_INFO, "Timeshift starts; url=%s", streamURL.c_str());
-  if (tsBuffer)
-    SAFE_DELETE(tsBuffer);
-  tsBuffer = new TimeshiftBuffer(streamURL, g_timeshiftBufferPath);
-  return tsBuffer->IsValid();
+  std::string streamURL = DvbData->GetLiveStreamURL(channel);
+  if (g_useTimeshift)
+    strReader = new TimeshiftBuffer(streamURL, g_timeshiftBufferPath);
+  else
+    strReader = new StreamReader(streamURL);
+  return strReader->IsValid();
 }
 
 void CloseLiveStream(void)
 {
   DvbData->CloseLiveStream();
-  if (tsBuffer)
-    SAFE_DELETE(tsBuffer);
+  SAFE_DELETE(strReader);
 }
 
-const char *GetLiveStreamURL(const PVR_CHANNEL &channel)
+bool SwitchChannel(const PVR_CHANNEL &channel)
 {
-  if (!DvbData || !DvbData->IsConnected())
-    return "";
+  if (channel.iUniqueId == DvbData->GetCurrentClientChannel())
+    return true;
 
-  DvbData->SwitchChannel(channel);
-  return DvbData->GetLiveStreamURL(channel).c_str();
+  /* as of late we need to close and reopen ourself */
+  (void)CloseLiveStream();
+  return OpenLiveStream(channel);
 }
 
 bool IsRealTimeStream()
 {
-  if (!tsBuffer)
-    return true;
-  //FIXME as soon as we return false here the players current time value starts
-  // flickering/jumping
-  //return tsBuffer->NearEnd();
-  return true;
+  return (strReader) ? strReader->NearEnd() : false;
 }
 
 bool CanPauseStream(void)
 {
-  if (!DvbData || !DvbData->IsConnected())
-    return false;
-
   return g_useTimeshift;
 }
 
 bool CanSeekStream(void)
 {
-  if (!DvbData || !DvbData->IsConnected())
-    return false;
-
   return g_useTimeshift;
 }
 
 int ReadLiveStream(unsigned char *buffer, unsigned int size)
 {
-  if (!tsBuffer)
-    return 0;
-
-  return tsBuffer->ReadData(buffer, size);
+  return (strReader) ? strReader->ReadData(buffer, size) : 0;
 }
 
 long long SeekLiveStream(long long position, int whence)
 {
-  if (!tsBuffer)
-    return -1;
-
-  return tsBuffer->Seek(position, whence);
+  return (strReader) ? strReader->Seek(position, whence) : -1;
 }
 
 long long PositionLiveStream(void)
 {
-  if (!tsBuffer)
-    return -1;
-
-  return tsBuffer->Position();
+  return (strReader) ? strReader->Position() : -1;
 }
 
 long long LengthLiveStream(void)
 {
-  if (!tsBuffer)
-    return -1;
-
-  return tsBuffer->Length();
+  return (strReader) ? strReader->Length() : -1;
 }
 
 bool IsTimeshifting(void)
 {
-  return (tsBuffer != nullptr);
+  return (g_useTimeshift && strReader != nullptr);
 }
 
 time_t GetBufferTimeStart()
 {
-  if (!tsBuffer)
-    return 0;
-
-  return tsBuffer->TimeStart();
+  return (strReader) ? strReader->TimeStart() : 0;
 }
 
 time_t GetBufferTimeEnd()
 {
-  if (!tsBuffer)
-    return 0;
-
-  return tsBuffer->TimeEnd();
+  return (strReader) ? strReader->TimeEnd() : 0;
 }
 
 time_t GetPlayingTime()
@@ -671,6 +629,7 @@ long long LengthRecordedStream(void)
 }
 
 /** UNUSED API FUNCTIONS */
+const char *GetLiveStreamURL(const PVR_CHANNEL &_UNUSED(channel)) { return ""; }
 PVR_ERROR GetStreamProperties(PVR_STREAM_PROPERTIES *_UNUSED(pProperties)) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR CallMenuHook(const PVR_MENUHOOK &_UNUSED(menuhook), const PVR_MENUHOOK_DATA &_UNUSED(item)) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR DeleteChannel(const PVR_CHANNEL &_UNUSED(channel)) { return PVR_ERROR_NOT_IMPLEMENTED; }

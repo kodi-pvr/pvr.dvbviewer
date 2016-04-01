@@ -5,7 +5,6 @@
 
 #include "RecordingReader.h"
 #include "kodi/libXBMC_pvr.h"
-#include "p8-platform/util/StdString.h"
 #include "p8-platform/threads/threads.h"
 #include <list>
 #include <functional>
@@ -21,8 +20,8 @@
 
 // minimum version required
 #define RS_VERSION_MAJOR   1
-#define RS_VERSION_MINOR   26
-#define RS_VERSION_PATCH1  0
+#define RS_VERSION_MINOR   30
+#define RS_VERSION_PATCH1  1
 #define RS_VERSION_PATCH2  0
 #define RS_VERSION_NUM  (RS_VERSION_MAJOR << 24 | RS_VERSION_MINOR << 16 | \
                           RS_VERSION_PATCH1 << 8 | RS_VERSION_PATCH2)
@@ -52,11 +51,11 @@ public:
   /*!< @brief list of backend ids (e.g AC3, other languages, ...) */
   std::list<uint64_t> backendIds;
   uint64_t epgId;
-  CStdString name;
+  std::string name;
   /*!< @brief name of the channel on the backend */
-  CStdString backendName;
-  CStdString streamURL;
-  CStdString logoURL;
+  std::string backendName;
+  std::string streamURL;
+  std::string logoURL;
   bool radio;
   bool hidden;
   bool encrypted;
@@ -65,9 +64,9 @@ public:
 class DvbGroup
 {
 public:
-  CStdString name;
+  std::string name;
   /*!< @brief name of the channel on the backend */
-  CStdString backendName;
+  std::string backendName;
   std::list<DvbChannel *> channels;
   bool radio;
   bool hidden;
@@ -83,12 +82,12 @@ public:
 public:
   unsigned int id;
   DvbChannel *channel;
-  CStdString title;
+  std::string title;
   time_t start;
   time_t end;
   unsigned int genre;
-  CStdString plotOutline;
-  CStdString plot;
+  std::string plotOutline;
+  std::string plot;
 };
 
 class DvbTimer
@@ -133,12 +132,12 @@ public:
    */
   unsigned int id;
   /*!< @brief unique guid provided by backend. unique every time */
-  CStdString guid;
+  std::string guid;
   /*!< @brief timer id on backend. unique at a time */
   unsigned int backendId;
 
   DvbChannel *channel;
-  CStdString title;
+  std::string title;
   uint64_t channelId;
   time_t start;
   time_t end;
@@ -168,15 +167,18 @@ public:
   {}
 
 public:
-  CStdString id;
+  std::string id;
   time_t start;
   int duration;
   unsigned int genre;
-  CStdString title;
-  CStdString plot;
-  CStdString plotOutline;
-  CStdString channelName;
-  CStdString thumbnailPath;
+  std::string title;
+  std::string plot;
+  std::string plotOutline;
+  std::string thumbnailPath;
+  /*!< @brief channel name provided by the backend */
+  std::string channelName;
+  /*!< @brief channel in case our search was successful */
+  DvbChannel *channel;
 };
 
 typedef std::vector<DvbChannel *> DvbChannels_t;
@@ -193,11 +195,10 @@ public:
   bool Open();
   bool IsConnected();
 
-  CStdString GetBackendName();
-  CStdString GetBackendVersion();
+  std::string GetBackendName();
+  std::string GetBackendVersion();
   bool GetDriveSpace(long long *total, long long *used);
 
-  bool SwitchChannel(const PVR_CHANNEL &channelinfo);
   unsigned int GetCurrentClientChannel(void);
   bool GetChannels(ADDON_HANDLE handle, bool radio);
   bool GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channelinfo,
@@ -221,15 +222,15 @@ public:
 
   bool OpenLiveStream(const PVR_CHANNEL &channelinfo);
   void CloseLiveStream();
-  const CStdString &GetLiveStreamURL(const PVR_CHANNEL &channelinfo);
+  const std::string &GetLiveStreamURL(const PVR_CHANNEL &channelinfo);
 
 protected:
   virtual void *Process(void);
 
 private:
   // functions
-  CStdString GetHttpXML(const CStdString& url);
-  CStdString URLEncodeInline(const CStdString& data);
+  std::string GetHttpXML(const std::string& url);
+  std::string URLEncode(const std::string& data);
   bool LoadChannels();
   DvbTimers_t LoadTimers();
   void TimerUpdates();
@@ -237,24 +238,24 @@ private:
   DvbTimer *GetTimer(std::function<bool (const DvbTimer&)> func);
 
   // helper functions
-  void RemoveNullChars(CStdString& str);
+  void RemoveNullChars(std::string& str);
   bool CheckBackendVersion();
   bool UpdateBackendStatus(bool updateSettings = false);
-  time_t ParseDateTime(const CStdString& strDate, bool iso8601 = true);
-  CStdString BuildURL(const char* path, ...);
-  CStdString BuildExtURL(const CStdString& baseURL, const char* path, ...);
-  CStdString ConvertToUtf8(const CStdString& src);
+  time_t ParseDateTime(const std::string& strDate, bool iso8601 = true);
+  std::string BuildURL(const char* path, ...);
+  std::string BuildExtURL(const std::string& baseURL, const char* path, ...);
+  std::string ConvertToUtf8(const std::string& src);
   long GetGMTOffset();
 
 private:
   bool m_connected;
   unsigned int m_backendVersion;
-  CStdString m_url;
-  CStdString m_recordingURL;
+  std::string m_url;
+  std::string m_recordingURL;
 
   long m_timezone;
   struct { long long total, used; } m_diskspace;
-  std::vector<CStdString> m_recfolders;
+  std::vector<std::string> m_recfolders;
 
   /* channels */
   DvbChannels_t m_channels;

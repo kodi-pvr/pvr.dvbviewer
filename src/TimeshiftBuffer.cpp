@@ -8,19 +8,20 @@
 
 using namespace ADDON;
 
-TimeshiftBuffer::TimeshiftBuffer(const CStdString &streamURL,
-    const CStdString &bufferPath)
+TimeshiftBuffer::TimeshiftBuffer(const std::string &streamURL,
+    const std::string &bufferPath)
   : m_bufferPath(bufferPath)
 {
-  m_streamHandle = XBMC->OpenFile(streamURL, READ_NO_CACHE);
+  m_streamHandle = XBMC->OpenFile(streamURL.c_str(), READ_NO_CACHE);
   m_bufferPath += "/tsbuffer.ts";
-  m_filebufferWriteHandle = XBMC->OpenFileForWrite(m_bufferPath, true);
+  m_filebufferWriteHandle = XBMC->OpenFileForWrite(m_bufferPath.c_str(), true);
 #ifndef TARGET_POSIX
   m_writePos = 0;
 #endif
   Sleep(100);
-  m_filebufferReadHandle = XBMC->OpenFile(m_bufferPath, READ_NO_CACHE);
+  m_filebufferReadHandle = XBMC->OpenFile(m_bufferPath.c_str(), READ_NO_CACHE);
   m_start = time(NULL);
+  XBMC->Log(LOG_INFO, "Timeshift starts; url=%s", streamURL.c_str());
   CreateThread();
 }
 
@@ -34,6 +35,7 @@ TimeshiftBuffer::~TimeshiftBuffer(void)
     XBMC->CloseFile(m_filebufferReadHandle);
   if (m_streamHandle)
     XBMC->CloseFile(m_streamHandle);
+  XBMC->Log(LOG_DEBUG, "Timeshift: Stopped");
 }
 
 bool TimeshiftBuffer::IsValid()
@@ -46,7 +48,7 @@ bool TimeshiftBuffer::IsValid()
 void *TimeshiftBuffer::Process()
 {
   XBMC->Log(LOG_DEBUG, "Timeshift: Thread started");
-  byte buffer[STREAM_READ_BUFFER_SIZE];
+  uint8_t buffer[STREAM_READ_BUFFER_SIZE];
 
   while (!IsStopped())
   {
@@ -124,7 +126,11 @@ time_t TimeshiftBuffer::TimeEnd()
 
 bool TimeshiftBuffer::NearEnd()
 {
+  //FIXME as soon as we return false here the players current time value starts
+  // flickering/jumping
+  return true;
+
   // other PVRs use 10 seconds here, but we aren't doing any demuxing
   // we'll therefore just asume 1 secs needs about 1mb
-  return Length() - Position() <= 10 * 1048576;
+  //return Length() - Position() <= 10 * 1048576;
 }
