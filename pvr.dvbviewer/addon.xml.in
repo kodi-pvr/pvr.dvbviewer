@@ -2,7 +2,7 @@
 <addon
   id="pvr.dvbviewer"
   version="2.2.0"
-  name="DVBViewer Client"
+  name="DVBViewer PVR Client Addon"
   provider-name="A600, Manuel Mausz">
   <requires>
     <c-pluff version="0.1"/>
