@@ -287,16 +287,25 @@ void ADDON_FreeSettings()
 {
 }
 
-void ADDON_Announce(const char *_UNUSED(flag), const char *sender,
-    const char *message, const void *_UNUSED(data))
-{
-  if (recReader != nullptr && strcmp(sender, "xbmc") == 0)
-    recReader->Announce(message);
-}
-
 /***********************************************************
  * PVR Client AddOn specific public library functions
  ***********************************************************/
+
+void OnSystemSleep()
+{
+}
+
+void OnSystemWake()
+{
+}
+
+void OnPowerSavingActivated()
+{
+}
+
+void OnPowerSavingDeactivated()
+{
+}
 
 const char* GetPVRAPIVersion(void)
 {

@@ -15,7 +15,7 @@ public:
   int64_t Seek(long long position, int whence);
   int64_t Position();
   int64_t Length();
-  void Announce(const char *message);
+  void OnPlay() { m_playback = true; }
 
 private:
   std::string m_streamURL;

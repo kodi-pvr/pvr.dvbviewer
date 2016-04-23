@@ -94,8 +94,3 @@ int64_t RecordingReader::Length()
   return m_len;
 }
 
-void RecordingReader::Announce(const char *message)
-{
-  if (strcmp(message, "OnPlay") == 0)
-    m_playback = true;
-}
