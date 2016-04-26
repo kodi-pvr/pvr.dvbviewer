@@ -899,7 +899,8 @@ DvbTimers_t Dvb::LoadTimers()
 {
   DvbTimers_t timers;
 
-  std::string &&req = GetHttpXML(BuildURL("api/timerlist.html?utf8=1"));
+  // utf8=2 is correct here
+  std::string &&req = GetHttpXML(BuildURL("api/timerlist.html?utf8=2"));
   RemoveNullChars(req);
 
   TiXmlDocument doc;
