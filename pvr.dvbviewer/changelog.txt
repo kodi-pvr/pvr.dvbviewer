@@ -1,3 +1,6 @@
+2.3.1
+[fixed] timerlist utf8 url parameter. As a result the xml wasn't UTF-8
+
 2.3.0
 [updated] to PVR API v5.2.0
 
