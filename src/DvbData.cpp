@@ -944,11 +944,11 @@ DvbTimers_t Dvb::LoadTimers()
     timer.start = ParseDateTime(startDate, false);
     timer.end   = timer.start + atoi(xTimer->Attribute("Dur")) * 60;
 
-    std::string weekdays = xTimer->Attribute("Days");
-    timer.weekdays = 0;
-    for (unsigned int j = 0; j < weekdays.length(); ++j)
+    timer.weekdays = PVR_WEEKDAY_NONE;
+    const char *weekdays = xTimer->Attribute("Days");
+    for (unsigned int j = 0; weekdays && weekdays[j] != '\0'; ++j)
     {
-      if (weekdays.data()[j] != '-')
+      if (weekdays[j] != '-')
         timer.weekdays += (1 << j);
     }
 
