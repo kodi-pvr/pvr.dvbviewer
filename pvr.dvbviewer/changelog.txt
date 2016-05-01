@@ -1,3 +1,7 @@
+2.3.2
+[fixed] crash if timer isn't repeating
+[fixed] timer ids didn't start at 1
+
 2.3.1
 [fixed] timerlist utf8 url parameter. As a result the xml wasn't UTF-8
 

@@ -32,7 +32,7 @@ static bool XMLUtils_GetString(const TiXmlNode* pRootNode, const char* strTag,
 
 Dvb::Dvb()
   : m_connected(false), m_backendVersion(0), m_currentChannel(0),
-  m_nextTimerId(0)
+  m_nextTimerId(1)
 {
   // simply add user@pass in front of the URL if username/password is set
   std::string auth("");
@@ -944,11 +944,11 @@ DvbTimers_t Dvb::LoadTimers()
     timer.start = ParseDateTime(startDate, false);
     timer.end   = timer.start + atoi(xTimer->Attribute("Dur")) * 60;
 
-    std::string weekdays = xTimer->Attribute("Days");
-    timer.weekdays = 0;
-    for (unsigned int j = 0; j < weekdays.length(); ++j)
+    timer.weekdays = PVR_WEEKDAY_NONE;
+    const char *weekdays = xTimer->Attribute("Days");
+    for (unsigned int j = 0; weekdays && weekdays[j] != '\0'; ++j)
     {
-      if (weekdays.data()[j] != '-')
+      if (weekdays[j] != '-')
         timer.weekdays += (1 << j);
     }
 
