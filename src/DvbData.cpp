@@ -32,7 +32,7 @@ static bool XMLUtils_GetString(const TiXmlNode* pRootNode, const char* strTag,
 
 Dvb::Dvb()
   : m_connected(false), m_backendVersion(0), m_currentChannel(0),
-  m_nextTimerId(0)
+  m_nextTimerId(1)
 {
   // simply add user@pass in front of the URL if username/password is set
   std::string auth("");
