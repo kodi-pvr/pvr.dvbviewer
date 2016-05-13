@@ -1,3 +1,6 @@
+2.3.3
+[fixed] includes
+
 2.3.2
 [fixed] crash if timer isn't repeating
 [fixed] timer ids didn't start at 1
