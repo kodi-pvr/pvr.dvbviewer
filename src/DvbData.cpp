@@ -1,6 +1,6 @@
 #include "DvbData.h"
 #include "client.h"
-#include "kodi/util/XMLUtils.h"
+#include "util/XMLUtils.h"
 #include "p8-platform/util/util.h"
 #include "p8-platform/util/StringUtils.h"
 #include <tinyxml.h>

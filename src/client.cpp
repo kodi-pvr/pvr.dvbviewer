@@ -23,7 +23,7 @@
 #include "StreamReader.h"
 #include "TimeshiftBuffer.h"
 #include "RecordingReader.h"
-#include "kodi/xbmc_pvr_dll.h"
+#include "xbmc_pvr_dll.h"
 #include "p8-platform/util/util.h"
 #include "p8-platform/util/StringUtils.h"
 #include <stdlib.h>
