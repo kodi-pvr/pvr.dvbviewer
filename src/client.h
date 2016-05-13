@@ -23,8 +23,8 @@
 #define PVR_DVBVIEWER_CLIENT_H
 
 #include "DvbData.h"
-#include "kodi/libXBMC_addon.h"
-#include "kodi/libXBMC_pvr.h"
+#include "libXBMC_addon.h"
+#include "libXBMC_pvr.h"
 
 #ifndef _UNUSED
 #if defined(__GNUC__)

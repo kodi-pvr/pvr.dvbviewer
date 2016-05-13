@@ -4,7 +4,7 @@
 #define PVR_DVBVIEWER_DVBDATA_H
 
 #include "RecordingReader.h"
-#include "kodi/libXBMC_pvr.h"
+#include "libXBMC_pvr.h"
 #include "p8-platform/threads/threads.h"
 #include <list>
 #include <functional>
