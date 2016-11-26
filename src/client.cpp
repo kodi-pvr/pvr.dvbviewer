@@ -661,6 +661,6 @@ PVR_ERROR DeleteAllRecordingsFromTrash() { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR SetEPGTimeFrame(int iDays) { return PVR_ERROR_NOT_IMPLEMENTED; }
 unsigned int GetChannelSwitchDelay(void) { return 0; }
 void PauseStream(bool _UNUSED(bPaused)) {}
-bool SeekTime(int time, bool backwards, double *startpts) { return false; }
+bool SeekTime(double time, bool backwards, double *startpts) { return false; }
 void SetSpeed(int speed) {};
 }
