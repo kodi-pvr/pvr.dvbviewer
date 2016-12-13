@@ -44,7 +44,6 @@ std::string    g_favouritesFile       = "";
 DvbRecording::Grouping g_groupRecordings = DvbRecording::Grouping::DISABLED;
 bool           g_useTimeshift         = false;
 std::string    g_timeshiftBufferPath  = DEFAULT_TSBUFFERPATH;
-bool           g_useRTSP              = false;
 PrependOutline g_prependOutline       = PrependOutline::IN_EPG;
 bool           g_lowPerformance       = false;
 
@@ -91,9 +90,6 @@ void ADDON_ReadSettings(void)
   if (XBMC->GetSetting("timeshiftpath", buffer) && !std::string(buffer).empty())
     g_timeshiftBufferPath = buffer;
 
-  if (!XBMC->GetSetting("usertsp", &g_useRTSP) || g_useTimeshift)
-    g_useRTSP = false;
-
   if (!XBMC->GetSetting("prependoutline", &g_prependOutline))
     g_prependOutline = PrependOutline::IN_EPG;
 
@@ -117,7 +113,6 @@ void ADDON_ReadSettings(void)
   XBMC->Log(LOG_DEBUG, "Timeshift: %s", (g_useTimeshift) ? "enabled" : "disabled");
   if (g_useTimeshift)
     XBMC->Log(LOG_DEBUG, "Timeshift buffer path: %s", g_timeshiftBufferPath.c_str());
-  XBMC->Log(LOG_DEBUG, "Use RTSP: %s", (g_useRTSP) ? "yes" : "no");
   if (g_prependOutline != PrependOutline::NEVER)
     XBMC->Log(LOG_DEBUG, "Prepend outline: %d", g_prependOutline);
   XBMC->Log(LOG_DEBUG, "Low performance mode: %s", (g_lowPerformance) ? "yes" : "no");
@@ -240,11 +235,6 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
           newValue.c_str());
       g_timeshiftBufferPath = newValue;
     }
-  }
-  else if (sname == "usertsp")
-  {
-    if (g_useRTSP != *(bool *)settingValue)
-      return ADDON_STATUS_NEED_RESTART;
   }
   else if (sname == "prependoutline")
   {
