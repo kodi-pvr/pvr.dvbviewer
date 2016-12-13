@@ -123,23 +123,17 @@ void ADDON_ReadSettings(void)
   XBMC->Log(LOG_DEBUG, "Low performance mode: %s", (g_lowPerformance) ? "yes" : "no");
 }
 
-ADDON_STATUS ADDON_Create(void* hdl, void* props)
+ADDON_STATUS ADDON_Create(void *hdl, void *props)
 {
   if (!hdl || !props)
     return ADDON_STATUS_UNKNOWN;
 
   XBMC = new CHelper_libXBMC_addon();
-  if (!XBMC->RegisterMe(hdl))
+  PVR  = new CHelper_libXBMC_pvr();
+  if (!XBMC->RegisterMe(hdl) || !PVR->RegisterMe(hdl))
   {
     SAFE_DELETE(XBMC);
-    return ADDON_STATUS_PERMANENT_FAILURE;
-  }
-
-  PVR = new CHelper_libXBMC_pvr();
-  if (!PVR->RegisterMe(hdl))
-  {
     SAFE_DELETE(PVR);
-    SAFE_DELETE(XBMC);
     return ADDON_STATUS_PERMANENT_FAILURE;
   }
 
@@ -149,19 +143,11 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
   ADDON_ReadSettings();
 
   DvbData = new Dvb();
-  if (!DvbData->Open())
-  {
-    SAFE_DELETE(DvbData);
-    SAFE_DELETE(PVR);
-    SAFE_DELETE(XBMC);
-    m_curStatus = ADDON_STATUS_LOST_CONNECTION;
-    return m_curStatus;
-  }
-
   m_curStatus = ADDON_STATUS_OK;
   return m_curStatus;
 }
 
+//TODO: I'm pretty sure ADDON_GetStatus can be removed
 ADDON_STATUS ADDON_GetStatus()
 {
   /* check whether we're still connected */
