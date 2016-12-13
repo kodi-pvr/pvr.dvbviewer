@@ -192,7 +192,6 @@ public:
   Dvb(void);
   ~Dvb();
 
-  bool Open();
   bool IsConnected();
 
   std::string GetBackendName();
@@ -229,7 +228,8 @@ protected:
 
 private:
   // functions
-  std::string GetHttpXML(const std::string& url);
+  struct httpResponse { bool error; std::string content; };
+  httpResponse GetHttpXML(const std::string& url);
   std::string URLEncode(const std::string& data);
   bool LoadChannels();
   DvbTimers_t LoadTimers();
@@ -241,6 +241,8 @@ private:
   void RemoveNullChars(std::string& str);
   bool CheckBackendVersion();
   bool UpdateBackendStatus(bool updateSettings = false);
+  void SetConnectionState(PVR_CONNECTION_STATE state,
+      const char *message = nullptr, ...);
   time_t ParseDateTime(const std::string& strDate, bool iso8601 = true);
   std::string BuildURL(const char* path, ...);
   std::string BuildExtURL(const std::string& baseURL, const char* path, ...);
@@ -248,7 +250,7 @@ private:
   long GetGMTOffset();
 
 private:
-  bool m_connected;
+  PVR_CONNECTION_STATE m_state;
   unsigned int m_backendVersion;
   std::string m_url;
   std::string m_recordingURL;
@@ -276,7 +278,6 @@ private:
   unsigned int m_nextTimerId;
 
   P8PLATFORM::CMutex m_mutex;
-  P8PLATFORM::CCondition<bool> m_started;
 };
 
 #endif
