@@ -718,7 +718,7 @@ bool Dvb::LoadChannels()
 
   TiXmlElement *root = doc.RootElement();
   std::string streamURL;
-  XMLUtils_GetString(root, (g_useRTSP) ? "rtspURL" : "upnpURL", streamURL);
+  XMLUtils_GetString(root, "upnpURL", streamURL);
 
   m_channels.clear();
   m_channelAmount = 0;
@@ -760,15 +760,7 @@ bool Dvb::LoadChannels()
         std::string logoURL;
         if (!g_lowPerformance && XMLUtils_GetString(xChannel, "logo", logoURL))
           channel->logoURL = BuildURL("%s", logoURL.c_str());
-
-        if (g_useRTSP)
-        {
-          std::string urlParams;
-          XMLUtils_GetString(xChannel, "rtsp", urlParams);
-          channel->streamURL = BuildExtURL(streamURL, "%s", urlParams.c_str());
-        }
-        else
-          channel->streamURL = BuildExtURL(streamURL, "%u.ts", channel->backendNr);
+        channel->streamURL = BuildExtURL(streamURL, "%u.ts", channel->backendNr);
 
         for (TiXmlElement* xSubChannel = xChannel->FirstChildElement("subchannel");
             xSubChannel; xSubChannel = xSubChannel->NextSiblingElement("subchannel"))
