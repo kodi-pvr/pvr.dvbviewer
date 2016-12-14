@@ -79,7 +79,6 @@ extern std::string    g_favouritesFile;
 extern DvbRecording::Grouping g_groupRecordings;
 extern bool           g_useTimeshift;
 extern std::string    g_timeshiftBufferPath;
-extern bool           g_useRTSP;
 extern PrependOutline g_prependOutline;
 extern bool           g_lowPerformance;
 

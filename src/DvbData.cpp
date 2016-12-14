@@ -31,7 +31,7 @@ static bool XMLUtils_GetString(const TiXmlNode* pRootNode, const char* strTag,
 }
 
 Dvb::Dvb()
-  : m_connected(false), m_backendVersion(0), m_currentChannel(0),
+  : m_state(PVR_CONNECTION_STATE_UNKNOWN), m_backendVersion(0), m_currentChannel(0),
   m_nextTimerId(1)
 {
   // simply add user@pass in front of the URL if username/password is set
@@ -44,42 +44,20 @@ Dvb::Dvb()
 
   m_updateTimers = false;
   m_updateEPG    = false;
+  CreateThread();
 }
 
 Dvb::~Dvb()
 {
-  StopThread(0);
+  StopThread();
 
   for (auto channel : m_channels)
     delete channel;
 }
 
-bool Dvb::Open()
-{
-  CLockObject lock(m_mutex);
-
-  if (!(m_connected = CheckBackendVersion()))
-    return false;
-
-  if (!UpdateBackendStatus(true))
-    return false;
-
-  if (!LoadChannels())
-    return false;
-
-  TimerUpdates();
-  // force recording sync as XBMC won't update recordings on PVR restart
-  PVR->TriggerRecordingUpdate();
-
-  XBMC->Log(LOG_INFO, "Starting separate polling thread...");
-  CreateThread();
-
-  return IsRunning();
-}
-
 bool Dvb::IsConnected()
 {
-  return m_connected;
+  return m_state == PVR_CONNECTION_STATE_CONNECTED;
 }
 
 std::string Dvb::GetBackendName()
@@ -146,10 +124,15 @@ bool Dvb::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channelinfo,
   const std::string &url = BuildURL("api/epg.html?lvl=2&channel=%" PRIu64
       "&start=%f&end=%f", channel->epgId, start/86400.0 + DELPHI_DATE,
       end/86400.0 + DELPHI_DATE);
-  const std::string &req = GetHttpXML(url);
+  const httpResponse &res = GetHttpXML(url);
+  if (res.error)
+  {
+    SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
+    return false;
+  }
 
   TiXmlDocument doc;
-  doc.Parse(req.c_str());
+  doc.Parse(res.content.c_str());
   if (doc.Error())
   {
     XBMC->Log(LOG_ERROR, "Unable to parse EPG. Error: %s",
@@ -390,12 +373,17 @@ unsigned int Dvb::GetTimersAmount()
 bool Dvb::GetRecordings(ADDON_HANDLE handle)
 {
   CLockObject lock(m_mutex);
-  std::string &&req = GetHttpXML(BuildURL("api/recordings.html?utf8=1"
+  httpResponse &&res = GetHttpXML(BuildURL("api/recordings.html?utf8=1"
       "&nofilename=1&images=1"));
-  RemoveNullChars(req);
+  if (res.error)
+  {
+    SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
+    return false;
+  }
 
   TiXmlDocument doc;
-  doc.Parse(req.c_str());
+  RemoveNullChars(res.content);
+  doc.Parse(res.content.c_str());
   if (doc.Error())
   {
     XBMC->Log(LOG_ERROR, "Unable to parse recordings. Error: %s",
@@ -533,6 +521,8 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
 bool Dvb::DeleteRecording(const PVR_RECORDING &recinfo)
 {
   // RS api doesn't return a result
+  // TODO: check for http 200 / http 423
+  // but kodi curl wrapper doesn't expose m_httpresponse
   GetHttpXML(BuildURL("api/recdelete.html?recid=%s&delfile=1",
       recinfo.strRecordingId));
 
@@ -590,66 +580,95 @@ const std::string &Dvb::GetLiveStreamURL(const PVR_CHANNEL &channelinfo)
   return m_channels[channelinfo.iUniqueId - 1]->streamURL;
 }
 
-
 void *Dvb::Process()
 {
   XBMC->Log(LOG_DEBUG, "%s: Running...", __FUNCTION__);
   int update = 0;
   int interval = (!g_lowPerformance) ? 60 : 300;
 
+  // set PVR_CONNECTION_STATE_CONNECTING only once!
+  SetConnectionState(PVR_CONNECTION_STATE_CONNECTING);
+
   while (!IsStopped())
   {
-    Sleep(1000);
-    ++update;
-
-    CLockObject lock(m_mutex);
-    if (m_updateEPG)
+    if (!IsConnected())
     {
-      m_updateEPG = false;
-      m_mutex.Unlock();
-      Sleep(8000); /* Sleep enough time to let the recording service grab the EPG data */
-      m_mutex.Lock();
-      XBMC->Log(LOG_INFO, "Performing forced EPG update!");
-      PVR->TriggerEpgUpdate(m_currentChannel);
+      XBMC->Log(LOG_INFO, "Trying to connect to the backend service...");
+
+      if (CheckBackendVersion() && UpdateBackendStatus(true) && LoadChannels())
+      {
+        XBMC->Log(LOG_INFO, "Connection to the backend service successful.");
+        SetConnectionState(PVR_CONNECTION_STATE_CONNECTED);
+
+        TimerUpdates();
+        // force recording sync as Kodi won't update recordings on PVR restart
+        PVR->TriggerRecordingUpdate();
+      }
+      else
+      {
+        XBMC->Log(LOG_INFO, "Connection to the backend service failed."
+          " Retrying in 10 seconds...");
+        Sleep(10000);
+      }
     }
-
-    if (m_updateTimers)
+    else
     {
-      m_updateTimers = false;
-      m_mutex.Unlock();
       Sleep(1000);
-      m_mutex.Lock();
-      XBMC->Log(LOG_INFO, "Performing forced timer updates!");
-      TimerUpdates();
-      update = 0;
-    }
+      ++update;
 
-    if (update >= interval)
-    {
-      update = 0;
-      XBMC->Log(LOG_INFO, "Performing timer/recording updates!");
-      TimerUpdates();
-      PVR->TriggerRecordingUpdate();
+      CLockObject lock(m_mutex);
+      if (m_updateEPG)
+      {
+        m_updateEPG = false;
+        m_mutex.Unlock();
+        Sleep(8000); /* Sleep enough time to let the recording service grab the EPG data */
+        m_mutex.Lock();
+        XBMC->Log(LOG_INFO, "Performing forced EPG update!");
+        PVR->TriggerEpgUpdate(m_currentChannel);
+      }
+
+      if (m_updateTimers)
+      {
+        m_updateTimers = false;
+        m_mutex.Unlock();
+        Sleep(1000);
+        m_mutex.Lock();
+        XBMC->Log(LOG_INFO, "Performing forced timer updates!");
+        TimerUpdates();
+        update = 0;
+      }
+
+      if (update >= interval)
+      {
+        update = 0;
+        XBMC->Log(LOG_INFO, "Performing timer/recording updates!");
+        TimerUpdates();
+        PVR->TriggerRecordingUpdate();
+      }
     }
   }
 
-  m_started.Broadcast();
   return nullptr;
 }
 
 
-std::string Dvb::GetHttpXML(const std::string& url)
+Dvb::httpResponse Dvb::GetHttpXML(const std::string& url)
 {
-  std::string result;
+  // TODO Kodi CURL api doesn't expose the http code. need to replace it
+  // afterwards handle connection failures here
+  // (PVR_CONNECTION_STATE_SERVER_UNREACHABLE)
+  httpResponse res = { true, "" };
   void *fileHandle = XBMC->OpenFile(url.c_str(), READ_NO_CACHE);
   if (fileHandle)
   {
+    res.error = false;
     char buffer[1024];
     while (int bytesRead = XBMC->ReadFile(fileHandle, buffer, 1024))
-      result.append(buffer, bytesRead);
+      res.content.append(buffer, bytesRead);
     XBMC->CloseFile(fileHandle);
+    return res;
   }
-  return result;
+  return res;
 }
 
 /* Copied from xbmc/URL.cpp */
@@ -678,23 +697,28 @@ std::string Dvb::URLEncode(const std::string& data)
 
 bool Dvb::LoadChannels()
 {
-  const std::string &req = GetHttpXML(BuildURL("api/getchannelsxml.html"
+  const httpResponse &res = GetHttpXML(BuildURL("api/getchannelsxml.html"
       "?subchannels=1&rtsp=1&upnp=1&logo=1"));
+  if (res.error)
+  {
+    SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
+    return false;
+  }
 
   TiXmlDocument doc;
-  doc.Parse(req.c_str());
+  doc.Parse(res.content.c_str());
   if (doc.Error())
   {
     XBMC->Log(LOG_ERROR, "Unable to parse channels. Error: %s",
         doc.ErrorDesc());
-    XBMC->QueueNotification(QUEUE_ERROR, XBMC->GetLocalizedString(30502));
-    XBMC->QueueNotification(QUEUE_ERROR, XBMC->GetLocalizedString(30503));
+    SetConnectionState(PVR_CONNECTION_STATE_SERVER_MISMATCH,
+        XBMC->GetLocalizedString(30502));
     return false;
   }
 
   TiXmlElement *root = doc.RootElement();
   std::string streamURL;
-  XMLUtils_GetString(root, (g_useRTSP) ? "rtspURL" : "upnpURL", streamURL);
+  XMLUtils_GetString(root, "upnpURL", streamURL);
 
   m_channels.clear();
   m_channelAmount = 0;
@@ -736,15 +760,7 @@ bool Dvb::LoadChannels()
         std::string logoURL;
         if (!g_lowPerformance && XMLUtils_GetString(xChannel, "logo", logoURL))
           channel->logoURL = BuildURL("%s", logoURL.c_str());
-
-        if (g_useRTSP)
-        {
-          std::string urlParams;
-          XMLUtils_GetString(xChannel, "rtsp", urlParams);
-          channel->streamURL = BuildExtURL(streamURL, "%s", urlParams.c_str());
-        }
-        else
-          channel->streamURL = BuildExtURL(streamURL, "%u.ts", channel->backendNr);
+        channel->streamURL = BuildExtURL(streamURL, "%u.ts", channel->backendNr);
 
         for (TiXmlElement* xSubChannel = xChannel->FirstChildElement("subchannel");
             xSubChannel; xSubChannel = xSubChannel->NextSiblingElement("subchannel"))
@@ -776,23 +792,29 @@ bool Dvb::LoadChannels()
       if (!XBMC->FileExists(g_favouritesFile.c_str(), false))
       {
         XBMC->Log(LOG_ERROR, "Unable to open local favourites.xml");
-        XBMC->QueueNotification(QUEUE_ERROR, XBMC->GetLocalizedString(30504));
+        SetConnectionState(PVR_CONNECTION_STATE_SERVER_MISMATCH,
+            XBMC->GetLocalizedString(30504));
         return false;
       }
       url = g_favouritesFile;
     }
 
-    std::string &&req = GetHttpXML(url);
-    RemoveNullChars(req);
+    httpResponse &&res = GetHttpXML(url);
+    if (res.error)
+    {
+      SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
+      return false;
+    }
 
     TiXmlDocument doc;
-    doc.Parse(req.c_str());
+    RemoveNullChars(res.content);
+    doc.Parse(res.content.c_str());
     if (doc.Error())
     {
       XBMC->Log(LOG_ERROR, "Unable to parse favourites.xml. Error: %s",
           doc.ErrorDesc());
-      XBMC->QueueNotification(QUEUE_ERROR, XBMC->GetLocalizedString(30505));
-      XBMC->QueueNotification(QUEUE_ERROR, XBMC->GetLocalizedString(30503));
+      SetConnectionState(PVR_CONNECTION_STATE_SERVER_MISMATCH,
+          XBMC->GetLocalizedString(30505));
       return false;
     }
 
@@ -900,17 +922,22 @@ DvbTimers_t Dvb::LoadTimers()
   DvbTimers_t timers;
 
   // utf8=2 is correct here
-  std::string &&req = GetHttpXML(BuildURL("api/timerlist.html?utf8=2"));
-  RemoveNullChars(req);
+  httpResponse &&res = GetHttpXML(BuildURL("api/timerlist.html?utf8=2"));
+  if (res.error)
+  {
+    SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
+    return timers;
+  }
 
   TiXmlDocument doc;
-  doc.Parse(req.c_str());
+  RemoveNullChars(res.content);
+  doc.Parse(res.content.c_str());
   if (doc.Error())
   {
     XBMC->Log(LOG_ERROR, "Unable to parse timers. Error: %s",
         doc.ErrorDesc());
-    XBMC->QueueNotification(QUEUE_ERROR, XBMC->GetLocalizedString(30506));
-    XBMC->QueueNotification(QUEUE_ERROR, XBMC->GetLocalizedString(30503));
+    SetConnectionState(PVR_CONNECTION_STATE_SERVER_MISMATCH,
+        XBMC->GetLocalizedString(30506));
     return timers;
   }
 
@@ -1067,14 +1094,23 @@ void Dvb::RemoveNullChars(std::string& str)
 
 bool Dvb::CheckBackendVersion()
 {
-  const std::string &req = GetHttpXML(BuildURL("api/version.html"));
+  const httpResponse &res = GetHttpXML(BuildURL("api/version.html"));
+  if (res.error)
+  {
+    SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
+    return false;
+  }
+
+  // TODO check access denied (PVR_CONNECTION_STATE_ACCESS_DENIED) vs timeout
+  // but kodi curl wrapper doesn't expose m_httpresponse
 
   TiXmlDocument doc;
-  doc.Parse(req.c_str());
+  doc.Parse(res.content.c_str());
   if (doc.Error())
   {
     XBMC->Log(LOG_ERROR, "Unable to connect to the backend service. Error: %s",
         doc.ErrorDesc());
+    SetConnectionState(PVR_CONNECTION_STATE_SERVER_MISMATCH);
     return false;
   }
 
@@ -1083,6 +1119,7 @@ bool Dvb::CheckBackendVersion()
       != TIXML_SUCCESS)
   {
     XBMC->Log(LOG_ERROR, "Unable to parse version");
+    SetConnectionState(PVR_CONNECTION_STATE_SERVER_MISMATCH);
     return false;
   }
   XBMC->Log(LOG_NOTICE, "Version: %u", m_backendVersion);
@@ -1091,9 +1128,8 @@ bool Dvb::CheckBackendVersion()
   {
     XBMC->Log(LOG_ERROR, "Recording Service version %s or higher required",
         RS_VERSION_STR);
-    XBMC->QueueNotification(QUEUE_ERROR, XBMC->GetLocalizedString(30501),
-        RS_VERSION_STR);
-    Sleep(10000);
+    SetConnectionState(PVR_CONNECTION_STATE_VERSION_MISMATCH,
+      XBMC->GetLocalizedString(30501), RS_VERSION_STR);
     return false;
   }
 
@@ -1102,10 +1138,15 @@ bool Dvb::CheckBackendVersion()
 
 bool Dvb::UpdateBackendStatus(bool updateSettings)
 {
-  const std::string &req = GetHttpXML(BuildURL("api/status2.html"));
+  const httpResponse &res = GetHttpXML(BuildURL("api/status2.html"));
+  if (res.error)
+  {
+    SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
+    return false;
+  }
 
   TiXmlDocument doc;
-  doc.Parse(req.c_str());
+  doc.Parse(res.content.c_str());
   if (doc.Error())
   {
     XBMC->Log(LOG_ERROR, "Unable to get backend status. Error: %s",
@@ -1155,6 +1196,27 @@ bool Dvb::UpdateBackendStatus(bool updateSettings)
   return true;
 }
 
+void Dvb::SetConnectionState(PVR_CONNECTION_STATE state,
+    const char *message, ...)
+{
+  if (state != m_state)
+  {
+    XBMC->Log(LOG_DEBUG, "Connection state change (%d -> %d)", m_state, state);
+    m_state = state;
+
+    std::string tmp;
+    if (message)
+    {
+      va_list argList;
+      va_start(argList, message);
+      tmp = StringUtils::FormatV(message, argList);
+      message = tmp.c_str();
+      va_end(argList);
+    }
+    PVR->ConnectionStateChange(g_hostname.c_str(), m_state, message);
+  }
+}
+
 time_t Dvb::ParseDateTime(const std::string& date, bool iso8601)
 {
   struct tm timeinfo;
@@ -1189,6 +1251,7 @@ std::string Dvb::BuildExtURL(const std::string& baseURL, const char* path, ...)
 {
   std::string url(baseURL);
   // simply add user@pass in front of the URL if username/password is set
+  //TODO: maybe use special authorization option (see CurlFile.cpp)?
   if (!g_username.empty() && !g_password.empty())
   {
     std::string auth = StringUtils::Format("%s:%s@",
