@@ -122,7 +122,35 @@ msgctxt "#30064"
 msgid "Always"
 msgstr ""
 
-#empty strings from id 30065 to 30099
+#empty strings from id 30065 to 30069
+
+msgctxt "#30070"
+msgid "Enable transcoding"
+msgstr ""
+
+msgctxt "#30071"
+msgid "Off"
+msgstr ""
+
+msgctxt "#30072"
+msgid "TS"
+msgstr ""
+
+msgctxt "#30073"
+msgid "WebM"
+msgstr ""
+
+msgctxt "#30074"
+msgid "FLV"
+msgstr ""
+
+#empty strings from id 30075 to 30076
+
+msgctxt "#30077"
+msgid "Transcoding URL parameters"
+msgstr ""
+
+#empty strings from id 30078 to 30099
 #sections
 
 msgctxt "#30100"
