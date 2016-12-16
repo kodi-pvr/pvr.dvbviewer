@@ -11,14 +11,15 @@ class StreamReader
 public:
   StreamReader(const std::string &streamURL);
   ~StreamReader(void);
-  bool IsValid();
-  ssize_t ReadData(unsigned char *buffer, unsigned int size);
-  int64_t Seek(long long position, int whence);
-  int64_t Position();
-  int64_t Length();
-  time_t TimeStart();
-  time_t TimeEnd();
-  bool NearEnd();
+  bool IsValid() override;
+  ssize_t ReadData(unsigned char *buffer, unsigned int size) override;
+  int64_t Seek(long long position, int whence) override;
+  int64_t Position() override;
+  int64_t Length() override;
+  time_t TimeStart() override;
+  time_t TimeEnd() override;
+  bool NearEnd() override;
+  bool IsTimeshifting() override;
 
 private:
   void *m_streamHandle;
