@@ -69,6 +69,15 @@ enum class PrependOutline
   ALWAYS
 };
 
+enum class Transcoding
+  : int // same type as addon settings
+{
+  OFF = 0,
+  TS,
+  WEBM,
+  FLV,
+};
+
 extern std::string    g_hostname;
 extern int            g_webPort;
 extern std::string    g_username;
@@ -81,6 +90,8 @@ extern bool           g_useTimeshift;
 extern std::string    g_timeshiftBufferPath;
 extern PrependOutline g_prependOutline;
 extern bool           g_lowPerformance;
+extern Transcoding    g_transcoding;
+extern std::string    g_transcodingParams;
 
 extern ADDON::CHelper_libXBMC_addon *XBMC;
 extern CHelper_libXBMC_pvr *PVR;
