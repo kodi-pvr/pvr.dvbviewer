@@ -719,7 +719,7 @@ std::string Dvb::URLEncode(const std::string& data)
 bool Dvb::LoadChannels()
 {
   const httpResponse &res = GetHttpXML(BuildURL("api/getchannelsxml.html"
-      "?subchannels=1&rtsp=1&upnp=1&logo=1"));
+      "?subchannels=1&upnp=1&logo=1"));
   if (res.error)
   {
     SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
