@@ -1,0 +1,65 @@
+os: Visual Studio 2015
+
+environment:
+  CONFIG: Release
+  ARCH: win32
+  KODI_BRANCH: master # usually synced with APPVEYOR_REPO_BRANCH
+
+init:
+  ps: |
+      $commit = (($env:APPVEYOR_REPO_TAG_NAME, $env:APPVEYOR_REPO_COMMIT.SubString(0, 7)) -ne $null)[0]
+      Update-AppveyorBuild -Version ("{0}-{1}" -f $env:APPVEYOR_REPO_BRANCH, $commit)
+      # iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+
+build_script:
+  # Setup Visual Studio compiler environment
+  - call "%VS140COMNTOOLS%..\..\VC\bin\vcvars32.bat"
+
+  # Build addon
+  - ps: |
+      # setup
+      cd "$env:APPVEYOR_BUILD_FOLDER\.."
+      mv "$env:APPVEYOR_PROJECT_SLUG" "$env:APPVEYOR_PROJECT_NAME"
+      $env:ROOT = (Resolve-Path .).Path
+
+      # download kodi
+      git clone -q --branch="$env:KODI_BRANCH" --depth=1 https://github.com/xbmc/xbmc.git
+      $env:KODI = "$env:ROOT\xbmc"
+
+      # create build directory
+      md -force "$env:ROOT\build"
+      pushd "$env:ROOT\build"
+
+      # configure
+      cmake -G "NMake Makefiles" `
+            -DADDON_SRC_PREFIX="$env:ROOT" `
+            -DADDONS_TO_BUILD="$env:APPVEYOR_PROJECT_NAME" `
+            -DCMAKE_INSTALL_PREFIX="$env:ROOT\addons" `
+            -DCMAKE_BUILD_TYPE="$env:CONFIG" `
+            -DCMAKE_USER_MAKE_RULES_OVERRIDE="$env:KODI\project\cmake\scripts\windows\CFlagOverrides.cmake" `
+            -DCMAKE_USER_MAKE_RULES_OVERRIDE_CXX="$env:KODI\project\cmake\scripts\windows\CXXFlagOverrides.cmake" `
+            -DPACKAGE_ZIP=ON `
+            -DPACKAGE_DIR="$env:ROOT\zips" `
+            "$env:KODI\project\cmake\addons"
+
+      # build
+      cmd /c 'cmake --build . -- package-addons 2>&1'
+
+after_build:
+  - ps: |
+      # rename and upload package
+      pushd "$env:ROOT\zips"
+      mv "$env:APPVEYOR_PROJECT_NAME-*.zip" "$env:APPVEYOR_PROJECT_NAME-$env:ARCH.zip"
+      Get-ChildItem *.zip | % { Push-AppveyorArtifact $_.FullName -FileName $_.Name }
+
+test: off
+
+deploy:
+  # https://www.appveyor.com/docs/deployment/github/
+  - provider: GitHub
+    auth_token:
+      secure: Hs3QTqUrCfO4dc0ANGq33ns/IOHcjJzVbLY7yf70xE7DwGwIoVoA//OvJlMNX3wN
+    artifact: /$(appveyor_project_name)-.*\.zip/
+    draft: true
+    on:
+      appveyor_repo_tag: true # tags only
