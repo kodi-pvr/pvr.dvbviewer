@@ -10,8 +10,8 @@ class RecordingReader
 public:
   RecordingReader(const std::string &streamURL, time_t end);
   ~RecordingReader(void);
+  bool Start();
   ssize_t ReadData(unsigned char *buffer, unsigned int size);
-  bool IsValid();
   int64_t Seek(long long position, int whence);
   int64_t Position();
   int64_t Length();

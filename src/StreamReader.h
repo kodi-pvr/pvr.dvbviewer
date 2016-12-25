@@ -11,7 +11,7 @@ class StreamReader
 public:
   StreamReader(const std::string &streamURL);
   ~StreamReader(void);
-  bool IsValid() override;
+  bool Start() override;
   ssize_t ReadData(unsigned char *buffer, unsigned int size) override;
   int64_t Seek(long long position, int whence) override;
   int64_t Position() override;
@@ -19,7 +19,7 @@ public:
   time_t TimeStart() override;
   time_t TimeEnd() override;
   bool NearEnd() override;
-  bool IsTimeshifting() override;
+  bool CanTimeshift() override;
 
 private:
   void *m_streamHandle;
