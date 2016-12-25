@@ -17,7 +17,7 @@ StreamReader::~StreamReader(void)
   XBMC->Log(LOG_DEBUG, "StreamReader: Stopped");
 }
 
-bool StreamReader::IsValid()
+bool StreamReader::Start()
 {
   return (m_streamHandle != nullptr);
 }
@@ -57,7 +57,7 @@ bool StreamReader::NearEnd()
   return true;
 }
 
-bool StreamReader::IsTimeshifting()
+bool StreamReader::CanTimeshift()
 {
   return false;
 }

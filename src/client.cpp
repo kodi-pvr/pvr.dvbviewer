@@ -501,9 +501,10 @@ bool OpenLiveStream(const PVR_CHANNEL &channel)
 
   std::string streamURL = DvbData->GetLiveStreamURL(channel);
   strReader = new StreamReader(streamURL);
-  if (g_timeshift == Timeshift::ON_PLAYBACK)
+  if (g_timeshift == Timeshift::ON_PLAYBACK
+      && XBMC->DirectoryExists(g_timeshiftBufferPath.c_str()))
     strReader = new TimeshiftBuffer(strReader, g_timeshiftBufferPath);
-  return strReader->IsValid();
+  return strReader->Start();
 }
 
 void CloseLiveStream(void)
@@ -529,13 +530,16 @@ bool IsRealTimeStream()
 
 bool CanPauseStream(void)
 {
-  return (g_timeshift != Timeshift::OFF);
+  if (g_timeshift != Timeshift::OFF && strReader)
+    return (strReader->CanTimeshift()
+      || XBMC->DirectoryExists(g_timeshiftBufferPath.c_str()));
+  return false;
 }
 
 bool CanSeekStream(void)
 {
   // pause button seems to check CanSeekStream() too
-  //return (strReader && strReader->IsTimeshifting());
+  //return (strReader && strReader->CanTimeshift());
   return (g_timeshift != Timeshift::OFF);
 }
 
@@ -561,7 +565,7 @@ long long LengthLiveStream(void)
 
 bool IsTimeshifting(void)
 {
-  return (strReader && strReader->IsTimeshifting());
+  return (strReader && strReader->CanTimeshift());
 }
 
 time_t GetBufferTimeStart()
@@ -576,9 +580,14 @@ time_t GetBufferTimeEnd()
 
 void PauseStream(bool paused)
 {
+  /* start timeshift on pause */
   if (paused && g_timeshift != Timeshift::OFF
-      && strReader && !strReader->IsTimeshifting())
+      && strReader && !strReader->CanTimeshift()
+      && XBMC->DirectoryExists(g_timeshiftBufferPath.c_str()))
+  {
     strReader = new TimeshiftBuffer(strReader, g_timeshiftBufferPath);
+    (void)strReader->Start();
+  }
 }
 
 time_t GetPlayingTime()
@@ -615,7 +624,7 @@ bool OpenRecordedStream(const PVR_RECORDING &recording)
   if (recReader)
     SAFE_DELETE(recReader);
   recReader = DvbData->OpenRecordedStream(recording);
-  return recReader->IsValid();
+  return recReader->Start();
 }
 
 void CloseRecordedStream(void)

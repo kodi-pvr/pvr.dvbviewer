@@ -11,7 +11,7 @@ using namespace ADDON;
 
 TimeshiftBuffer::TimeshiftBuffer(IStreamReader *strReader,
     const std::string &bufferPath)
-  : m_strReader(strReader), m_bufferPath(bufferPath)
+  : m_strReader(strReader), m_bufferPath(bufferPath), m_start(0)
 {
   m_bufferPath += "/tsbuffer.ts";
   m_filebufferWriteHandle = XBMC->OpenFileForWrite(m_bufferPath.c_str(), true);
@@ -20,9 +20,6 @@ TimeshiftBuffer::TimeshiftBuffer(IStreamReader *strReader,
 #endif
   Sleep(100);
   m_filebufferReadHandle = XBMC->OpenFile(m_bufferPath.c_str(), READ_NO_CACHE);
-  m_start = time(NULL);
-  XBMC->Log(LOG_INFO, "Timeshift: Started");
-  CreateThread();
 }
 
 TimeshiftBuffer::~TimeshiftBuffer(void)
@@ -37,11 +34,18 @@ TimeshiftBuffer::~TimeshiftBuffer(void)
   XBMC->Log(LOG_DEBUG, "Timeshift: Stopped");
 }
 
-bool TimeshiftBuffer::IsValid()
+bool TimeshiftBuffer::Start()
 {
-  return (m_strReader != nullptr && m_strReader->IsValid()
-      && m_filebufferWriteHandle != nullptr
-      && m_filebufferReadHandle != nullptr);
+  if (m_strReader == nullptr
+      || m_filebufferWriteHandle == nullptr
+      || m_filebufferReadHandle == nullptr)
+    return false;
+  if (IsRunning())
+    return true;
+  XBMC->Log(LOG_INFO, "Timeshift: Started");
+  m_start = time(NULL);
+  CreateThread();
+  return true;
 }
 
 void *TimeshiftBuffer::Process()
@@ -49,6 +53,7 @@ void *TimeshiftBuffer::Process()
   XBMC->Log(LOG_DEBUG, "Timeshift: Thread started");
   uint8_t buffer[STREAM_READ_BUFFER_SIZE];
 
+  m_strReader->Start();
   while (!IsStopped())
   {
     ssize_t read = m_strReader->ReadData(buffer, sizeof(buffer));
@@ -134,7 +139,7 @@ bool TimeshiftBuffer::NearEnd()
   //return Length() - Position() <= 10 * 1048576;
 }
 
-bool TimeshiftBuffer::IsTimeshifting()
+bool TimeshiftBuffer::CanTimeshift()
 {
   return true;
 }

@@ -9,7 +9,7 @@ class IStreamReader
 {
 public:
   virtual ~IStreamReader(void) {};
-  virtual bool IsValid() = 0;
+  virtual bool Start() = 0;
   virtual ssize_t ReadData(unsigned char *buffer, unsigned int size) = 0;
   virtual int64_t Seek(long long position, int whence) = 0;
   virtual int64_t Position() = 0;
@@ -17,7 +17,7 @@ public:
   virtual time_t TimeStart() = 0;
   virtual time_t TimeEnd() = 0;
   virtual bool NearEnd() = 0;
-  virtual bool IsTimeshifting() = 0;
+  virtual bool CanTimeshift() = 0;
 };
 
 #endif
