@@ -36,11 +36,11 @@ build_script:
             -DADDONS_TO_BUILD="$env:APPVEYOR_PROJECT_NAME" `
             -DCMAKE_INSTALL_PREFIX="$env:ROOT\addons" `
             -DCMAKE_BUILD_TYPE="$env:CONFIG" `
-            -DCMAKE_USER_MAKE_RULES_OVERRIDE="$env:KODI\project\cmake\scripts\windows\CFlagOverrides.cmake" `
-            -DCMAKE_USER_MAKE_RULES_OVERRIDE_CXX="$env:KODI\project\cmake\scripts\windows\CXXFlagOverrides.cmake" `
+            -DCMAKE_USER_MAKE_RULES_OVERRIDE="$env:KODI\cmake\scripts\windows\CFlagOverrides.cmake" `
+            -DCMAKE_USER_MAKE_RULES_OVERRIDE_CXX="$env:KODI\cmake\scripts\windows\CXXFlagOverrides.cmake" `
             -DPACKAGE_ZIP=ON `
             -DPACKAGE_DIR="$env:ROOT\zips" `
-            "$env:KODI\project\cmake\addons"
+            "$env:KODI\cmake\addons"
 
       # build
       cmd /c 'cmake --build . -- package-addons 2>&1'
