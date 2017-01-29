@@ -27,7 +27,13 @@ TimeshiftBuffer::~TimeshiftBuffer(void)
   StopThread(0);
 
   if (m_filebufferWriteHandle)
+  {
+    // XBMC->TruncateFile doesn't work for unknown reasons
     XBMC->CloseFile(m_filebufferWriteHandle);
+    void *tmp;
+    if ((tmp = XBMC->OpenFileForWrite(m_bufferPath.c_str(), true)) != nullptr)
+      XBMC->CloseFile(tmp);
+  }
   if (m_filebufferReadHandle)
     XBMC->CloseFile(m_filebufferReadHandle);
   SAFE_DELETE(m_strReader);
