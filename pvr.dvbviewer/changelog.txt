@@ -1,3 +1,8 @@
+2.4.7
+[added] support for transcoding
+[added] support for on-pause/on-demand timeshifting
+[fixed] truncate timeshift buffer file on stop
+
 2.4.6
 [fixed] added support for connection state change callback
 [removed] RTSP support
