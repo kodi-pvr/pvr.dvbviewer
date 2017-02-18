@@ -27,7 +27,7 @@ RecordingReader::~RecordingReader(void)
   XBMC->Log(LOG_DEBUG, "RecordingReader: Stopped");
 }
 
-bool RecordingReader::IsValid()
+bool RecordingReader::Start()
 {
   return (m_readHandle != nullptr);
 }

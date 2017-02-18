@@ -221,10 +221,10 @@ public:
 
   bool OpenLiveStream(const PVR_CHANNEL &channelinfo);
   void CloseLiveStream();
-  const std::string &GetLiveStreamURL(const PVR_CHANNEL &channelinfo);
+  const std::string GetLiveStreamURL(const PVR_CHANNEL &channelinfo);
 
 protected:
-  virtual void *Process(void);
+  virtual void *Process(void) override;
 
 private:
   // functions

@@ -575,8 +575,29 @@ void Dvb::CloseLiveStream(void)
   m_currentChannel = 0;
 }
 
-const std::string &Dvb::GetLiveStreamURL(const PVR_CHANNEL &channelinfo)
+const std::string Dvb::GetLiveStreamURL(const PVR_CHANNEL &channelinfo)
 {
+  DvbChannel *channel = m_channels[channelinfo.iUniqueId - 1];
+  //TODO: RS API doc says better use channel->backendId here.
+  // however this might break default subchannel logic/overwrite
+  if (g_transcoding != Transcoding::OFF)
+  {
+    switch(g_transcoding)
+    {
+      case Transcoding::TS:
+        return BuildURL("flashstream/stream.ts?chid=%u&%s",
+          channel->backendNr, g_transcodingParams.c_str());
+        break;
+      case Transcoding::WEBM:
+        return BuildURL("flashstream/stream.webm?chid=%u&%s",
+          channel->backendNr, g_transcodingParams.c_str());
+        break;
+      case Transcoding::FLV:
+        return BuildURL("flashstream/stream.flv?chid=%u&%s",
+          channel->backendNr, g_transcodingParams.c_str());
+        break;
+    }
+  }
   return m_channels[channelinfo.iUniqueId - 1]->streamURL;
 }
 
@@ -698,7 +719,7 @@ std::string Dvb::URLEncode(const std::string& data)
 bool Dvb::LoadChannels()
 {
   const httpResponse &res = GetHttpXML(BuildURL("api/getchannelsxml.html"
-      "?subchannels=1&rtsp=1&upnp=1&logo=1"));
+      "?subchannels=1&upnp=1&logo=1"));
   if (res.error)
   {
     SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
@@ -760,7 +781,9 @@ bool Dvb::LoadChannels()
         std::string logoURL;
         if (!g_lowPerformance && XMLUtils_GetString(xChannel, "logo", logoURL))
           channel->logoURL = BuildURL("%s", logoURL.c_str());
+        //TODO: maybe move this to GetLiveStreamURL
         channel->streamURL = BuildExtURL(streamURL, "%u.ts", channel->backendNr);
+        //TODO: better use channel->backendId here? might break default subchannel logic
 
         for (TiXmlElement* xSubChannel = xChannel->FirstChildElement("subchannel");
             xSubChannel; xSubChannel = xSubChannel->NextSiblingElement("subchannel"))

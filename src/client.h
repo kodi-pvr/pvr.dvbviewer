@@ -60,6 +60,14 @@
 #define DEFAULT_WEB_PORT         8089
 #define DEFAULT_TSBUFFERPATH     "special://userdata/addon_data/pvr.dvbviewer"
 
+enum class Timeshift
+  : int // same type as addon settings
+{
+  OFF = 0,
+  ON_PLAYBACK,
+  ON_PAUSE
+};
+
 enum class PrependOutline
   : int // same type as addon settings
 {
@@ -67,6 +75,15 @@ enum class PrependOutline
   IN_EPG,
   IN_RECORDINGS,
   ALWAYS
+};
+
+enum class Transcoding
+  : int // same type as addon settings
+{
+  OFF = 0,
+  TS,
+  WEBM,
+  FLV,
 };
 
 extern std::string    g_hostname;
@@ -77,10 +94,12 @@ extern bool           g_useFavourites;
 extern bool           g_useFavouritesFile;
 extern std::string    g_favouritesFile;
 extern DvbRecording::Grouping g_groupRecordings;
-extern bool           g_useTimeshift;
+extern Timeshift      g_timeshift;
 extern std::string    g_timeshiftBufferPath;
 extern PrependOutline g_prependOutline;
 extern bool           g_lowPerformance;
+extern Transcoding    g_transcoding;
+extern std::string    g_transcodingParams;
 
 extern ADDON::CHelper_libXBMC_addon *XBMC;
 extern CHelper_libXBMC_pvr *PVR;

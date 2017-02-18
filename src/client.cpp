@@ -42,10 +42,12 @@ bool           g_useFavourites        = false;
 bool           g_useFavouritesFile    = false;
 std::string    g_favouritesFile       = "";
 DvbRecording::Grouping g_groupRecordings = DvbRecording::Grouping::DISABLED;
-bool           g_useTimeshift         = false;
+Timeshift      g_timeshift            = Timeshift::OFF;
 std::string    g_timeshiftBufferPath  = DEFAULT_TSBUFFERPATH;
 PrependOutline g_prependOutline       = PrependOutline::IN_EPG;
 bool           g_lowPerformance       = false;
+Transcoding    g_transcoding          = Transcoding::OFF;
+std::string    g_transcodingParams    = "";
 
 ADDON_STATUS m_curStatus    = ADDON_STATUS_UNKNOWN;
 CHelper_libXBMC_addon *XBMC = nullptr;
@@ -84,8 +86,8 @@ void ADDON_ReadSettings(void)
   if (!XBMC->GetSetting("grouprecordings", &g_groupRecordings))
     g_groupRecordings = DvbRecording::Grouping::DISABLED;
 
-  if (!XBMC->GetSetting("usetimeshift", &g_useTimeshift))
-    g_useTimeshift = false;
+  if (!XBMC->GetSetting("timeshift", &g_timeshift))
+    g_timeshift = Timeshift::OFF;
 
   if (XBMC->GetSetting("timeshiftpath", buffer) && !std::string(buffer).empty())
     g_timeshiftBufferPath = buffer;
@@ -96,7 +98,17 @@ void ADDON_ReadSettings(void)
   if (!XBMC->GetSetting("lowperformance", &g_lowPerformance))
     g_lowPerformance = false;
 
+  if (!XBMC->GetSetting("transcoding", &g_transcoding))
+    g_transcoding = Transcoding::OFF;
+
+  if (XBMC->GetSetting("transcodingparams", buffer))
+  {
+    g_transcodingParams = buffer;
+    StringUtils::Replace(g_transcodingParams, " ", "+");
+  }
+
   /* Log the current settings for debugging purposes */
+  /* general tab */
   XBMC->Log(LOG_DEBUG, "DVBViewer Addon Configuration options");
   XBMC->Log(LOG_DEBUG, "Hostname:   %s", g_hostname.c_str());
   if (!g_username.empty() && !g_password.empty())
@@ -105,17 +117,26 @@ void ADDON_ReadSettings(void)
     XBMC->Log(LOG_DEBUG, "Password:   %s", g_password.c_str());
   }
   XBMC->Log(LOG_DEBUG, "WebPort:    %d", g_webPort);
+
+  /* livetv tab */
   XBMC->Log(LOG_DEBUG, "Use favourites: %s", (g_useFavourites) ? "yes" : "no");
   if (g_useFavouritesFile)
     XBMC->Log(LOG_DEBUG, "Favourites file: %s", g_favouritesFile.c_str());
+  XBMC->Log(LOG_DEBUG, "Timeshift: %d", g_timeshift);
+  if (g_timeshift != Timeshift::OFF)
+    XBMC->Log(LOG_DEBUG, "Timeshift buffer path: %s", g_timeshiftBufferPath.c_str());
+
+  /* recordings tab */
   if (g_groupRecordings != DvbRecording::Grouping::DISABLED)
     XBMC->Log(LOG_DEBUG, "Group recordings: %d", g_groupRecordings);
-  XBMC->Log(LOG_DEBUG, "Timeshift: %s", (g_useTimeshift) ? "enabled" : "disabled");
-  if (g_useTimeshift)
-    XBMC->Log(LOG_DEBUG, "Timeshift buffer path: %s", g_timeshiftBufferPath.c_str());
+
+  /* advanced tab */
   if (g_prependOutline != PrependOutline::NEVER)
     XBMC->Log(LOG_DEBUG, "Prepend outline: %d", g_prependOutline);
   XBMC->Log(LOG_DEBUG, "Low performance mode: %s", (g_lowPerformance) ? "yes" : "no");
+  XBMC->Log(LOG_DEBUG, "Transcoding: %d", g_transcoding);
+  if (g_transcoding != Transcoding::OFF)
+    XBMC->Log(LOG_DEBUG, "Transcoding params: %s", g_transcodingParams.c_str());
 }
 
 ADDON_STATUS ADDON_Create(void *hdl, void *props)
@@ -215,20 +236,25 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
     if (g_favouritesFile.compare((const char *)settingValue) != 0)
       return ADDON_STATUS_NEED_RESTART;
   }
-  else if (sname == "usetimeshift")
-  {
-    if (g_useTimeshift != *(bool *)settingValue)
-      return ADDON_STATUS_NEED_RESTART;
-  }
   else if (sname == "grouprecordings")
   {
     if (g_groupRecordings != *(const DvbRecording::Grouping *)settingValue)
       return ADDON_STATUS_NEED_RESTART;
   }
+  else if (sname == "timeshift")
+  {
+    Timeshift newValue = *(const Timeshift *)settingValue;
+    if (g_timeshift != newValue)
+    {
+      XBMC->Log(LOG_DEBUG, "%s: Changed setting '%s' from '%d' to '%d'",
+          __FUNCTION__, settingName, g_timeshift, newValue);
+      g_timeshift = newValue;
+    }
+  }
   else if (sname == "timeshiftpath")
   {
     std::string newValue = (const char *)settingValue;
-    if (g_timeshiftBufferPath != newValue)
+    if (g_timeshiftBufferPath != newValue && !newValue.empty())
     {
       XBMC->Log(LOG_DEBUG, "%s: Changed setting '%s' from '%s' to '%s'",
           __FUNCTION__, settingName, g_timeshiftBufferPath.c_str(),
@@ -251,6 +277,15 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
   {
     if (g_lowPerformance != *(bool *)settingValue)
       return ADDON_STATUS_NEED_RESTART;
+  }
+  else if (sname == "transcoding")
+  {
+    g_transcoding = *(const Transcoding *)settingValue;
+  }
+  else if (sname == "transcodingparams")
+  {
+    g_transcodingParams = (const char *)settingValue;
+    StringUtils::Replace(g_transcodingParams, " ", "+");
   }
   return ADDON_STATUS_OK;
 }
@@ -465,11 +500,11 @@ bool OpenLiveStream(const PVR_CHANNEL &channel)
     return false;
 
   std::string streamURL = DvbData->GetLiveStreamURL(channel);
-  if (g_useTimeshift)
-    strReader = new TimeshiftBuffer(streamURL, g_timeshiftBufferPath);
-  else
-    strReader = new StreamReader(streamURL);
-  return strReader->IsValid();
+  strReader = new StreamReader(streamURL);
+  if (g_timeshift == Timeshift::ON_PLAYBACK
+      && XBMC->DirectoryExists(g_timeshiftBufferPath.c_str()))
+    strReader = new TimeshiftBuffer(strReader, g_timeshiftBufferPath);
+  return strReader->Start();
 }
 
 void CloseLiveStream(void)
@@ -495,12 +530,17 @@ bool IsRealTimeStream()
 
 bool CanPauseStream(void)
 {
-  return g_useTimeshift;
+  if (g_timeshift != Timeshift::OFF && strReader)
+    return (strReader->CanTimeshift()
+      || XBMC->DirectoryExists(g_timeshiftBufferPath.c_str()));
+  return false;
 }
 
 bool CanSeekStream(void)
 {
-  return g_useTimeshift;
+  // pause button seems to check CanSeekStream() too
+  //return (strReader && strReader->CanTimeshift());
+  return (g_timeshift != Timeshift::OFF);
 }
 
 int ReadLiveStream(unsigned char *buffer, unsigned int size)
@@ -525,7 +565,7 @@ long long LengthLiveStream(void)
 
 bool IsTimeshifting(void)
 {
-  return (g_useTimeshift && strReader != nullptr);
+  return (strReader && strReader->CanTimeshift());
 }
 
 time_t GetBufferTimeStart()
@@ -536,6 +576,18 @@ time_t GetBufferTimeStart()
 time_t GetBufferTimeEnd()
 {
   return (strReader) ? strReader->TimeEnd() : 0;
+}
+
+void PauseStream(bool paused)
+{
+  /* start timeshift on pause */
+  if (paused && g_timeshift != Timeshift::OFF
+      && strReader && !strReader->CanTimeshift()
+      && XBMC->DirectoryExists(g_timeshiftBufferPath.c_str()))
+  {
+    strReader = new TimeshiftBuffer(strReader, g_timeshiftBufferPath);
+    (void)strReader->Start();
+  }
 }
 
 time_t GetPlayingTime()
@@ -572,7 +624,7 @@ bool OpenRecordedStream(const PVR_RECORDING &recording)
   if (recReader)
     SAFE_DELETE(recReader);
   recReader = DvbData->OpenRecordedStream(recording);
-  return recReader->IsValid();
+  return recReader->Start();
 }
 
 void CloseRecordedStream(void)
@@ -636,7 +688,6 @@ PVR_ERROR UndeleteRecording(const PVR_RECORDING& _UNUSED(recording)) { return PV
 PVR_ERROR DeleteAllRecordingsFromTrash() { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR SetEPGTimeFrame(int iDays) { return PVR_ERROR_NOT_IMPLEMENTED; }
 unsigned int GetChannelSwitchDelay(void) { return 0; }
-void PauseStream(bool _UNUSED(bPaused)) {}
 bool SeekTime(double time, bool backwards, double *startpts) { return false; }
 void SetSpeed(int speed) {};
 }
