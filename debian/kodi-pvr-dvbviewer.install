@@ -1,2 +1,2 @@
-usr/lib/*/addons/pvr.dvbviewer/pvr.dvbviewer.so* usr/lib/kodi/addons/pvr.dvbviewer
+usr/lib/*/kodi/addons/pvr.dvbviewer/pvr.dvbviewer.so* usr/share/kodi/addons/pvr.dvbviewer
 usr/share/kodi/addons/pvr.dvbviewer
