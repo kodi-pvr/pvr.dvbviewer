@@ -13,7 +13,7 @@ supporting streaming of Live TV & Recordings, EPG, Timers.
 1. `git clone https://github.com/xbmc/xbmc.git`
 2. `git clone https://github.com/kodi-pvr/pvr.dvbviewer.git`
 3. `cd pvr.dvbviewer && mkdir build && cd build`
-4. `cmake -DADDONS_TO_BUILD=pvr.dvbviewer -DADDON_SRC_PREFIX=../.. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=../../xbmc/addons -DPACKAGE_ZIP=1 ../../xbmc/project/cmake/addons`
+4. `cmake -DADDONS_TO_BUILD=pvr.dvbviewer -DADDON_SRC_PREFIX=../.. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=../../xbmc/addons -DPACKAGE_ZIP=1 ../../xbmc/cmake/addons`
 5. `make`
 
 ##### Useful links
