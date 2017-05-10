@@ -25,8 +25,8 @@
 #define RS_VERSION_PATCH2  0
 #define RS_VERSION_NUM  (RS_VERSION_MAJOR << 24 | RS_VERSION_MINOR << 16 | \
                           RS_VERSION_PATCH1 << 8 | RS_VERSION_PATCH2)
-#define RS_VERSION_STR  XSTR(RS_VERSION_MAJOR) "." XSTR(RS_VERSION_MINOR) \
-                          "." XSTR(RS_VERSION_PATCH1) "." XSTR(RS_VERSION_PATCH2)
+#define RS_VERSION_STR  STR(RS_VERSION_MAJOR) "." STR(RS_VERSION_MINOR) \
+                          "." STR(RS_VERSION_PATCH1) "." STR(RS_VERSION_PATCH2)
 
 /* forward declaration */
 class DvbGroup;
