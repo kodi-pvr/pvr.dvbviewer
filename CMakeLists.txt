@@ -24,6 +24,13 @@ set(DVBVIEWER_SOURCES src/client.cpp
                       src/RecordingReader.cpp
                       src/TimeshiftBuffer.cpp)
 
+set(DVBVIEWER_HEADERS src/client.h
+                      src/DvbData.h
+                      src/IStreamReader.h
+                      src/RecordingReader.h
+                      src/StreamReader.h
+                      src/TimeshiftBuffer.h)
+
 set(DEPLIBS ${kodiplatform_LIBRARIES}
             ${p8-platform_LIBRARIES}
             ${TINYXML_LIBRARIES})

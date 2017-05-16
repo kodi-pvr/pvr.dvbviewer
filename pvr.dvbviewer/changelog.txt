@@ -1,5 +1,12 @@
+3.0.1
+[updated] Set dependency versions automatic during build
+[updated] Removed never used kodi to addon functions
+[fixed] Truncate buffer file on stop
+[fixed] Make sure bufferpath exists
+[updated] Add support for on-pause/on-demand timeshifting
+
 3.0.0
-Initial Kodi v18 version
+[updated] Initial Kodi v18 version
 
 2.4.6
 [fixed] added support for connection state change callback
