@@ -304,26 +304,6 @@ void OnPowerSavingDeactivated()
 {
 }
 
-const char* GetPVRAPIVersion(void)
-{
-  return XBMC_PVR_API_VERSION;
-}
-
-const char* GetMininumPVRAPIVersion(void)
-{
-  return XBMC_PVR_MIN_API_VERSION;
-}
-
-const char* GetGUIAPIVersion(void)
-{
-  return ""; // GUI API not used
-}
-
-const char* GetMininumGUIAPIVersion(void)
-{
-  return ""; // GUI API not used
-}
-
 PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
 {
   pCapabilities->bSupportsEPG                = true;
