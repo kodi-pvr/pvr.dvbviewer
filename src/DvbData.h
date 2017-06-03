@@ -158,7 +158,8 @@ public:
     BY_DATE,
     BY_FIRST_LETTER,
     BY_TV_CHANNEL,
-    BY_SERIES
+    BY_SERIES,
+	BY_TITLE,
   };
 
 public:
