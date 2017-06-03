@@ -516,6 +516,9 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
         XMLUtils_GetString(xRecording, "series", tmp);
         PVR_STRCPY(recinfo.strDirectory, tmp.c_str());
         break;
+      case DvbRecording::Grouping::BY_TITLE:
+        PVR_STRCPY(recinfo.strDirectory, recinfo.strTitle);
+        break;
       default:
         break;
     }

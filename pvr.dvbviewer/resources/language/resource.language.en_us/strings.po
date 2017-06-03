@@ -88,6 +88,10 @@ msgctxt "#30056"
 msgid "by series"
 msgstr "by series"
 
+msgctxt "#30057"
+msgid "by title"
+msgstr "by title"
+
 msgctxt "#30060"
 msgid "Put outline (e.g. subtitles) before plot"
 msgstr "Put outline (e.g. subtitles) before plot"
