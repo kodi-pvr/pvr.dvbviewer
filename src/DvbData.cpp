@@ -490,7 +490,7 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
           StringUtils::Replace(tmp, '\\', '/');
           // strip leading /, if present
           std::string::size_type offset = 0;
-          if (tmp[0] == '/')
+          if (!tmp.empty() && (tmp[0] == '/'))
           {
             offset++;
           }
