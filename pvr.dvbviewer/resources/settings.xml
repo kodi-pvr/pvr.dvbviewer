@@ -22,7 +22,6 @@
   <!-- recordings -->
   <category label="30102">
     <setting label="30050" id="grouprecordings" type="enum" lvalues="30051|30052|30053|30054|30055|30056|30057" default="0" />
-	<setting label="30059" id="groupswithonerecording" type="bool" default="false" enable="gt(-1,0)" />
   </category>
 
   <!-- advanced -->
