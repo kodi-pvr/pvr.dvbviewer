@@ -42,6 +42,7 @@ bool           g_useFavourites        = false;
 bool           g_useFavouritesFile    = false;
 std::string    g_favouritesFile       = "";
 DvbRecording::Grouping g_groupRecordings = DvbRecording::Grouping::DISABLED;
+bool           g_useGroupsOnDemand    = false;
 Timeshift      g_timeshift            = Timeshift::OFF;
 std::string    g_timeshiftBufferPath  = DEFAULT_TSBUFFERPATH;
 PrependOutline g_prependOutline       = PrependOutline::IN_EPG;
@@ -85,6 +86,12 @@ void ADDON_ReadSettings(void)
 
   if (!XBMC->GetSetting("grouprecordings", &g_groupRecordings))
     g_groupRecordings = DvbRecording::Grouping::DISABLED;
+
+  // enable groups on demand for group by title, only
+  if (g_groupRecordings == DvbRecording::Grouping::BY_TITLE)
+    g_useGroupsOnDemand = true;
+  else
+    g_useGroupsOnDemand = false;
 
   if (!XBMC->GetSetting("timeshift", &g_timeshift))
     g_timeshift = Timeshift::OFF;

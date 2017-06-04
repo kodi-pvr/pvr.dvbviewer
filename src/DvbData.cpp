@@ -5,6 +5,7 @@
 #include "p8-platform/util/StringUtils.h"
 #include <tinyxml.h>
 #include <inttypes.h>
+#include <map>
 #include <set>
 #include <iterator>
 #include <sstream>
@@ -373,8 +374,15 @@ unsigned int Dvb::GetTimersAmount()
 bool Dvb::GetRecordings(ADDON_HANDLE handle)
 {
   CLockObject lock(m_mutex);
-  httpResponse &&res = GetHttpXML(BuildURL("api/recordings.html?utf8=1"
-      "&nofilename=1&images=1"));
+
+  std::string apiResource = "api/recordings.html?utf8=1&images=1";
+  // suppress file names of recording, if not required for grouping
+  if (g_groupRecordings != DvbRecording::Grouping::BY_DIRECTORY)
+  {
+    apiResource.append("&nofilename=1");
+  }
+
+  httpResponse &&res = GetHttpXML(BuildURL(apiResource.c_str()));
   if (res.error)
   {
     SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
@@ -400,6 +408,12 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
   // there's no need to merge new recordings in older ones as XBMC does this
   // already for us (using strRecordingId). so just parse all recordings again
   m_recordingAmount = 0;
+
+  // count number of recordings per group
+  std::map<std::string, unsigned int> recordingsPerGroup;
+
+  // list of recordings
+  std::vector<PVR_RECORDING> listOfRecordings;
 
   // insert recordings in reverse order
   for (TiXmlNode *xNode = root->LastChild("recording");
@@ -481,7 +495,14 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
             continue;
           tmp = tmp.substr(recf.length(), tmp.rfind('\\') - recf.length());
           StringUtils::Replace(tmp, '\\', '/');
-          PVR_STRCPY(recinfo.strDirectory, tmp.c_str() + 1);
+          // strip leading /, if present
+          std::string::size_type offset = 0;
+          if (!tmp.empty() && (tmp[0] == '/'))
+          {
+            offset++;
+          }
+
+          PVR_STRCPY(recinfo.strDirectory, tmp.c_str() + offset);
           break;
         }
         break;
@@ -502,16 +523,39 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
         XMLUtils_GetString(xRecording, "series", tmp);
         PVR_STRCPY(recinfo.strDirectory, tmp.c_str());
         break;
+      case DvbRecording::Grouping::BY_TITLE:
+        PVR_STRCPY(recinfo.strDirectory, recinfo.strTitle);
+        break;
       default:
         break;
     }
 
-    PVR->TransferRecordingEntry(handle, &recinfo);
-    ++m_recordingAmount;
+    recordingsPerGroup[recinfo.strDirectory]++;
+
+    listOfRecordings.push_back(recinfo);    
 
     XBMC->Log(LOG_DEBUG, "%s: Loaded recording entry '%s': start=%u, length=%u",
         __FUNCTION__, recording.title.c_str(), recording.start,
         recording.duration);
+  }
+
+  // remove groups having only one member
+  if (g_useGroupsOnDemand)
+  {
+    for (auto &recinfo : listOfRecordings)
+    {
+      if (recordingsPerGroup[recinfo.strDirectory] == 1)
+      {
+        recinfo.strDirectory[0] = '\0';
+      }
+    }
+  }
+
+  // transfer all recordings to PVR manager
+  for (auto &recinfo : listOfRecordings)
+  {
+    PVR->TransferRecordingEntry(handle, &recinfo);
+    ++m_recordingAmount;
   }
 
   XBMC->Log(LOG_INFO, "Loaded %u recording entries", m_recordingAmount);
