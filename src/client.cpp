@@ -42,6 +42,7 @@ bool           g_useFavourites        = false;
 bool           g_useFavouritesFile    = false;
 std::string    g_favouritesFile       = "";
 DvbRecording::Grouping g_groupRecordings = DvbRecording::Grouping::DISABLED;
+bool           g_useGroupsWithOneRecording = false;
 Timeshift      g_timeshift            = Timeshift::OFF;
 std::string    g_timeshiftBufferPath  = DEFAULT_TSBUFFERPATH;
 PrependOutline g_prependOutline       = PrependOutline::IN_EPG;
@@ -86,6 +87,9 @@ void ADDON_ReadSettings(void)
   if (!XBMC->GetSetting("grouprecordings", &g_groupRecordings))
     g_groupRecordings = DvbRecording::Grouping::DISABLED;
 
+  if (!XBMC->GetSetting("groupswithonerecording", &g_useGroupsWithOneRecording))
+    g_useGroupsWithOneRecording = false;
+
   if (!XBMC->GetSetting("timeshift", &g_timeshift))
     g_timeshift = Timeshift::OFF;
 
@@ -129,6 +133,7 @@ void ADDON_ReadSettings(void)
   /* recordings tab */
   if (g_groupRecordings != DvbRecording::Grouping::DISABLED)
     XBMC->Log(LOG_DEBUG, "Group recordings: %d", g_groupRecordings);
+  XBMC->Log(LOG_DEBUG, "Use Groups with one recording: %s", (g_useGroupsWithOneRecording) ? "yes" : "no");
 
   /* advanced tab */
   if (g_prependOutline != PrependOutline::NEVER)
@@ -236,9 +241,14 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
     if (g_favouritesFile.compare((const char *)settingValue) != 0)
       return ADDON_STATUS_NEED_RESTART;
   }
-  else if (sname == "grouprecordings")
+  else if (sname == "groupswithonerecording")
   {
-    if (g_groupRecordings != *(const DvbRecording::Grouping *)settingValue)
+    if (g_useGroupsWithOneRecording != *(bool *)settingValue)
+      return ADDON_STATUS_NEED_RESTART;
+  }
+  else if (sname == "usefavouritesfile")
+  {
+    if (g_useFavouritesFile != *(bool *)settingValue)
       return ADDON_STATUS_NEED_RESTART;
   }
   else if (sname == "timeshift")
