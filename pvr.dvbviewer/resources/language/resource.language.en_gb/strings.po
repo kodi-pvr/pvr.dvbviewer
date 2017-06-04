@@ -112,11 +112,7 @@ msgctxt "#30057"
 msgid "by title"
 msgstr "by title"
 
-#empty strings from id 30058 to 30058
-
-msgctxt "#30059"
-msgid "groups with only one recording"
-msgstr "groups with only one recording"
+#empty strings from id 30058 to 30059
 
 msgctxt "#30060"
 msgid "Put outline (e.g. subtitles) before plot"

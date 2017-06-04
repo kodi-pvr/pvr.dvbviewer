@@ -91,7 +91,7 @@ extern bool           g_useFavourites;
 extern bool           g_useFavouritesFile;
 extern std::string    g_favouritesFile;
 extern DvbRecording::Grouping g_groupRecordings;
-extern bool           g_useGroupsWithOneRecording;
+extern bool           g_useGroupsOnDemand;
 extern Timeshift      g_timeshift;
 extern std::string    g_timeshiftBufferPath;
 extern PrependOutline g_prependOutline;
