@@ -243,9 +243,9 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
     if (g_favouritesFile.compare((const char *)settingValue) != 0)
       return ADDON_STATUS_NEED_RESTART;
   }
-  else if (sname == "usefavouritesfile")
+  else if (sname == "grouprecordings")
   {
-    if (g_useFavouritesFile != *(bool *)settingValue)
+    if (g_groupRecordings != *(const DvbRecording::Grouping *)settingValue)
       return ADDON_STATUS_NEED_RESTART;
   }
   else if (sname == "timeshift")
