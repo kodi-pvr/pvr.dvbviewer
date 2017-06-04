@@ -535,8 +535,8 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
     listOfRecordings.push_back(recinfo);    
 
     XBMC->Log(LOG_DEBUG, "%s: Loaded recording entry '%s': start=%u, length=%u",
-      __FUNCTION__, recording.title.c_str(), recording.start,
-      recording.duration);
+        __FUNCTION__, recording.title.c_str(), recording.start,
+        recording.duration);
   }
 
   // remove groups having only one member

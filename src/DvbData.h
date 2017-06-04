@@ -159,7 +159,7 @@ public:
     BY_FIRST_LETTER,
     BY_TV_CHANNEL,
     BY_SERIES,
-	BY_TITLE,
+    BY_TITLE,
   };
 
 public:

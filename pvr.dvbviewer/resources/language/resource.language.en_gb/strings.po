@@ -112,7 +112,11 @@ msgctxt "#30057"
 msgid "by title"
 msgstr "by title"
 
-#empty strings from id 30058 to 30059
+#empty strings from id 30058 to 30058
+
+msgctxt "#30059"
+msgid "groups with only one recording"
+msgstr "groups with only one recording"
 
 msgctxt "#30060"
 msgid "Put outline (e.g. subtitles) before plot"
@@ -215,7 +219,3 @@ msgstr ""
 msgctxt "#30507"
 msgid "Please reset the EPG database and restart Kodi afterwards"
 msgstr ""
-
-msgctxt "#30059"
-msgid "groups with only one recording"
-msgstr "groups with only one recording"
