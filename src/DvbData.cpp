@@ -540,7 +540,7 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
   }
 
   // remove groups having only one member
-  if (!g_useGroupsOnDemand)
+  if (g_useGroupsOnDemand)
   {
     for (auto &recinfo : listOfRecordings)
     {
