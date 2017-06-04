@@ -374,7 +374,7 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
 {
   CLockObject lock(m_mutex);
   httpResponse &&res = GetHttpXML(BuildURL("api/recordings.html?utf8=1"
-      "&nofilename=1&images=1"));
+      "&images=1"));
   if (res.error)
   {
     SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
@@ -478,7 +478,7 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
             continue;
           tmp = tmp.substr(recf.length(), tmp.rfind('\\') - recf.length());
           StringUtils::Replace(tmp, '\\', '/');
-          PVR_STRCPY(recinfo.strDirectory, tmp.c_str() + 1);
+          PVR_STRCPY(recinfo.strDirectory, StringUtils::TrimLeft(tmp, "/").c_str());
           break;
         }
         break;
