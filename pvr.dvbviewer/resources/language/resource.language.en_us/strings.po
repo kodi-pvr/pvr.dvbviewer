@@ -155,3 +155,7 @@ msgstr "Unable to parse timer list"
 msgctxt "#30507"
 msgid "Please reset the EPG database and restart Kodi afterwards"
 msgstr "Please reset the EPG database and restart Kodi afterwards"
+
+msgctxt "#30059"
+msgid "groups with only one recording"
+msgstr "groups with only one recording"

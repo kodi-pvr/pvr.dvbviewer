@@ -5,6 +5,7 @@
 #include "p8-platform/util/StringUtils.h"
 #include <tinyxml.h>
 #include <inttypes.h>
+#include <map>
 #include <set>
 #include <iterator>
 #include <sstream>
@@ -408,6 +409,12 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
   // already for us (using strRecordingId). so just parse all recordings again
   m_recordingAmount = 0;
 
+  // count number of recordings per group
+  std::map<std::string, unsigned int> recordingsPerGroup;
+
+  // list of recordings
+  std::vector<PVR_RECORDING> listOfRecordings;
+
   // insert recordings in reverse order
   for (TiXmlNode *xNode = root->LastChild("recording");
       xNode; xNode = xNode->PreviousSibling("recording"))
@@ -523,12 +530,32 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
         break;
     }
 
-    PVR->TransferRecordingEntry(handle, &recinfo);
-    ++m_recordingAmount;
+    recordingsPerGroup[recinfo.strDirectory]++;
+
+    listOfRecordings.push_back(recinfo);    
 
     XBMC->Log(LOG_DEBUG, "%s: Loaded recording entry '%s': start=%u, length=%u",
-        __FUNCTION__, recording.title.c_str(), recording.start,
-        recording.duration);
+      __FUNCTION__, recording.title.c_str(), recording.start,
+      recording.duration);
+  }
+
+  // remove groups having only one member
+  if (!g_useGroupsWithOneRecording)
+  {
+    for (auto &recinfo : listOfRecordings)
+    {
+      if (recordingsPerGroup[recinfo.strDirectory] == 1)
+      {
+        recinfo.strDirectory[0] = '\0';
+      }
+    }
+  }
+
+  // transfer all recordings to PVR manager
+  for (auto &recinfo : listOfRecordings)
+  {
+    PVR->TransferRecordingEntry(handle, &recinfo);
+    ++m_recordingAmount;
   }
 
   XBMC->Log(LOG_INFO, "Loaded %u recording entries", m_recordingAmount);
