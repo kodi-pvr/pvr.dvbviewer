@@ -211,3 +211,7 @@ msgstr ""
 msgctxt "#30507"
 msgid "Please reset the EPG database and restart Kodi afterwards"
 msgstr ""
+
+msgctxt "#30508"
+msgid "Favourites contains unresolvable channel: %s"
+msgstr ""

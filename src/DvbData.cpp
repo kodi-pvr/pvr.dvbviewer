@@ -109,7 +109,7 @@ bool Dvb::GetChannels(ADDON_HANDLE handle, bool radio)
     xbmcChannel.iEncryptionSystem = channel->encrypted;
     xbmcChannel.bIsHidden         = false;
     PVR_STRCPY(xbmcChannel.strChannelName, channel->name.c_str());
-    PVR_STRCPY(xbmcChannel.strIconPath,    channel->logoURL.c_str());
+    PVR_STRCPY(xbmcChannel.strIconPath,    channel->logo.c_str());
 
     PVR->TransferChannelEntry(handle, &xbmcChannel);
   }
@@ -254,8 +254,8 @@ bool Dvb::GetChannelGroupMembers(ADDON_HANDLE handle,
 
       PVR->TransferChannelGroupMember(handle, &tag);
 
-      XBMC->Log(LOG_DEBUG, "%s: Add channel '%s' (%u) to group '%s'",
-          __FUNCTION__, channel->name.c_str(), channel->backendNr,
+      XBMC->Log(LOG_DEBUG, "%s: Add channel '%s' (backendid=%" PRIu64 ") to group '%s'",
+          __FUNCTION__, channel->name.c_str(), channel->backendIds.front(),
           group.name.c_str());
     }
   }
@@ -391,11 +391,7 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
     return false;
   }
 
-  std::string imageURL;
   TiXmlElement *root = doc.RootElement();
-  // refresh in case this has changed
-  XMLUtils_GetString(root, "serverURL", m_recordingURL);
-  XMLUtils_GetString(root, "imageURL",  imageURL);
 
   // there's no need to merge new recordings in older ones as XBMC does this
   // already for us (using strRecordingId). so just parse all recordings again
@@ -438,7 +434,8 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
 
     std::string thumbnail;
     if (!g_lowPerformance && XMLUtils_GetString(xRecording, "image", thumbnail))
-      recording.thumbnailPath = BuildExtURL(imageURL, "%s", thumbnail.c_str());
+      recording.thumbnail = BuildURL("upnp/thumbnails/video/%s",
+          thumbnail.c_str());
 
     std::string startTime = xRecording->Attribute("start");
     recording.start = ParseDateTime(startTime);
@@ -454,7 +451,7 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
     PVR_STRCPY(recinfo.strPlotOutline,   recording.plotOutline.c_str());
     PVR_STRCPY(recinfo.strPlot,          recording.plot.c_str());
     PVR_STRCPY(recinfo.strChannelName,   recording.channelName.c_str());
-    PVR_STRCPY(recinfo.strThumbnailPath, recording.thumbnailPath.c_str());
+    PVR_STRCPY(recinfo.strThumbnailPath, recording.thumbnail.c_str());
     recinfo.recordingTime = recording.start;
     recinfo.iDuration     = recording.duration;
     recinfo.iGenreType    = recording.genre & 0xF0;
@@ -550,7 +547,7 @@ RecordingReader *Dvb::OpenRecordedStream(const PVR_RECORDING &recinfo)
   if (timer)
     end = timer->end;
 
-  return new RecordingReader(BuildExtURL(m_recordingURL, "%s.ts",
+  return new RecordingReader(BuildURL("upnp/recordings/%s.ts",
         recinfo.strRecordingId), end);
 }
 
@@ -578,27 +575,23 @@ void Dvb::CloseLiveStream(void)
 const std::string Dvb::GetLiveStreamURL(const PVR_CHANNEL &channelinfo)
 {
   DvbChannel *channel = m_channels[channelinfo.iUniqueId - 1];
-  //TODO: RS API doc says better use channel->backendId here.
-  // however this might break default subchannel logic/overwrite
-  if (g_transcoding != Transcoding::OFF)
+  uint64_t backendId = channel->backendIds.front();
+  switch(g_transcoding)
   {
-    switch(g_transcoding)
-    {
-      case Transcoding::TS:
-        return BuildURL("flashstream/stream.ts?chid=%u&%s",
-          channel->backendNr, g_transcodingParams.c_str());
-        break;
-      case Transcoding::WEBM:
-        return BuildURL("flashstream/stream.webm?chid=%u&%s",
-          channel->backendNr, g_transcodingParams.c_str());
-        break;
-      case Transcoding::FLV:
-        return BuildURL("flashstream/stream.flv?chid=%u&%s",
-          channel->backendNr, g_transcodingParams.c_str());
-        break;
-    }
+    case Transcoding::TS:
+      return BuildURL("flashstream/stream.ts?chid=%" PRIu64 "&%s",
+        backendId, g_transcodingParams.c_str());
+      break;
+    case Transcoding::WEBM:
+      return BuildURL("flashstream/stream.webm?chid=%" PRIu64 "&%s",
+        backendId, g_transcodingParams.c_str());
+      break;
+    case Transcoding::FLV:
+      return BuildURL("flashstream/stream.flv?chid=%" PRIu64 "&%s",
+        backendId, g_transcodingParams.c_str());
+      break;
   }
-  return m_channels[channelinfo.iUniqueId - 1]->streamURL;
+  return BuildURL("upnp/channelstream/%" PRIu64 ".ts", backendId);
 }
 
 void *Dvb::Process()
@@ -719,7 +712,7 @@ std::string Dvb::URLEncode(const std::string& data)
 bool Dvb::LoadChannels()
 {
   const httpResponse &res = GetHttpXML(BuildURL("api/getchannelsxml.html"
-      "?subchannels=1&upnp=1&logo=1"));
+      "?fav=1&subchannels=1&upnp=1&logo=1"));
   if (res.error)
   {
     SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
@@ -737,16 +730,20 @@ bool Dvb::LoadChannels()
     return false;
   }
 
-  TiXmlElement *root = doc.RootElement();
-  std::string streamURL;
-  XMLUtils_GetString(root, "upnpURL", streamURL);
-
   m_channels.clear();
   m_channelAmount = 0;
   m_groups.clear();
   m_groupAmount = 0;
 
-  for (TiXmlElement *xRoot = root->FirstChildElement("root");
+  TiXmlElement *root = doc.RootElement();
+  if (!root->FirstChildElement("root"))
+  {
+    XBMC->Log(LOG_NOTICE, "Channel list is empty");
+    return true;
+  }
+
+  // skip the first group (the favourites)
+  for (TiXmlElement *xRoot = root->FirstChildElement("root")->NextSiblingElement("root");
       xRoot; xRoot = xRoot->NextSiblingElement("root"))
   {
     for (TiXmlElement *xGroup = xRoot->FirstChildElement("group");
@@ -770,20 +767,16 @@ bool Dvb::LoadChannels()
         channel->encrypted  = (flags & ENCRYPTED_FLAG);
         channel->name       = channel->backendName = xChannel->Attribute("name");
         channel->hidden     = g_useFavourites;
-        channel->frontendNr = (!g_useFavourites) ? m_channels.size() + 1 : 0;
-        xChannel->QueryUnsignedAttribute("nr", &channel->backendNr);
+        channel->frontendNr = (!channel->hidden) ? m_channels.size() + 1 : 0;
         xChannel->QueryValueAttribute<uint64_t>("EPGID", &channel->epgId);
 
         uint64_t backendId = 0;
         xChannel->QueryValueAttribute<uint64_t>("ID", &backendId);
         channel->backendIds.push_back(backendId);
 
-        std::string logoURL;
-        if (!g_lowPerformance && XMLUtils_GetString(xChannel, "logo", logoURL))
-          channel->logoURL = BuildURL("%s", logoURL.c_str());
-        //TODO: maybe move this to GetLiveStreamURL
-        channel->streamURL = BuildExtURL(streamURL, "%u.ts", channel->backendNr);
-        //TODO: better use channel->backendId here? might break default subchannel logic
+        std::string logo;
+        if (!g_lowPerformance && XMLUtils_GetString(xChannel, "logo", logo))
+          channel->logo = BuildURL("%s", logo.c_str());
 
         for (TiXmlElement* xSubChannel = xChannel->FirstChildElement("subchannel");
             xSubChannel; xSubChannel = xSubChannel->NextSiblingElement("subchannel"))
@@ -807,31 +800,71 @@ bool Dvb::LoadChannels()
     }
   }
 
-  if (g_useFavourites)
+  if (g_useFavourites && !g_useFavouritesFile)
   {
-    std::string &&url = BuildURL("api/getfavourites.html");
-    if (g_useFavouritesFile)
-    {
-      if (!XBMC->FileExists(g_favouritesFile.c_str(), false))
-      {
-        XBMC->Log(LOG_ERROR, "Unable to open local favourites.xml");
-        SetConnectionState(PVR_CONNECTION_STATE_SERVER_MISMATCH,
-            XBMC->GetLocalizedString(30504));
-        return false;
-      }
-      url = g_favouritesFile;
-    }
+    m_groups.clear();
+    m_groupAmount = 0;
 
-    httpResponse &&res = GetHttpXML(url);
-    if (res.error)
+    TiXmlElement *xRoot = root->FirstChildElement("root");
+    for (TiXmlElement *xGroup = xRoot->FirstChildElement("group");
+        xGroup; xGroup = xGroup->NextSiblingElement("group"))
     {
-      SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
+      m_groups.push_back(DvbGroup());
+      DvbGroup *group = &m_groups.back();
+      group->name     = group->backendName = xGroup->Attribute("name");
+      group->hidden   = false;
+      group->radio    = true;
+      ++m_groupAmount;
+
+      for (TiXmlElement *xChannel = xGroup->FirstChildElement("channel");
+          xChannel; xChannel = xChannel->NextSiblingElement("channel"))
+      {
+        uint64_t backendId = 0;
+        xChannel->QueryValueAttribute<uint64_t>("ID", &backendId);
+        DvbChannel *channel = GetChannel([&] (const DvbChannel *channel)
+            {
+              return (std::find(channel->backendIds.begin(),
+                    channel->backendIds.end(), backendId)
+                  != channel->backendIds.end());
+            });
+        if (!channel)
+        {
+          XBMC->Log(LOG_NOTICE, "Favourites contains unresolvable channel: %s."
+              " Ignoring.", xChannel->Attribute("name"));
+          XBMC->QueueNotification(QUEUE_WARNING, XBMC->GetLocalizedString(30507),
+              xChannel->Attribute("name"));
+          continue;
+        }
+
+        channel->name = xChannel->Attribute("name");
+        channel->hidden = false;
+        channel->frontendNr = ++m_channelAmount;
+        group->channels.push_back(channel);
+        if (!channel->radio)
+          group->radio = false;
+      }
+    }
+  }
+  else if (g_useFavourites && g_useFavouritesFile)
+  {
+    void *fileHandle = XBMC->OpenFile(g_favouritesFile.c_str(), 0);
+    if (!fileHandle)
+    {
+      XBMC->Log(LOG_ERROR, "Unable to open local favourites.xml");
+      SetConnectionState(PVR_CONNECTION_STATE_SERVER_MISMATCH,
+          XBMC->GetLocalizedString(30504));
       return false;
     }
 
+    std::string content;
+    char buffer[1024];
+    while (int bytesRead = XBMC->ReadFile(fileHandle, buffer, 1024))
+      content.append(buffer, bytesRead);
+    XBMC->CloseFile(fileHandle);
+
     TiXmlDocument doc;
-    RemoveNullChars(res.content);
-    doc.Parse(res.content.c_str());
+    RemoveNullChars(content);
+    doc.Parse(content.c_str());
     if (doc.Error())
     {
       XBMC->Log(LOG_ERROR, "Unable to parse favourites.xml. Error: %s",
@@ -884,42 +917,41 @@ bool Dvb::LoadChannels()
         if (!backendId)
           continue;
 
-        for (auto channel : m_channels)
+        std::string channelName;
+        if (!ss.eof())
         {
-          bool found = false;
+          ss.ignore(1);
+          getline(ss, channelName);
+          channelName = ConvertToUtf8(channelName);
+        }
 
-          for (auto backendId2 : channel->backendIds)
-          {
-            /* legacy support for old 32bit channel ids */
-            if (backendId <= 0xFFFFFFFF)
-              backendId2 &= 0xFFFFFFFF;
-            if (backendId == backendId2)
+        DvbChannel *channel = GetChannel([&] (const DvbChannel *channel)
             {
-              found = true;
-              break;
-            }
-          }
+              return (std::find(channel->backendIds.begin(),
+                    channel->backendIds.end(), backendId)
+                  != channel->backendIds.end());
+            });
+        if (!channel)
+        {
+          const char *descr = (channelName.empty()) ? xEntry->GetText()
+            : channelName.c_str();
+          XBMC->Log(LOG_NOTICE, "Favourites contains unresolvable channel: %s."
+              " Ignoring.", descr);
+          XBMC->QueueNotification(QUEUE_WARNING, XBMC->GetLocalizedString(30508),
+              descr);
+          continue;
+        }
 
-          if (found)
-          {
-            channel->hidden = false;
-            channel->frontendNr = ++m_channelAmount;
-            if (!ss.eof())
-            {
-              ss.ignore(1);
-              std::string channelName;
-              getline(ss, channelName);
-              channel->name = ConvertToUtf8(channelName);
-            }
+        channel->hidden = false;
+        channel->frontendNr = ++m_channelAmount;
+        if (!channelName.empty())
+          channel->name = channelName;
 
-            if (group)
-            {
-              group->channels.push_back(channel);
-              if (!channel->radio)
-                group->radio = false;
-            }
-            break;
-          }
+        if (group)
+        {
+          group->channels.push_back(channel);
+          if (!channel->radio)
+            group->radio = false;
         }
       }
     }
