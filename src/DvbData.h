@@ -20,8 +20,8 @@
 
 // minimum version required
 #define RS_VERSION_MAJOR   1
-#define RS_VERSION_MINOR   30
-#define RS_VERSION_PATCH1  1
+#define RS_VERSION_MINOR   33
+#define RS_VERSION_PATCH1  2
 #define RS_VERSION_PATCH2  0
 #define RS_VERSION_NUM  (RS_VERSION_MAJOR << 24 | RS_VERSION_MINOR << 16 | \
                           RS_VERSION_PATCH1 << 8 | RS_VERSION_PATCH2)
@@ -35,7 +35,7 @@ class DvbChannel
 {
 public:
   DvbChannel()
-    : backendNr(0), epgId(0)
+    : epgId(0)
   {}
 
 public:
@@ -44,18 +44,17 @@ public:
    * see FIXME for more details
    */
   unsigned int id;
-  /*!< @brief backend number for generating the stream url */
-  unsigned int backendNr;
   /*!< @brief channel number on the frontend */
   unsigned int frontendNr;
-  /*!< @brief list of backend ids (e.g AC3, other languages, ...) */
+  /*!< @brief list of backend ids (e.g AC3, other languages, ...).
+   * the first entry is used for generating the stream url
+   */
   std::list<uint64_t> backendIds;
   uint64_t epgId;
   std::string name;
   /*!< @brief name of the channel on the backend */
   std::string backendName;
-  std::string streamURL;
-  std::string logoURL;
+  std::string logo;
   bool radio;
   bool hidden;
   bool encrypted;
@@ -174,7 +173,7 @@ public:
   std::string title;
   std::string plot;
   std::string plotOutline;
-  std::string thumbnailPath;
+  std::string thumbnail;
   /*!< @brief channel name provided by the backend */
   std::string channelName;
   /*!< @brief channel in case our search was successful */
@@ -253,7 +252,6 @@ private:
   PVR_CONNECTION_STATE m_state;
   unsigned int m_backendVersion;
   std::string m_url;
-  std::string m_recordingURL;
 
   long m_timezone;
   struct { long long total, used; } m_diskspace;
