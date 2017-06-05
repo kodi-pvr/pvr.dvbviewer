@@ -395,7 +395,11 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
 
   // there's no need to merge new recordings in older ones as XBMC does this
   // already for us (using strRecordingId). so just parse all recordings again
+  std::vector<DvbRecording> recordings;
   m_recordingAmount = 0;
+
+  // group name and its size/amount of recordings
+  std::map<std::string, unsigned int> groups;
 
   // insert recordings in reverse order
   for (TiXmlNode *xNode = root->LastChild("recording");
@@ -444,6 +448,51 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
     sscanf(xRecording->Attribute("duration"), "%02d%02d%02d", &hours, &mins, &secs);
     recording.duration = hours*60*60 + mins*60 + secs;
 
+    std::string group("Unknown");
+    switch(g_groupRecordings)
+    {
+      case DvbRecording::Grouping::BY_DIRECTORY:
+        if (!XMLUtils_GetString(xRecording, "file", group))
+          break;
+        StringUtils::ToLower(group);
+        for (auto &recf : m_recfolders)
+        {
+          if (!StringUtils::StartsWith(group, recf))
+            continue;
+          group = group.substr(recf.length(), group.rfind('\\') - recf.length());
+          StringUtils::Replace(group, '\\', '/');
+          StringUtils::TrimLeft(group, "/");
+          break;
+        }
+        break;
+      case DvbRecording::Grouping::BY_DATE:
+        group = StringUtils::Format("%s/%s", startTime.substr(0, 4).c_str(),
+            startTime.substr(4, 2).c_str());
+        break;
+      case DvbRecording::Grouping::BY_FIRST_LETTER:
+        group = toupper(recording.title[0]);
+        break;
+      case DvbRecording::Grouping::BY_TV_CHANNEL:
+        group = recording.channelName;
+        break;
+      case DvbRecording::Grouping::BY_SERIES:
+        XMLUtils_GetString(xRecording, "series", group);
+        break;
+      case DvbRecording::Grouping::BY_TITLE:
+        group = recording.title;
+        break;
+      default:
+        group = "";
+        break;
+    }
+    recording.group = groups.emplace(group, 0).first;
+    ++recording.group->second;
+
+    recordings.push_back(recording);
+  }
+
+  for (auto &recording : recordings)
+  {
     PVR_RECORDING recinfo;
     memset(&recinfo, 0, sizeof(PVR_RECORDING));
     PVR_STRCPY(recinfo.strRecordingId,   recording.id.c_str());
@@ -466,42 +515,10 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
           ? PVR_RECORDING_CHANNEL_TYPE_RADIO : PVR_RECORDING_CHANNEL_TYPE_TV;
     }
 
-    std::string tmp;
-    switch(g_groupRecordings)
-    {
-      case DvbRecording::Grouping::BY_DIRECTORY:
-        XMLUtils_GetString(xRecording, "file", tmp);
-        StringUtils::ToLower(tmp);
-        for (auto &recf : m_recfolders)
-        {
-          if (!StringUtils::StartsWith(tmp, recf))
-            continue;
-          tmp = tmp.substr(recf.length(), tmp.rfind('\\') - recf.length());
-          StringUtils::Replace(tmp, '\\', '/');
-          PVR_STRCPY(recinfo.strDirectory, StringUtils::TrimLeft(tmp, "/").c_str());
-          break;
-        }
-        break;
-      case DvbRecording::Grouping::BY_DATE:
-        tmp = StringUtils::Format("%s/%s", startTime.substr(0, 4).c_str(),
-            startTime.substr(4, 2).c_str());
-        PVR_STRCPY(recinfo.strDirectory, tmp.c_str());
-        break;
-      case DvbRecording::Grouping::BY_FIRST_LETTER:
-        recinfo.strDirectory[0] = recording.title[0];
-        recinfo.strDirectory[1] = '\0';
-        break;
-      case DvbRecording::Grouping::BY_TV_CHANNEL:
-        PVR_STRCPY(recinfo.strDirectory, recording.channelName.c_str());
-        break;
-      case DvbRecording::Grouping::BY_SERIES:
-        tmp = "Unknown";
-        XMLUtils_GetString(xRecording, "series", tmp);
-        PVR_STRCPY(recinfo.strDirectory, tmp.c_str());
-        break;
-      default:
-        break;
-    }
+    // no grouping for single entry groups if by_title
+    if (g_groupRecordings != DvbRecording::Grouping::BY_TITLE
+        || recording.group->second > 1)
+      PVR_STRCPY(recinfo.strDirectory, recording.group->first.c_str());
 
     PVR->TransferRecordingEntry(handle, &recinfo);
     ++m_recordingAmount;

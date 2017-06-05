@@ -7,6 +7,7 @@
 #include "libXBMC_pvr.h"
 #include "p8-platform/threads/threads.h"
 #include <list>
+#include <map>
 #include <functional>
 
 #define CHANNELDAT_HEADER_SIZE       (7)
@@ -157,7 +158,8 @@ public:
     BY_DATE,
     BY_FIRST_LETTER,
     BY_TV_CHANNEL,
-    BY_SERIES
+    BY_SERIES,
+    BY_TITLE
   };
 
 public:
@@ -178,6 +180,8 @@ public:
   std::string channelName;
   /*!< @brief channel in case our search was successful */
   DvbChannel *channel;
+  /*!< @brief group name and its size/amount of recordings */
+  std::map<std::string, unsigned int>::iterator group;
 };
 
 typedef std::vector<DvbChannel *> DvbChannels_t;

@@ -108,7 +108,11 @@ msgctxt "#30056"
 msgid "by series"
 msgstr ""
 
-#empty strings from id 30057 to 30059
+msgctxt "#30057"
+msgid "by title"
+msgstr ""
+
+#empty strings from id 30058 to 30059
 
 msgctxt "#30060"
 msgid "Put outline (e.g. subtitles) before plot"
