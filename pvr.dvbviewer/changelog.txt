@@ -1,5 +1,10 @@
+3.0.5
+[added] Support for grouping recordings by title (by heikobihr)
+[updated] Load remote favourites from channellist
+[fixed] Group recordings by recording directory (by heikobihr)
+
 3.0.4
-Remove of never used addon interface function
+[changed] Remove of never used addon interface function
 
 3.0.3
 [updated] Debian package control
