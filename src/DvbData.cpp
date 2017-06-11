@@ -624,6 +624,12 @@ void *Dvb::Process()
   {
     if (!IsConnected())
     {
+      if (g_useWoL)
+      {
+        if (!XBMC->WakeOnLan(g_mac.c_str()))
+          XBMC->Log(LOG_ERROR, "Error sending WoL packet to %s", g_mac.c_str());
+      }
+
       XBMC->Log(LOG_INFO, "Trying to connect to the backend service...");
 
       if (CheckBackendVersion() && UpdateBackendStatus(true) && LoadChannels())

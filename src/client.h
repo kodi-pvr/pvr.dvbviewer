@@ -87,6 +87,8 @@ extern std::string    g_hostname;
 extern int            g_webPort;
 extern std::string    g_username;
 extern std::string    g_password;
+extern bool           g_useWoL;
+extern std::string    g_mac;
 extern bool           g_useFavourites;
 extern bool           g_useFavouritesFile;
 extern std::string    g_favouritesFile;

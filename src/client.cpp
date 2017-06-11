@@ -38,6 +38,8 @@ std::string    g_hostname             = DEFAULT_HOST;
 int            g_webPort              = DEFAULT_WEB_PORT;
 std::string    g_username             = "";
 std::string    g_password             = "";
+bool           g_useWoL               = false;
+std::string    g_mac                  = "";
 bool           g_useFavourites        = false;
 bool           g_useFavouritesFile    = false;
 std::string    g_favouritesFile       = "";
@@ -65,14 +67,20 @@ void ADDON_ReadSettings(void)
   if (XBMC->GetSetting("host", buffer))
     g_hostname = buffer;
 
+  if (!XBMC->GetSetting("webport", &g_webPort))
+    g_webPort = DEFAULT_WEB_PORT;
+
   if (XBMC->GetSetting("user", buffer))
     g_username = buffer;
 
   if (XBMC->GetSetting("pass", buffer))
     g_password = buffer;
 
-  if (!XBMC->GetSetting("webport", &g_webPort))
-    g_webPort = DEFAULT_WEB_PORT;
+  if (!XBMC->GetSetting("usewol", &g_useWoL))
+    g_useWoL = false;
+
+  if (g_useWoL && XBMC->GetSetting("mac", buffer))
+    g_mac = buffer;
 
   if (!XBMC->GetSetting("usefavourites", &g_useFavourites))
     g_useFavourites = false;
@@ -110,19 +118,18 @@ void ADDON_ReadSettings(void)
   /* Log the current settings for debugging purposes */
   /* general tab */
   XBMC->Log(LOG_DEBUG, "DVBViewer Addon Configuration options");
-  XBMC->Log(LOG_DEBUG, "Hostname:   %s", g_hostname.c_str());
+  XBMC->Log(LOG_DEBUG, "Backend: http://%s:%d/", g_hostname.c_str(), g_webPort);
   if (!g_username.empty() && !g_password.empty())
-  {
-    XBMC->Log(LOG_DEBUG, "Username:   %s", g_username.c_str());
-    XBMC->Log(LOG_DEBUG, "Password:   %s", g_password.c_str());
-  }
-  XBMC->Log(LOG_DEBUG, "WebPort:    %d", g_webPort);
+    XBMC->Log(LOG_DEBUG, "Login credentials: %s/%s", g_username.c_str(),
+        g_password.c_str());
+  if (g_useWoL)
+    XBMC->Log(LOG_DEBUG, "WoL MAC: %s", g_mac.c_str());
 
   /* livetv tab */
   XBMC->Log(LOG_DEBUG, "Use favourites: %s", (g_useFavourites) ? "yes" : "no");
   if (g_useFavouritesFile)
     XBMC->Log(LOG_DEBUG, "Favourites file: %s", g_favouritesFile.c_str());
-  XBMC->Log(LOG_DEBUG, "Timeshift: %d", g_timeshift);
+  XBMC->Log(LOG_DEBUG, "Timeshift mode: %d", g_timeshift);
   if (g_timeshift != Timeshift::OFF)
     XBMC->Log(LOG_DEBUG, "Timeshift buffer path: %s", g_timeshiftBufferPath.c_str());
 
@@ -196,6 +203,11 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
     if (g_hostname.compare((const char *)settingValue) != 0)
       return ADDON_STATUS_NEED_RESTART;
   }
+  else if (sname == "webport")
+  {
+    if (g_webPort != *(int *)settingValue)
+      return ADDON_STATUS_NEED_RESTART;
+  }
   else if (sname == "user")
   {
     if (g_username.compare((const char *)settingValue) != 0)
@@ -206,10 +218,13 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
     if (g_password.compare((const char *)settingValue) != 0)
       return ADDON_STATUS_NEED_RESTART;
   }
-  else if (sname == "webport")
+  else if (sname == "usewol")
   {
-    if (g_webPort != *(int *)settingValue)
-      return ADDON_STATUS_NEED_RESTART;
+    g_useWoL = *(bool *)settingValue;
+  }
+  else if (sname == "mac")
+  {
+    g_mac = (const char *)settingValue;
   }
   else if (sname == "usefavourites")
   {
