@@ -762,7 +762,7 @@ bool Dvb::LoadChannels()
   if (!root->FirstChildElement("root"))
   {
     XBMC->Log(LOG_NOTICE, "Channel list is empty");
-    return true;
+    return true; // empty channel is fine
   }
 
   // check if the first group contains favourites.
@@ -775,6 +775,14 @@ bool Dvb::LoadChannels()
         && (tmp = tmp->FirstChildElement("channel"))
         && tmp->QueryIntAttribute("nr", &channelNr) == TIXML_SUCCESS
         && channelNr < 0);
+  }
+
+  // user wants to use remote favourites but doesn't have any defined
+  if (g_useFavourites && !g_useFavouritesFile && !hasFavourites)
+  {
+    XBMC->Log(LOG_NOTICE, "Favourites enabled but non defined");
+    XBMC->QueueNotification(QUEUE_WARNING, XBMC->GetLocalizedString(30509));
+    return false; // empty favourites is an error
   }
 
   TiXmlElement *xRoot = root->FirstChildElement("root");
@@ -836,15 +844,7 @@ bool Dvb::LoadChannels()
     }
   }
 
-  if (g_useFavourites && !g_useFavouritesFile && !hasFavourites)
-  {
-    // user wants to use favourites but doesn't have any defined
-    m_groups.clear();
-    m_groupAmount = 0;
-    XBMC->Log(LOG_NOTICE, "Favourites enabled but non defined");
-    XBMC->QueueNotification(QUEUE_WARNING, XBMC->GetLocalizedString(30509));
-  }
-  else if (g_useFavourites && !g_useFavouritesFile && hasFavourites)
+  if (g_useFavourites && !g_useFavouritesFile)
   {
     m_groups.clear();
     m_groupAmount = 0;
