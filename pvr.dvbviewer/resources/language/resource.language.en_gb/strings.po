@@ -227,3 +227,7 @@ msgstr ""
 msgctxt "#30508"
 msgid "Favourites contains unresolvable channel: %s"
 msgstr ""
+
+msgctxt "#30509"
+msgid "Favourites enabled but none defined"
+msgstr ""

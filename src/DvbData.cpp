@@ -735,7 +735,7 @@ std::string Dvb::URLEncode(const std::string& data)
 bool Dvb::LoadChannels()
 {
   const httpResponse &res = GetHttpXML(BuildURL("api/getchannelsxml.html"
-      "?fav=1&subchannels=1&upnp=1&logo=1"));
+      "?fav=1&subchannels=1&logo=1"));
   if (res.error)
   {
     SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
@@ -765,9 +765,22 @@ bool Dvb::LoadChannels()
     return true;
   }
 
-  // skip the first group (the favourites)
-  for (TiXmlElement *xRoot = root->FirstChildElement("root")->NextSiblingElement("root");
-      xRoot; xRoot = xRoot->NextSiblingElement("root"))
+  // check if the first group contains favourites.
+  // favourites have negative channel numbers
+  bool hasFavourites = false;
+  if (TiXmlElement *tmp = root->FirstChildElement("root"))
+  {
+    int channelNr = 0;
+    hasFavourites = ((tmp = tmp->FirstChildElement("group"))
+        && (tmp = tmp->FirstChildElement("channel"))
+        && tmp->QueryIntAttribute("nr", &channelNr) == TIXML_SUCCESS
+        && channelNr < 0);
+  }
+
+  TiXmlElement *xRoot = root->FirstChildElement("root");
+  if (xRoot && hasFavourites) // skip favourites
+    xRoot = xRoot->NextSiblingElement("root");
+  for (; xRoot; xRoot = xRoot->NextSiblingElement("root"))
   {
     for (TiXmlElement *xGroup = xRoot->FirstChildElement("group");
         xGroup; xGroup = xGroup->NextSiblingElement("group"))
@@ -823,11 +836,20 @@ bool Dvb::LoadChannels()
     }
   }
 
-  if (g_useFavourites && !g_useFavouritesFile)
+  if (g_useFavourites && !g_useFavouritesFile && !hasFavourites)
+  {
+    // user wants to use favourites but doesn't have any defined
+    m_groups.clear();
+    m_groupAmount = 0;
+    XBMC->Log(LOG_NOTICE, "Favourites enabled but non defined");
+    XBMC->QueueNotification(QUEUE_WARNING, XBMC->GetLocalizedString(30509));
+  }
+  else if (g_useFavourites && !g_useFavouritesFile && hasFavourites)
   {
     m_groups.clear();
     m_groupAmount = 0;
 
+    // the first group contains the favourites
     TiXmlElement *xRoot = root->FirstChildElement("root");
     for (TiXmlElement *xGroup = xRoot->FirstChildElement("group");
         xGroup; xGroup = xGroup->NextSiblingElement("group"))
@@ -854,7 +876,7 @@ bool Dvb::LoadChannels()
         {
           XBMC->Log(LOG_NOTICE, "Favourites contains unresolvable channel: %s."
               " Ignoring.", xChannel->Attribute("name"));
-          XBMC->QueueNotification(QUEUE_WARNING, XBMC->GetLocalizedString(30507),
+          XBMC->QueueNotification(QUEUE_WARNING, XBMC->GetLocalizedString(30508),
               xChannel->Attribute("name"));
           continue;
         }
