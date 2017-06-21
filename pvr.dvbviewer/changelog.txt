@@ -1,3 +1,7 @@
+3.0.6
+[added] Support for Wake-on-Lan
+[fixed] Channel parsing if no favourites have been defined
+
 3.0.5
 [added] Support for grouping recordings by title (by heikobihr)
 [updated] Load remote favourites from channellist
