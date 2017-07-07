@@ -1,3 +1,6 @@
+3.1.0
+[updated] to PVR API v5.3.0
+
 3.0.6
 [added] Support for Wake-on-Lan
 [fixed] Channel parsing if no favourites have been defined
