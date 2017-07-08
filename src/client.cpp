@@ -328,6 +328,9 @@ PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
   pCapabilities->bHandlesInputStream         = true;
   pCapabilities->bHandlesDemuxing            = false;
   pCapabilities->bSupportsLastPlayedPosition = false;
+  pCapabilities->bSupportsRecordingsRename   = false;
+  pCapabilities->bSupportsRecordingsLifetimeChange = false;
+  pCapabilities->bSupportsDescrambleInfo = false;
 
   return PVR_ERROR_NO_ERROR;
 }
@@ -667,4 +670,6 @@ PVR_ERROR SetEPGTimeFrame(int iDays) { return PVR_ERROR_NOT_IMPLEMENTED; }
 unsigned int GetChannelSwitchDelay(void) { return 0; }
 bool SeekTime(double time, bool backwards, double *startpts) { return false; }
 void SetSpeed(int speed) {};
+PVR_ERROR GetDescrambleInfo(PVR_DESCRAMBLE_INFO*) { return PVR_ERROR_NOT_IMPLEMENTED; }
+PVR_ERROR SetRecordingLifetime(const PVR_RECORDING*) { return PVR_ERROR_NOT_IMPLEMENTED; }
 }
