@@ -1,3 +1,7 @@
+3.2.0
+[updated] to PVR API v5.6.0
+[updated] migrate add-on settings to settings library
+
 3.1.0
 [updated] to PVR API v5.3.0
 
