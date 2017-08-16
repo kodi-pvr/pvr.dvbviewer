@@ -1,3 +1,6 @@
+3.2.1
+[removed] legacy functions
+
 3.2.0
 [updated] to PVR API v5.6.0
 [updated] migrate add-on settings to settings library

@@ -496,16 +496,6 @@ void CloseLiveStream(void)
   SAFE_DELETE(strReader);
 }
 
-bool SwitchChannel(const PVR_CHANNEL &channel)
-{
-  if (channel.iUniqueId == DvbData->GetCurrentClientChannel())
-    return true;
-
-  /* as of late we need to close and reopen ourself */
-  (void)CloseLiveStream();
-  return OpenLiveStream(channel);
-}
-
 bool IsRealTimeStream()
 {
   return (strReader) ? strReader->NearEnd() : false;
@@ -673,7 +663,6 @@ PVR_ERROR GetRecordingEdl(const PVR_RECORDING&, PVR_EDL_ENTRY[], int*) { return 
 PVR_ERROR UndeleteRecording(const PVR_RECORDING& _UNUSED(recording)) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR DeleteAllRecordingsFromTrash() { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR SetEPGTimeFrame(int iDays) { return PVR_ERROR_NOT_IMPLEMENTED; }
-unsigned int GetChannelSwitchDelay(void) { return 0; }
 bool SeekTime(double time, bool backwards, double *startpts) { return false; }
 void SetSpeed(int speed) {};
 PVR_ERROR GetDescrambleInfo(PVR_DESCRAMBLE_INFO*) { return PVR_ERROR_NOT_IMPLEMENTED; }
