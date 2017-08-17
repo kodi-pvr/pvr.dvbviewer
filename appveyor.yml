@@ -1,9 +1,13 @@
-os: Visual Studio 2015
+image: Visual Studio 2015
 
 environment:
   CONFIG: Release
-  ARCH: win32
   KODI_BRANCH: master # usually synced with APPVEYOR_REPO_BRANCH
+  matrix:
+    - ARCH: win32
+      MSVC_PLATFORM: x86
+    - ARCH: win64
+      MSVC_PLATFORM: amd64
 
 init:
   ps: |
@@ -13,7 +17,7 @@ init:
 
 build_script:
   # Setup Visual Studio compiler environment
-  - call "%VS140COMNTOOLS%..\..\VC\bin\vcvars32.bat"
+  - call "%VS140COMNTOOLS%..\..\VC\vcvarsall.bat" %MSVC_PLATFORM%
 
   # Build addon
   - ps: |
