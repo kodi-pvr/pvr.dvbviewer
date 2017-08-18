@@ -47,7 +47,7 @@ build_script:
             "$env:KODI\cmake\addons"
 
       # build
-      cmd /c 'cmake --build . -- package-addons 2>&1'
+      cmd /c 'cmake --build . --config %CONFIG% -- package-addons 2>&1'
 
 after_build:
   - ps: |
