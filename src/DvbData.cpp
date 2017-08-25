@@ -187,7 +187,7 @@ bool Dvb::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channelinfo,
     memset(&broadcast, 0, sizeof(EPG_TAG));
     broadcast.iUniqueBroadcastId  = entry.id;
     broadcast.strTitle            = entry.title.c_str();
-    broadcast.iChannelNumber      = channelinfo.iChannelNumber;
+    broadcast.iUniqueChannelId    = channelinfo.iUniqueId;
     broadcast.startTime           = entry.start;
     broadcast.endTime             = entry.end;
     broadcast.strPlotOutline      = entry.plotOutline.c_str();

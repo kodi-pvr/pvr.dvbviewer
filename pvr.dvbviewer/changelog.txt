@@ -1,4 +1,7 @@
-3.2.1
+3.3.0
+[updated] to final PVR API v5.7.0
+
+3.2.2
 [updated] to PVR API v5.7.0
 
 3.2.1
