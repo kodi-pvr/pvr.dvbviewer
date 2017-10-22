@@ -1,3 +1,12 @@
+2.4.14
+[updated] Backport of v3.3.3 for Krypton
+[fixed] Preserve whitespaces in EPG
+[added] Support for Wake-on-Lan
+[fixed] Channel parsing if no favourites have been defined
+[added] Support for grouping recordings by title (by heikobihr)
+[updated] Load remote favourites from channellist
+[fixed] Group recordings by recording directory (by heikobihr)
+
 2.4.7
 [added] support for transcoding
 [added] support for on-pause/on-demand timeshifting
