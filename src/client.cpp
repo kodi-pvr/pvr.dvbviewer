@@ -504,7 +504,7 @@ bool IsRealTimeStream()
 bool CanPauseStream(void)
 {
   if (g_timeshift != Timeshift::OFF && strReader)
-    return (strReader->CanTimeshift()
+    return (strReader->IsTimeshifting()
       || XBMC->DirectoryExists(g_timeshiftBufferPath.c_str()));
   return false;
 }
@@ -512,7 +512,7 @@ bool CanPauseStream(void)
 bool CanSeekStream(void)
 {
   // pause button seems to check CanSeekStream() too
-  //return (strReader && strReader->CanTimeshift());
+  //return (strReader && strReader->IsTimeshifting());
   return (g_timeshift != Timeshift::OFF);
 }
 
@@ -526,11 +526,6 @@ long long SeekLiveStream(long long position, int whence)
   return (strReader) ? strReader->Seek(position, whence) : -1;
 }
 
-long long PositionLiveStream(void)
-{
-  return (strReader) ? strReader->Position() : -1;
-}
-
 long long LengthLiveStream(void)
 {
   return (strReader) ? strReader->Length() : -1;
@@ -538,35 +533,35 @@ long long LengthLiveStream(void)
 
 bool IsTimeshifting(void)
 {
-  return (strReader && strReader->CanTimeshift());
+  return (strReader && strReader->IsTimeshifting());
 }
 
-time_t GetBufferTimeStart()
+PVR_ERROR GetStreamTimes(PVR_STREAM_TIMES *times)
 {
-  return (strReader) ? strReader->TimeStart() : 0;
-}
-
-time_t GetBufferTimeEnd()
-{
-  return (strReader) ? strReader->TimeEnd() : 0;
+  if (!times)
+    return PVR_ERROR_INVALID_PARAMETERS;
+  if (strReader)
+  {
+    times->startTime = strReader->TimeStart();
+    times->ptsStart  = 0;
+    times->ptsBegin  = 0;
+    times->ptsEnd    = (!strReader->IsTimeshifting()) ? 0
+      : (strReader->TimeEnd() - strReader->TimeStart()) * DVD_TIME_BASE;
+    return PVR_ERROR_NO_ERROR;
+  }
+  return PVR_ERROR_NOT_IMPLEMENTED;
 }
 
 void PauseStream(bool paused)
 {
   /* start timeshift on pause */
-  if (paused && g_timeshift != Timeshift::OFF
-      && strReader && !strReader->CanTimeshift()
+  if (paused && g_timeshift == Timeshift::ON_PAUSE
+      && strReader && !strReader->IsTimeshifting()
       && XBMC->DirectoryExists(g_timeshiftBufferPath.c_str()))
   {
     strReader = new TimeshiftBuffer(strReader, g_timeshiftBufferPath);
     (void)strReader->Start();
   }
-}
-
-time_t GetPlayingTime()
-{
-  //FIXME: this should rather return the time of the *current* position
-  return GetBufferTimeEnd();
 }
 
 /* recording stream functions */
@@ -622,14 +617,6 @@ long long SeekRecordedStream(long long position, int whence)
   return recReader->Seek(position, whence);
 }
 
-long long PositionRecordedStream(void)
-{
-  if (!recReader)
-    return -1;
-
-  return recReader->Position();
-}
-
 long long LengthRecordedStream(void)
 {
   if (!recReader)
@@ -639,13 +626,11 @@ long long LengthRecordedStream(void)
 }
 
 /** UNUSED API FUNCTIONS */
-PVR_ERROR GetStreamTimes(PVR_STREAM_TIMES*) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR GetStreamProperties(PVR_STREAM_PROPERTIES*) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR GetChannelStreamProperties(const PVR_CHANNEL*, PVR_NAMED_VALUE*, unsigned int*) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR CallMenuHook(const PVR_MENUHOOK&, const PVR_MENUHOOK_DATA&) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR DeleteChannel(const PVR_CHANNEL&) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR RenameChannel(const PVR_CHANNEL&) { return PVR_ERROR_NOT_IMPLEMENTED; }
-PVR_ERROR MoveChannel(const PVR_CHANNEL&) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR OpenDialogChannelScan(void) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR OpenDialogChannelSettings(const PVR_CHANNEL&) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR OpenDialogChannelAdd(const PVR_CHANNEL&) { return PVR_ERROR_NOT_IMPLEMENTED; }

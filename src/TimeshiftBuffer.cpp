@@ -49,7 +49,7 @@ bool TimeshiftBuffer::Start()
   if (IsRunning())
     return true;
   XBMC->Log(LOG_INFO, "Timeshift: Started");
-  m_start = time(NULL);
+  m_start = time(nullptr);
   CreateThread();
   return true;
 }
@@ -131,7 +131,7 @@ time_t TimeshiftBuffer::TimeStart()
 
 time_t TimeshiftBuffer::TimeEnd()
 {
-  return time(NULL);
+  return time(nullptr);
 }
 
 bool TimeshiftBuffer::NearEnd()
@@ -145,7 +145,7 @@ bool TimeshiftBuffer::NearEnd()
   //return Length() - Position() <= 10 * 1048576;
 }
 
-bool TimeshiftBuffer::CanTimeshift()
+bool TimeshiftBuffer::IsTimeshifting()
 {
   return true;
 }

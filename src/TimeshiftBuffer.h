@@ -20,7 +20,7 @@ public:
   time_t TimeStart() override;
   time_t TimeEnd() override;
   bool NearEnd() override;
-  bool CanTimeshift() override;
+  bool IsTimeshifting() override;
 
 private:
   virtual void *Process(void) override;

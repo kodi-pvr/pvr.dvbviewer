@@ -1,3 +1,6 @@
+3.4.0
+[updated] to PVR API v5.8.0
+
 3.3.3
 [fixed] Preserve whitespaces in EPG
 

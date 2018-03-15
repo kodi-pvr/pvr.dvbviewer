@@ -4,7 +4,7 @@
 using namespace ADDON;
 
 StreamReader::StreamReader(const std::string &streamURL)
-  : m_start(time(NULL))
+  : m_start(time(nullptr))
 {
   m_streamHandle = XBMC->OpenFile(streamURL.c_str(), READ_NO_CACHE);
   XBMC->Log(LOG_DEBUG, "StreamReader: Started; url=%s", streamURL.c_str());
@@ -49,7 +49,7 @@ time_t StreamReader::TimeStart()
 
 time_t StreamReader::TimeEnd()
 {
-  return time(NULL);
+  return time(nullptr);
 }
 
 bool StreamReader::NearEnd()
@@ -57,7 +57,7 @@ bool StreamReader::NearEnd()
   return true;
 }
 
-bool StreamReader::CanTimeshift()
+bool StreamReader::IsTimeshifting()
 {
   return false;
 }
