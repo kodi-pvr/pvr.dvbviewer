@@ -414,9 +414,9 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
     DvbRecording recording;
     recording.id = xRecording->Attribute("id");
     xRecording->QueryUnsignedAttribute("content", &recording.genre);
-    XMLUtils_GetString(xRecording, "title",   recording.title);
-    XMLUtils_GetString(xRecording, "info",    recording.plotOutline);
-    XMLUtils_GetString(xRecording, "desc",    recording.plot);
+    XMLUtils_GetString(xRecording, "title", recording.title);
+    XMLUtils_GetString(xRecording, "info",  recording.plotOutline);
+    XMLUtils_GetString(xRecording, "desc",  recording.plot);
     if (recording.plot.empty())
     {
       recording.plot = recording.plotOutline;
@@ -454,17 +454,21 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
     switch(g_groupRecordings)
     {
       case DvbRecording::Grouping::BY_DIRECTORY:
-        if (!XMLUtils_GetString(xRecording, "file", group))
-          break;
-        StringUtils::ToLower(group);
-        for (auto &recf : m_recfolders)
         {
-          if (!StringUtils::StartsWith(group, recf))
-            continue;
-          group = group.substr(recf.length(), group.rfind('\\') - recf.length());
-          StringUtils::Replace(group, '\\', '/');
-          StringUtils::TrimLeft(group, "/");
-          break;
+          std::string file;
+          if (!XMLUtils_GetString(xRecording, "file", file))
+            break;
+          std::string fileLower(file.size(), 0);
+          std::transform(file.begin(), file.end(), fileLower.begin(), ::tolower);
+          for (auto &recf : m_recfolders)
+          {
+            if (!StringUtils::StartsWith(fileLower, recf))
+              continue;
+            group = file.substr(recf.length(), file.rfind('\\') - recf.length());
+            StringUtils::Replace(group, '\\', '/');
+            StringUtils::TrimLeft(group, "/");
+            break;
+          }
         }
         break;
       case DvbRecording::Grouping::BY_DATE:
@@ -472,7 +476,7 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
             startTime.substr(4, 2).c_str());
         break;
       case DvbRecording::Grouping::BY_FIRST_LETTER:
-        group = toupper(recording.title[0]);
+        group = ::toupper(recording.title[0]);
         break;
       case DvbRecording::Grouping::BY_TV_CHANNEL:
         group = recording.channelName;
