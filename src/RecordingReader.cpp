@@ -10,12 +10,13 @@
 using namespace ADDON;
 
 RecordingReader::RecordingReader(const std::string &streamURL, time_t end)
-  : m_streamURL(streamURL), m_end(end), m_fastReopen(false), m_playback(false)
+  : m_streamURL(streamURL), m_end(end)
 {
-  m_readHandle = XBMC->OpenFile(m_streamURL.c_str(), 0);
+  m_readHandle = XBMC->CURLCreate(m_streamURL.c_str());
+  (void)XBMC->CURLOpen(m_readHandle, XFILE::READ_NO_CACHE);
   m_len = XBMC->GetFileLength(m_readHandle);
   m_pos = 0;
-  m_nextReopen = time(NULL) + REOPEN_INTERVAL;
+  m_nextReopen = time(nullptr) + REOPEN_INTERVAL;
   XBMC->Log(LOG_DEBUG, "RecordingReader: Started; url=%s, end=%u",
       m_streamURL.c_str(), m_end);
 }
@@ -35,37 +36,24 @@ bool RecordingReader::Start()
 ssize_t RecordingReader::ReadData(unsigned char *buffer, unsigned int size)
 {
   /* check for playback of ongoing recording */
-  if (m_playback && m_end)
+  if (m_end)
   {
-    time_t now = time(NULL);
-    if (now > m_nextReopen)
+    time_t now = time(nullptr);
+    if (m_pos == m_len || now > m_nextReopen)
     {
-FORCE_REOPEN:
       /* reopen stream */
       XBMC->Log(LOG_DEBUG, "RecordingReader: Reopening stream...");
-      XBMC->CloseFile(m_readHandle);
-      m_readHandle = XBMC->OpenFile(m_streamURL.c_str(), 0);
+      (void)XBMC->CURLOpen(m_readHandle, XFILE::READ_REOPEN | XFILE::READ_NO_CACHE);
       m_len = XBMC->GetFileLength(m_readHandle);
       XBMC->SeekFile(m_readHandle, m_pos, SEEK_SET);
 
-      m_nextReopen = now + ((m_fastReopen) ? REOPEN_INTERVAL_FAST : REOPEN_INTERVAL);
+      // random value (10 MiB) we choose to switch to fast reopen interval
+      bool nearEnd = m_len - m_pos <= 10 * 1024 * 1024;
+      m_nextReopen = now + (nearEnd ? REOPEN_INTERVAL_FAST : REOPEN_INTERVAL);
 
       /* recording has finished */
       if (now > m_end)
         m_end = 0;
-    }
-    else if (m_pos == m_len)
-    {
-      /* in case we reached the end we need to wait a little */
-      int sleep = REOPEN_INTERVAL_FAST + 5;
-      if (!m_fastReopen)
-        sleep = std::min(sleep, static_cast<int>(m_nextReopen - now + 1));
-      XBMC->Log(LOG_DEBUG, "RecordingReader: End reached. Sleeping %d secs",
-          sleep);
-      P8PLATFORM::CEvent::Sleep(sleep * 1000);
-      now += sleep;
-      m_fastReopen = true;
-      goto FORCE_REOPEN;
     }
   }
 
@@ -93,4 +81,3 @@ int64_t RecordingReader::Length()
 {
   return m_len;
 }
-
