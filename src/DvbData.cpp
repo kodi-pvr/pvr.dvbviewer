@@ -3,6 +3,7 @@
 #include "util/XMLUtils.h"
 #include "p8-platform/util/util.h"
 #include "p8-platform/util/StringUtils.h"
+
 #include <tinyxml.h>
 #include <inttypes.h>
 #include <set>
@@ -35,14 +36,6 @@ Dvb::Dvb()
   m_nextTimerId(1)
 {
   TiXmlBase::SetCondenseWhiteSpace(false);
-
-  // simply add user@pass in front of the URL if username/password is set
-  std::string auth("");
-  if (!g_username.empty() && !g_password.empty())
-    auth = StringUtils::Format("%s:%s@", URLEncode(g_username).c_str(),
-        URLEncode(g_password).c_str());
-  m_url = StringUtils::Format("http://%s%s:%u/", auth.c_str(), g_hostname.c_str(),
-      g_webPort);
 
   m_updateTimers = false;
   m_updateEPG    = false;
@@ -123,10 +116,9 @@ bool Dvb::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channelinfo,
 {
   DvbChannel *channel = m_channels[channelinfo.iUniqueId - 1];
 
-  const std::string &url = BuildURL("api/epg.html?lvl=2&channel=%" PRIu64
+  const httpResponse &res = GetFromAPI("api/epg.html?lvl=2&channel=%" PRIu64
       "&start=%f&end=%f", channel->epgId, start/86400.0 + DELPHI_DATE,
       end/86400.0 + DELPHI_DATE);
-  const httpResponse &res = GetHttpXML(url);
   if (res.error)
   {
     SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
@@ -322,10 +314,10 @@ bool Dvb::AddTimer(const PVR_TIMER &timer, bool update)
 
   uint64_t backendId = m_channels[timer.iClientChannelUid - 1]->backendIds.front();
   if (!update)
-    GetHttpXML(BuildURL("api/timeradd.html?ch=%" PRIu64 "&dor=%u&enable=1"
+    GetFromAPI("api/timeradd.html?ch=%" PRIu64 "&dor=%u&enable=1"
         "&start=%u&stop=%u&prio=%d&days=%s&title=%s&encoding=255",
         backendId, date, start, stop, timer.iPriority, repeat,
-        URLEncode(timer.strTitle).c_str()));
+        URLEncode(timer.strTitle).c_str());
   else
   {
     auto t = GetTimer([&] (const DvbTimer &t)
@@ -336,10 +328,10 @@ bool Dvb::AddTimer(const PVR_TIMER &timer, bool update)
       return false;
 
     short enabled = (timer.state == PVR_TIMER_STATE_CANCELLED) ? 0 : 1;
-    GetHttpXML(BuildURL("api/timeredit.html?id=%d&ch=%" PRIu64 "&dor=%u"
+    GetFromAPI("api/timeredit.html?id=%d&ch=%" PRIu64 "&dor=%u"
         "&enable=%d&start=%u&stop=%u&prio=%d&days=%s&title=%s&encoding=255",
         t->backendId, backendId, date, enabled, start, stop, timer.iPriority,
-        repeat, URLEncode(timer.strTitle).c_str()));
+        repeat, URLEncode(timer.strTitle).c_str());
   }
 
   //TODO: instead of syncing all timers, we could only sync the new/modified
@@ -358,7 +350,7 @@ bool Dvb::DeleteTimer(const PVR_TIMER &timer)
   if (!t)
     return false;
 
-  GetHttpXML(BuildURL("api/timerdelete.html?id=%u", t->backendId));
+  GetFromAPI("api/timerdelete.html?id=%u", t->backendId);
 
   //TODO: instead of syncing all timers, we could only sync the new/modified
   m_updateTimers = true;
@@ -375,8 +367,7 @@ unsigned int Dvb::GetTimersAmount()
 bool Dvb::GetRecordings(ADDON_HANDLE handle)
 {
   CLockObject lock(m_mutex);
-  httpResponse &&res = GetHttpXML(BuildURL("api/recordings.html?utf8=1"
-      "&images=1"));
+  httpResponse &&res = GetFromAPI("api/recordings.html?utf8=1&images=1");
   if (res.error)
   {
     SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
@@ -540,12 +531,10 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
 
 bool Dvb::DeleteRecording(const PVR_RECORDING &recinfo)
 {
-  // RS api doesn't return a result
-  // TODO: check for http 200 / http 423
-  // but kodi curl wrapper doesn't expose m_httpresponse
-  GetHttpXML(BuildURL("api/recdelete.html?recid=%s&delfile=1",
-      recinfo.strRecordingId));
-
+  const httpResponse &res = GetFromAPI("api/recdelete.html?recid=%s&delfile=1",
+      recinfo.strRecordingId);
+  if (res.error)
+    return false;
   PVR->TriggerRecordingUpdate();
   return true;
 }
@@ -694,23 +683,69 @@ void *Dvb::Process()
   return nullptr;
 }
 
-
-Dvb::httpResponse Dvb::GetHttpXML(const std::string& url)
+Dvb::httpResponse Dvb::GetFromAPI(const char* format, ...)
 {
-  // TODO Kodi CURL api doesn't expose the http code. need to replace it
-  // afterwards handle connection failures here
-  // (PVR_CONNECTION_STATE_SERVER_UNREACHABLE)
-  httpResponse res = { true, "" };
-  void *fileHandle = XBMC->OpenFile(url.c_str(), READ_NO_CACHE);
-  if (fileHandle)
+  static const std::string baseUrl = StringUtils::Format("http://%s:%u/",
+      g_hostname.c_str(), g_webPort);
+  va_list argList;
+  va_start(argList, format);
+  std::string url = baseUrl + StringUtils::FormatV(format, argList);
+  va_end(argList);
+
+  httpResponse res = { true, 0, "" };
+  void *file = XBMC->CURLCreate(url.c_str());
+  if (!file)
   {
-    res.error = false;
-    char buffer[1024];
-    while (int bytesRead = XBMC->ReadFile(fileHandle, buffer, 1024))
-      res.content.append(buffer, bytesRead);
-    XBMC->CloseFile(fileHandle);
+    XBMC->Log(LOG_ERROR, "Unable to create curl handle for %s", url.c_str());
+    SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
     return res;
   }
+
+  XBMC->CURLAddOption(file, XFILE::CURL_OPTION_PROTOCOL, "user-agent", "Kodi PVR");
+  XBMC->CURLAddOption(file, XFILE::CURL_OPTION_HEADER, "Accept", "text/xml");
+  if (!g_username.empty() && !g_password.empty())
+    XBMC->CURLAddOption(file, XFILE::CURL_OPTION_CREDENTIALS,
+        g_username.c_str(), g_password.c_str());
+
+  /*
+   * FIXME
+   * CURLOpen fails on http!=2xy responses and the underlaying handle gets
+   * deleted. So we can't parse the status line anymore.
+   */
+  if (!XBMC->CURLOpen(file, XFILE::READ_NO_CACHE))
+  {
+    XBMC->Log(LOG_ERROR, "Unable to open url: %s", url.c_str());
+    XBMC->CloseFile(file);
+    return res;
+  }
+
+  char *status = XBMC->GetFilePropertyValue(file,
+    XFILE::FILE_PROPERTY_RESPONSE_PROTOCOL, "");
+  if (!status)
+  {
+    XBMC->Log(LOG_ERROR, "Endpoint %s didn't return a status line.", url.c_str());
+    XBMC->CloseFile(file);
+    SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
+    return res;
+  }
+
+  std::istringstream ss(status);
+  ss.ignore(10, ' ');
+  ss >> res.code;
+  if (!ss.good())
+  {
+    XBMC->Log(LOG_ERROR, "Endpoint %s returned an invalid status line: ",
+      url.c_str(), status);
+    XBMC->CloseFile(file);
+    SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
+    return res;
+  }
+
+  res.error = (res.code >= 300);
+  char buffer[1024];
+  while (int bytesRead = XBMC->ReadFile(file, buffer, 1024))
+    res.content.append(buffer, bytesRead);
+  XBMC->CloseFile(file);
   return res;
 }
 
@@ -740,8 +775,8 @@ std::string Dvb::URLEncode(const std::string& data)
 
 bool Dvb::LoadChannels()
 {
-  const httpResponse &res = GetHttpXML(BuildURL("api/getchannelsxml.html"
-      "?fav=1&subchannels=1&logo=1"));
+  const httpResponse &res = GetFromAPI("api/getchannelsxml.html"
+      "?fav=1&subchannels=1&logo=1");
   if (res.error)
   {
     SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
@@ -1028,7 +1063,7 @@ DvbTimers_t Dvb::LoadTimers()
   DvbTimers_t timers;
 
   // utf8=2 is correct here
-  httpResponse &&res = GetHttpXML(BuildURL("api/timerlist.html?utf8=2"));
+  httpResponse &&res = GetFromAPI("api/timerlist.html?utf8=2");
   if (res.error)
   {
     SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
@@ -1200,15 +1235,14 @@ void Dvb::RemoveNullChars(std::string& str)
 
 bool Dvb::CheckBackendVersion()
 {
-  const httpResponse &res = GetHttpXML(BuildURL("api/version.html"));
+  const httpResponse &res = GetFromAPI("api/version.html");
+  if (res.code == 401)
+    SetConnectionState(PVR_CONNECTION_STATE_ACCESS_DENIED);
   if (res.error)
   {
     SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
     return false;
   }
-
-  // TODO check access denied (PVR_CONNECTION_STATE_ACCESS_DENIED) vs timeout
-  // but kodi curl wrapper doesn't expose m_httpresponse
 
   TiXmlDocument doc;
   doc.Parse(res.content.c_str());
@@ -1244,7 +1278,7 @@ bool Dvb::CheckBackendVersion()
 
 bool Dvb::UpdateBackendStatus(bool updateSettings)
 {
-  const httpResponse &res = GetHttpXML(BuildURL("api/status2.html"));
+  const httpResponse &res = GetFromAPI("api/status2.html");
   if (res.error)
   {
     SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
@@ -1345,27 +1379,13 @@ time_t Dvb::ParseDateTime(const std::string& date, bool iso8601)
 
 std::string Dvb::BuildURL(const char* path, ...)
 {
-  std::string url(m_url);
-  va_list argList;
-  va_start(argList, path);
-  url += StringUtils::FormatV(path, argList);
-  va_end(argList);
-  return url;
-}
+  static const std::string auth = (g_username.empty() || g_password.empty()) ? ""
+      : StringUtils::Format("%s:%s@", URLEncode(g_username).c_str(),
+          URLEncode(g_password).c_str());
+  static const std::string baseUrl = StringUtils::Format("http://%s%s:%u/",
+      auth.c_str(), g_hostname.c_str(), g_webPort);
 
-std::string Dvb::BuildExtURL(const std::string& baseURL, const char* path, ...)
-{
-  std::string url(baseURL);
-  // simply add user@pass in front of the URL if username/password is set
-  //TODO: maybe use special authorization option (see CurlFile.cpp)?
-  if (!g_username.empty() && !g_password.empty())
-  {
-    std::string auth = StringUtils::Format("%s:%s@",
-        URLEncode(g_username).c_str(), URLEncode(g_password).c_str());
-    std::string::size_type pos = url.find("://");
-    if (pos != std::string::npos)
-      url.insert(pos + strlen("://"), auth);
-  }
+  std::string url(baseUrl);
   va_list argList;
   va_start(argList, path);
   url += StringUtils::FormatV(path, argList);

@@ -231,8 +231,8 @@ protected:
 
 private:
   // functions
-  struct httpResponse { bool error; std::string content; };
-  httpResponse GetHttpXML(const std::string& url);
+  struct httpResponse { bool error; unsigned short code; std::string content; };
+  httpResponse GetFromAPI(const char* format, ...);
   std::string URLEncode(const std::string& data);
   bool LoadChannels();
   DvbTimers_t LoadTimers();
@@ -248,14 +248,12 @@ private:
       const char *message = nullptr, ...);
   time_t ParseDateTime(const std::string& strDate, bool iso8601 = true);
   std::string BuildURL(const char* path, ...);
-  std::string BuildExtURL(const std::string& baseURL, const char* path, ...);
   std::string ConvertToUtf8(const std::string& src);
   long GetGMTOffset();
 
 private:
   PVR_CONNECTION_STATE m_state;
   unsigned int m_backendVersion;
-  std::string m_url;
 
   long m_timezone;
   struct { long long total, used; } m_diskspace;

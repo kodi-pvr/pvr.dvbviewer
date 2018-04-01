@@ -19,7 +19,7 @@ TimeshiftBuffer::TimeshiftBuffer(IStreamReader *strReader,
   m_writePos = 0;
 #endif
   Sleep(100);
-  m_filebufferReadHandle = XBMC->OpenFile(m_bufferPath.c_str(), READ_NO_CACHE);
+  m_filebufferReadHandle = XBMC->OpenFile(m_bufferPath.c_str(), XFILE::READ_NO_CACHE);
 }
 
 TimeshiftBuffer::~TimeshiftBuffer(void)
