@@ -1,3 +1,6 @@
+2.4.15
+[added] Add support for processing Recorded TV Edit Decision Lists (EDL)
+
 2.4.14
 [updated] Backport of v3.3.3 for Krypton
 [fixed] Preserve whitespaces in EPG

@@ -26,6 +26,10 @@
   <!-- recordings -->
   <category label="30102">
     <setting label="30050" id="grouprecordings" type="enum" lvalues="30051|30052|30053|30054|30055|30056|30057" default="0" />
+    <setting id="enable_recording_edl" label="30090" type="bool" default="false"/>
+    <setting id="recording_edl_folder" enable="eq(-1,true)" label="30091" type="folder" source="auto" option="writeable"/>
+    <setting id="recording_edl_start_padding" enable="eq(-2,true)" label="30092" type="slider" default="0" range="0,500,10000" option="int"/>
+    <setting id="recording_edl_end_padding" enable="eq(-3,true)" label="30093" type="slider" default="0" range="0,500,10000" option="int"/>
   </category>
 
   <!-- advanced -->

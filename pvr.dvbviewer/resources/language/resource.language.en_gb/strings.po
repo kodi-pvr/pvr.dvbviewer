@@ -170,6 +170,24 @@ msgctxt "#30077"
 msgid "Transcoding URL parameters"
 msgstr ""
 
+#empty strings from id 30078 to 30089
+ 
+msgctxt "#30090"
+msgid "Enable Edit Decision List (EDL) support for Recorded TV"
+msgstr ""
+
+msgctxt "#30091"
+msgid "EDL file path"
+msgstr ""
+
+msgctxt "#30092"
+msgid "Start time padding (milliseconds)"
+msgstr ""
+
+msgctxt "#30093"
+msgid "End time padding (milliseconds)"
+msgstr ""
+
 #empty strings from id 30078 to 30099
 #sections
 
