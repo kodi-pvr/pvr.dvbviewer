@@ -432,25 +432,31 @@ bool Dvb::AddTimer(const PVR_TIMER &timer, bool update)
 
   uint64_t backendId = m_channels[timer.iClientChannelUid - 1]->backendIds.front();
   std::string params = StringUtils::Format("encoding=255&ch=%" PRIu64 "&dor=%u"
-      "&start=%u&stop=%u&pre=%u&post=%u&prio=%d&days=%s&title=%s",
+      "&start=%u&stop=%u&pre=%u&post=%u&prio=%d&days=%s&enable=%d",
       backendId, date, start, stop, pre, post, timer.iPriority, repeat,
-      URLEncode(timer.strTitle).c_str());
+      (timer.state != PVR_TIMER_STATE_DISABLED));
+  params += "&title="  + URLEncode(timer.strTitle);
   params += "&folder=" + URLEncode((timer.iRecordingGroup == 0) ? "Auto"
       : m_recfolders[timer.iRecordingGroup - 1]);
-
-  if (!update)
-    GetFromAPI("api/timeradd.html?enable=1&%s", params.c_str());
-  else
-  {
+  if (update) {
     auto t = GetTimer([&] (const DvbTimer &t)
         {
           return (t.id == timer.iClientIndex);
         });
     if (!t)
+    {
+      XBMC->Log(LOG_ERROR, "Timer %u is unknown", timer.iClientIndex);
       return false;
+    }
+    params += StringUtils::Format("&id=%d", t->backendId);
+  }
 
-    GetFromAPI("api/timeredit.html?id=%d&enable=%d&%s", t->backendId,
-        (timer.state == PVR_TIMER_STATE_DISABLED) ? 0 : 1, params.c_str());
+  const httpResponse &res = GetFromAPI("api/timer%s.html?%s",
+      (update) ? "edit" : "add", params.c_str());
+  if (res.error)
+  {
+    XBMC->Log(LOG_ERROR, "Unable to add/edit timer");
+    return false;
   }
 
   //TODO: instead of syncing all timers, we could only sync the new/modified
