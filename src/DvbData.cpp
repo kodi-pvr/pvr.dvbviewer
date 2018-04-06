@@ -10,6 +10,7 @@
 #include <iterator>
 #include <sstream>
 #include <algorithm>
+#include <memory>
 
 using namespace ADDON;
 using namespace P8PLATFORM;
@@ -81,6 +82,9 @@ bool Dvb::GetDriveSpace(long long *total, long long *used)
   return true;
 }
 
+/***************************************************************************
+ * Channels
+ **************************************************************************/
 unsigned int Dvb::GetCurrentClientChannel(void)
 {
   CLockObject lock(m_mutex);
@@ -208,7 +212,9 @@ unsigned int Dvb::GetChannelsAmount()
   return m_channelAmount;
 }
 
-
+/***************************************************************************
+ * Channel groups
+ **************************************************************************/
 bool Dvb::GetChannelGroups(ADDON_HANDLE handle, bool radio)
 {
   for (auto &group : m_groups)
@@ -261,6 +267,111 @@ unsigned int Dvb::GetChannelGroupsAmount()
   return m_groupAmount;
 }
 
+/***************************************************************************
+ * Timers
+ **************************************************************************/
+bool Dvb::GetTimerTypes(PVR_TIMER_TYPE types[], int *size)
+{
+  struct TimerType
+    : PVR_TIMER_TYPE
+  {
+    TimerType(unsigned int id, unsigned int attributes,
+      const std::string &description = std::string(),
+      const std::vector< std::pair<int, std::string> > &priorityValues
+        = std::vector< std::pair<int, std::string> >(),
+      const std::vector< std::pair<int, std::string> > &groupValues
+        = std::vector< std::pair<int, std::string> >())
+    {
+      int i;
+      memset(this, 0, sizeof(PVR_TIMER_TYPE));
+
+      iId         = id;
+      iAttributes = attributes;
+      PVR_STRCPY(strDescription, description.c_str());
+      //TODO: add support for deDup + CheckRecTitle, CheckRecSubtitle
+
+      if ((iPrioritiesSize = priorityValues.size()))
+        iPrioritiesDefault = priorityValues[0].first;
+      i = 0;
+      for (auto &priority : priorityValues)
+      {
+        priorities[i].iValue = priority.first;
+        PVR_STRCPY(priorities[i].strDescription, priority.second.c_str());
+        ++i;
+      }
+
+      if ((iRecordingGroupSize = groupValues.size()))
+        iRecordingGroupDefault = groupValues[0].first;
+      i = 0;
+      for (auto &group : groupValues)
+      {
+        recordingGroup[i].iValue = group.first;
+        PVR_STRCPY(recordingGroup[i].strDescription, group.second.c_str());
+        ++i;
+      }
+    }
+  };
+
+  /* PVR_Timer.iPriority values and presentation.*/
+  static std::vector< std::pair<int, std::string> > priorityValues = {
+    { -1,  XBMC->GetLocalizedString(30400) }, //default
+    { 0,   XBMC->GetLocalizedString(30401) },
+    { 25,  XBMC->GetLocalizedString(30402) },
+    { 50,  XBMC->GetLocalizedString(30403) },
+    { 75,  XBMC->GetLocalizedString(30404) },
+    { 100, XBMC->GetLocalizedString(30405) },
+  };
+
+  /* PVR_Timer.iRecordingGroup values and presentation.*/
+  std::vector< std::pair<int, std::string> > groupValues = {
+    { 0, XBMC->GetLocalizedString(30410) }, //automatic
+  };
+  for (auto &recf : m_recfolders)
+    groupValues.emplace_back(groupValues.size(), recf);
+
+  std::vector< std::unique_ptr<TimerType> > timerTypes;
+
+  //TODO: use std::make_unique with C++14
+  timerTypes.emplace_back(
+    /* One-shot manual (time and channel based) */
+    std::unique_ptr<TimerType>(new TimerType(
+      DvbTimer::Type::MANUAL_ONCE,
+      PVR_TIMER_TYPE_IS_MANUAL                 |
+      PVR_TIMER_TYPE_SUPPORTS_ENABLE_DISABLE   |
+      PVR_TIMER_TYPE_SUPPORTS_CHANNELS         |
+      PVR_TIMER_TYPE_SUPPORTS_START_TIME       |
+      PVR_TIMER_TYPE_SUPPORTS_END_TIME         |
+      PVR_TIMER_TYPE_SUPPORTS_START_END_MARGIN |
+      PVR_TIMER_TYPE_SUPPORTS_PRIORITY         |
+      PVR_TIMER_TYPE_SUPPORTS_RECORDING_GROUP,
+      "", /* Let Kodi generate the description */
+      priorityValues, groupValues)));
+
+  timerTypes.emplace_back(
+    /* Repeating manual (time and channel based) */
+    std::unique_ptr<TimerType>(new TimerType(
+      DvbTimer::Type::MANUAL_REPEATING,
+      PVR_TIMER_TYPE_IS_MANUAL                 |
+      PVR_TIMER_TYPE_IS_REPEATING              |
+      PVR_TIMER_TYPE_SUPPORTS_ENABLE_DISABLE   |
+      PVR_TIMER_TYPE_SUPPORTS_CHANNELS         |
+      PVR_TIMER_TYPE_SUPPORTS_START_TIME       |
+      PVR_TIMER_TYPE_SUPPORTS_END_TIME         |
+      PVR_TIMER_TYPE_SUPPORTS_WEEKDAYS         |
+      PVR_TIMER_TYPE_SUPPORTS_START_END_MARGIN |
+      PVR_TIMER_TYPE_SUPPORTS_PRIORITY         |
+      PVR_TIMER_TYPE_SUPPORTS_RECORDING_GROUP,
+      "", /* Let Kodi generate the description */
+      priorityValues, groupValues)));
+
+
+  int i = 0;
+  for (auto &timer : timerTypes)
+    types[i++] = *timer;
+  *size = timerTypes.size();
+  XBMC->Log(LOG_DEBUG, "transfered %u timers", *size);
+  return true;
+}
 
 bool Dvb::GetTimers(ADDON_HANDLE handle)
 {
@@ -275,10 +386,12 @@ bool Dvb::GetTimers(ADDON_HANDLE handle)
     tag.iClientChannelUid = timer.channel->id;
     tag.startTime         = timer.start;
     tag.endTime           = timer.end;
+    tag.iMarginStart      = timer.pre;
+    tag.iMarginEnd        = timer.post;
     tag.state             = timer.state;
-    /* TODO: Implement own timer types to get support for the timer features introduced with PVR API 1.9.7 */
-    tag.iTimerType        = PVR_TIMER_TYPE_NONE;
+    tag.iTimerType        = timer.type;
     tag.iPriority         = timer.priority;
+    tag.iRecordingGroup   = timer.recfolder + 1; /* first entry is automatic */
     tag.firstDay          = (timer.weekdays != 0) ? timer.start : 0;
     tag.iWeekdays         = timer.weekdays;
 
@@ -293,10 +406,15 @@ bool Dvb::AddTimer(const PVR_TIMER &timer, bool update)
       __FUNCTION__, timer.iClientChannelUid, timer.strTitle);
   CLockObject lock(m_mutex);
 
-  time_t startTime = timer.startTime - timer.iMarginStart * 60;
-  time_t endTime   = timer.endTime   + timer.iMarginEnd * 60;
-  if (!timer.startTime)
-    startTime = time(NULL);
+  // DMS API requires starttime/endtime to include the margins
+  unsigned int pre = timer.iMarginStart, post = timer.iMarginEnd;
+  time_t startTime = (timer.startTime) ? timer.startTime - pre*60 : time(nullptr);
+  time_t endTime   = timer.endTime + post*60;
+  if (endTime - startTime >= 24*60*60)
+  {
+    XBMC->QueueNotification(QUEUE_ERROR, XBMC->GetLocalizedString(30510));
+    return false;
+  }
 
   unsigned int date = ((startTime + m_timezone) / DAY_SECS) + DELPHI_DATE;
   struct tm *timeinfo;
@@ -313,11 +431,15 @@ bool Dvb::AddTimer(const PVR_TIMER &timer, bool update)
   }
 
   uint64_t backendId = m_channels[timer.iClientChannelUid - 1]->backendIds.front();
+  std::string params = StringUtils::Format("encoding=255&ch=%" PRIu64 "&dor=%u"
+      "&start=%u&stop=%u&pre=%u&post=%u&prio=%d&days=%s&title=%s",
+      backendId, date, start, stop, pre, post, timer.iPriority, repeat,
+      URLEncode(timer.strTitle).c_str());
+  params += "&folder=" + URLEncode((timer.iRecordingGroup == 0) ? "Auto"
+      : m_recfolders[timer.iRecordingGroup - 1]);
+
   if (!update)
-    GetFromAPI("api/timeradd.html?ch=%" PRIu64 "&dor=%u&enable=1"
-        "&start=%u&stop=%u&prio=%d&days=%s&title=%s&encoding=255",
-        backendId, date, start, stop, timer.iPriority, repeat,
-        URLEncode(timer.strTitle).c_str());
+    GetFromAPI("api/timeradd.html?enable=1&%s", params.c_str());
   else
   {
     auto t = GetTimer([&] (const DvbTimer &t)
@@ -327,11 +449,8 @@ bool Dvb::AddTimer(const PVR_TIMER &timer, bool update)
     if (!t)
       return false;
 
-    short enabled = (timer.state == PVR_TIMER_STATE_CANCELLED) ? 0 : 1;
-    GetFromAPI("api/timeredit.html?id=%d&ch=%" PRIu64 "&dor=%u"
-        "&enable=%d&start=%u&stop=%u&prio=%d&days=%s&title=%s&encoding=255",
-        t->backendId, backendId, date, enabled, start, stop, timer.iPriority,
-        repeat, URLEncode(timer.strTitle).c_str());
+    GetFromAPI("api/timeredit.html?id=%d&enable=%d&%s", t->backendId,
+        (timer.state == PVR_TIMER_STATE_DISABLED) ? 0 : 1, params.c_str());
   }
 
   //TODO: instead of syncing all timers, we could only sync the new/modified
@@ -363,7 +482,9 @@ unsigned int Dvb::GetTimersAmount()
   return m_timers.size();
 }
 
-
+/***************************************************************************
+ * Recordings
+ **************************************************************************/
 bool Dvb::GetRecordings(ADDON_HANDLE handle)
 {
   CLockObject lock(m_mutex);
@@ -449,11 +570,9 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
           std::string file;
           if (!XMLUtils_GetString(xRecording, "file", file))
             break;
-          std::string fileLower(file.size(), 0);
-          std::transform(file.begin(), file.end(), fileLower.begin(), ::tolower);
           for (auto &recf : m_recfolders)
           {
-            if (!StringUtils::StartsWith(fileLower, recf))
+            if (!StringUtils::StartsWithNoCase(file, recf))
               continue;
             group = file.substr(recf.length(), file.rfind('\\') - recf.length());
             StringUtils::Replace(group, '\\', '/');
@@ -548,12 +667,12 @@ unsigned int Dvb::GetRecordingsAmount()
 RecordingReader *Dvb::OpenRecordedStream(const PVR_RECORDING &recinfo)
 {
   CLockObject lock(m_mutex);
-  time_t now = time(NULL), end = 0;
+  time_t now = time(nullptr), end = 0;
   std::string channelName = recinfo.strChannelName;
   auto timer = GetTimer([&] (const DvbTimer &timer)
       {
         return (timer.start <= now && now <= timer.end
-            && timer.state != PVR_TIMER_STATE_CANCELLED
+            && timer.state != PVR_TIMER_STATE_DISABLED
             && timer.channel->name == channelName);
       });
   if (timer)
@@ -563,7 +682,9 @@ RecordingReader *Dvb::OpenRecordedStream(const PVR_RECORDING &recinfo)
         recinfo.strRecordingId), end);
 }
 
-
+/***************************************************************************
+ * Livestream
+ **************************************************************************/
 bool Dvb::OpenLiveStream(const PVR_CHANNEL &channelinfo)
 {
   XBMC->Log(LOG_DEBUG, "%s: channel=%u", __FUNCTION__, channelinfo.iUniqueId);
@@ -606,6 +727,9 @@ const std::string Dvb::GetLiveStreamURL(const PVR_CHANNEL &channelinfo)
   return BuildURL("upnp/channelstream/%" PRIu64 ".ts", backendId);
 }
 
+/***************************************************************************
+ * Internal
+ **************************************************************************/
 void *Dvb::Process()
 {
   XBMC->Log(LOG_DEBUG, "%s: Running...", __FUNCTION__);
@@ -822,7 +946,7 @@ bool Dvb::LoadChannels()
   if (g_useFavourites && !g_useFavouritesFile && !hasFavourites)
   {
     XBMC->Log(LOG_NOTICE, "Favourites enabled but non defined");
-    XBMC->QueueNotification(QUEUE_WARNING, XBMC->GetLocalizedString(30509));
+    XBMC->QueueNotification(QUEUE_ERROR, XBMC->GetLocalizedString(30509));
     return false; // empty favourites is an error
   }
 
@@ -1092,6 +1216,7 @@ DvbTimers_t Dvb::LoadTimers()
     XMLUtils::GetUInt(xTimer, "ID", timer.backendId);
     XMLUtils_GetString(xTimer, "Descr", timer.title);
 
+    //TODO: DMS 2.0.4.17 adds the EPGID. do the search with that
     uint64_t backendId = 0;
     std::istringstream ss(xTimer->FirstChildElement("Channel")->Attribute("ID"));
     ss >> backendId;
@@ -1105,12 +1230,23 @@ DvbTimers_t Dvb::LoadTimers()
               != channel->backendIds.end());
         });
     if (!timer.channel)
+    {
+      XBMC->Log(LOG_NOTICE, "Found timer for unknown channel (backendid=%"
+        PRIu64 "). Ignoring.", backendId);
       continue;
+    }
 
     std::string startDate = xTimer->Attribute("Date");
     startDate += xTimer->Attribute("Start");
     timer.start = ParseDateTime(startDate, false);
     timer.end   = timer.start + atoi(xTimer->Attribute("Dur")) * 60;
+
+    timer.pre = timer.post = 0;
+    xTimer->QueryUnsignedAttribute("PreEPG",  &timer.pre);
+    xTimer->QueryUnsignedAttribute("PostEPG", &timer.post);
+    // Kodi requires starttime/endtime to exclude the margins
+    timer.start += timer.pre * 60;
+    timer.end   -= timer.post * 60;
 
     timer.weekdays = PVR_WEEKDAY_NONE;
     const char *weekdays = xTimer->Attribute("Days");
@@ -1119,21 +1255,33 @@ DvbTimers_t Dvb::LoadTimers()
       if (weekdays[j] != '-')
         timer.weekdays += (1 << j);
     }
+    if (timer.weekdays != PVR_WEEKDAY_NONE)
+      timer.type = DvbTimer::Type::MANUAL_REPEATING;
 
-    timer.priority    = atoi(xTimer->Attribute("Priority"));
+    xTimer->QueryIntAttribute("Priority", &timer.priority);
     timer.updateState = DvbTimer::State::NEW;
     timer.state       = PVR_TIMER_STATE_SCHEDULED;
     if (xTimer->Attribute("Enabled")[0] == '0')
-      timer.state = PVR_TIMER_STATE_CANCELLED;
+      timer.state = PVR_TIMER_STATE_DISABLED;
 
     int tmp;
     XMLUtils::GetInt(xTimer, "Recording", tmp);
     if (tmp == -1)
       timer.state = PVR_TIMER_STATE_RECORDING;
 
-    timers.push_back(timer);
-    XBMC->Log(LOG_DEBUG, "%s: Loaded timer entry '%s': start=%u, end=%u",
-        __FUNCTION__, timer.title.c_str(), timer.start, timer.end);
+    timer.recfolder = -1;
+    std::string recfolder;
+    if (XMLUtils_GetString(xTimer, "Folder", recfolder))
+    {
+      auto pos = std::distance(m_recfolders.begin(),
+          std::find(m_recfolders.begin(), m_recfolders.end(), recfolder));
+      if (pos < m_recfolders.size())
+        timer.recfolder = pos;
+    }
+
+    timers.emplace_back(timer);
+    XBMC->Log(LOG_DEBUG, "%s: Loaded timer entry '%s': type=%u, start=%u, end=%u",
+        __FUNCTION__, timer.title.c_str(), timer.type, timer.start, timer.end);
   }
 
   XBMC->Log(LOG_INFO, "Loaded %u timer entries", timers.size());
@@ -1302,8 +1450,7 @@ bool Dvb::UpdateBackendStatus(bool updateSettings)
 
   // compute disk space. duplicates are detected by their identical values
   TiXmlElement *root = doc.RootElement();
-  typedef std::pair<long long, long long> Recfolder_t;
-  std::set<Recfolder_t> folders;
+  std::set< std::pair<long long, long long> > folders;
   m_diskspace.total = m_diskspace.used = 0;
   for (TiXmlElement *xFolder = root->FirstChild("recfolders")->FirstChildElement("folder");
       xFolder; xFolder = xFolder->NextSiblingElement("folder"))
@@ -1312,26 +1459,18 @@ bool Dvb::UpdateBackendStatus(bool updateSettings)
     xFolder->QueryValueAttribute<long long>("size", &size);
     xFolder->QueryValueAttribute<long long>("free", &free);
 
-    if (folders.insert(std::make_pair(size, free)).second)
+    if (folders.emplace(size, free).second)
     {
       m_diskspace.total += size / 1024;
       m_diskspace.used += (size - free) / 1024;
     }
 
-    if (updateSettings && g_groupRecordings == DvbRecording::Grouping::BY_DIRECTORY)
+    if (updateSettings)
     {
       std::string recf = xFolder->GetText();
-      StringUtils::ToLower(recf);
-      m_recfolders.push_back(recf);
+      m_recfolders.emplace_back(recf);
     }
   }
-
-  if (updateSettings && g_groupRecordings == DvbRecording::Grouping::BY_DIRECTORY)
-    std::sort(m_recfolders.begin(), m_recfolders.end(),
-        [](const std::string& a, const std::string& b)
-        {
-          return (a.length() < b.length());
-        });
 
   return true;
 }
@@ -1406,7 +1545,7 @@ long Dvb::GetGMTOffset()
 #ifdef TARGET_POSIX
   struct tm t;
   tzset();
-  time_t tt = time(NULL);
+  time_t tt = time(nullptr);
   if (localtime_r(&tt, &t))
     return t.tm_gmtoff;
 #else

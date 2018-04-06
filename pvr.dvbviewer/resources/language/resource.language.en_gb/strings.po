@@ -189,7 +189,38 @@ msgctxt "#30103"
 msgid "Live TV"
 msgstr ""
 
-#empty strings from id 30104 to 30499
+#empty strings from id 30104 to 30399
+#timers
+
+msgctxt "#30400"
+msgid "Default"
+msgstr ""
+
+msgctxt "#30401"
+msgid "Unimportant (Lowest)"
+msgstr ""
+
+msgctxt "#30402"
+msgid "Low"
+msgstr ""
+
+msgctxt "#30403"
+msgid "Normal"
+msgstr ""
+
+msgctxt "#30404"
+msgid "High"
+msgstr ""
+
+msgctxt "#30405"
+msgid "Important (Highest)"
+msgstr ""
+
+msgctxt "#30410"
+msgid "Automatic"
+msgstr ""
+
+#empty strings from id 30411 to 30499
 #notifications
 
 msgctxt "#30500"
@@ -230,4 +261,8 @@ msgstr ""
 
 msgctxt "#30509"
 msgid "Favourites enabled but none defined"
+msgstr ""
+
+msgctxt "#30510"
+msgid "The time period cannot span more than 24 hours"
 msgstr ""

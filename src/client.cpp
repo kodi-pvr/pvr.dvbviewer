@@ -333,8 +333,9 @@ PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
   pCapabilities->bSupportsRecordingEdl       = false;
   pCapabilities->bSupportsRecordingsRename   = false;
   pCapabilities->bSupportsRecordingsLifetimeChange = false;
-  pCapabilities->bSupportsDescrambleInfo = false;
+  pCapabilities->bSupportsDescrambleInfo     = false;
 
+  pCapabilities->iRecordingsLifetimesSize = 0;
   return PVR_ERROR_NO_ERROR;
 }
 
@@ -436,8 +437,10 @@ PVR_ERROR GetChannelGroupMembers(ADDON_HANDLE handle,
 /* timer functions */
 PVR_ERROR GetTimerTypes(PVR_TIMER_TYPE types[], int *size)
 {
-  /* TODO: Implement this to get support for the timer features introduced with PVR API 1.9.7 */
-  return PVR_ERROR_NOT_IMPLEMENTED;
+  *size = 0;
+  if (DvbData /*&& DvbData->IsConnected()*/)
+    DvbData->GetTimerTypes(types, size);
+  return PVR_ERROR_NO_ERROR;
 }
 
 int GetTimersAmount(void)

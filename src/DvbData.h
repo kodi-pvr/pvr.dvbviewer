@@ -83,16 +83,21 @@ public:
   unsigned int id;
   DvbChannel *channel;
   std::string title;
-  time_t start;
-  time_t end;
+  time_t start, end;
   unsigned int genre;
-  std::string plotOutline;
-  std::string plot;
+  std::string plot, plotOutline;
 };
 
 class DvbTimer
 {
 public:
+  enum Type
+    : unsigned int // same type as PVR_TIMER_TYPE.iId
+  {
+    MANUAL_ONCE      = PVR_TIMER_TYPE_NONE + 1,
+    MANUAL_REPEATING = PVR_TIMER_TYPE_NONE + 2,
+  };
+
   enum class State
     : uint8_t
   {
@@ -103,7 +108,7 @@ public:
   };
 
   DvbTimer()
-    : updateState(State::NEW)
+    : type(Type::MANUAL_ONCE), updateState(State::NEW)
   {}
 
 #define TIMER_UPDATE_MEMBER(member) \
@@ -120,8 +125,11 @@ public:
     TIMER_UPDATE_MEMBER(title);
     TIMER_UPDATE_MEMBER(start);
     TIMER_UPDATE_MEMBER(end);
+    TIMER_UPDATE_MEMBER(pre);
+    TIMER_UPDATE_MEMBER(post);
     TIMER_UPDATE_MEMBER(priority);
     TIMER_UPDATE_MEMBER(weekdays);
+    TIMER_UPDATE_MEMBER(recfolder);
     TIMER_UPDATE_MEMBER(state);
     return updated;
   }
@@ -136,13 +144,16 @@ public:
   /*!< @brief timer id on backend. unique at a time */
   unsigned int backendId;
 
+  Type type;
   DvbChannel *channel;
   std::string title;
   uint64_t channelId;
-  time_t start;
-  time_t end;
+  time_t start, end;
+  unsigned int pre, post;
   int priority;
   unsigned int weekdays;
+  /*!< @brief index to m_recfolders or -1 */
+  int recfolder;
   PVR_TIMER_STATE state;
   State updateState;
 };
@@ -173,8 +184,7 @@ public:
   int duration;
   unsigned int genre;
   std::string title;
-  std::string plot;
-  std::string plotOutline;
+  std::string plot, plotOutline;
   std::string thumbnail;
   /*!< @brief channel name provided by the backend */
   std::string channelName;
@@ -212,6 +222,7 @@ public:
       const PVR_CHANNEL_GROUP &group);
   unsigned int GetChannelGroupsAmount(void);
 
+  bool GetTimerTypes(PVR_TIMER_TYPE types[], int *size);
   bool GetTimers(ADDON_HANDLE handle);
   bool AddTimer(const PVR_TIMER &timer, bool update = false);
   bool DeleteTimer(const PVR_TIMER &timer);
