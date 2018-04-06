@@ -3,9 +3,9 @@
 #include "client.h"
 #include "p8-platform/util/util.h"
 
-#define STREAM_READ_BUFFER_SIZE   32768
-#define BUFFER_READ_TIMEOUT       10000
-#define BUFFER_READ_WAITTIME      50
+#define STREAM_READ_BUFFER_SIZE 32768
+#define BUFFER_READ_TIMEOUT     10000
+#define BUFFER_READ_WAITTIME    50
 
 using namespace ADDON;
 
@@ -63,11 +63,12 @@ void *TimeshiftBuffer::Process()
   while (!IsStopped())
   {
     ssize_t read = m_strReader->ReadData(buffer, sizeof(buffer));
-    XBMC->WriteFile(m_filebufferWriteHandle, buffer, read);
+    // don't handle any errors here, assume write fully succeeds
+    ssize_t write = XBMC->WriteFile(m_filebufferWriteHandle, buffer, read);
 
 #ifndef TARGET_POSIX
     m_mutex.Lock();
-    m_writePos += read;
+    m_writePos += write;
     m_mutex.Unlock();
 #endif
   }
