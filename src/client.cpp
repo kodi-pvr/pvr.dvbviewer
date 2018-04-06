@@ -438,7 +438,7 @@ PVR_ERROR GetChannelGroupMembers(ADDON_HANDLE handle,
 PVR_ERROR GetTimerTypes(PVR_TIMER_TYPE types[], int *size)
 {
   *size = 0;
-  if (DvbData /*&& DvbData->IsConnected()*/)
+  if (DvbData && DvbData->IsConnected())
     DvbData->GetTimerTypes(types, size);
   return PVR_ERROR_NO_ERROR;
 }
