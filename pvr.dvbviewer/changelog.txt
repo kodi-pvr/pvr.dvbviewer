@@ -1,3 +1,10 @@
+3.4.2
+[updated] Rename RS to DMS
+[updated] Add support for custom timers
+[fixed] Playback of ongoing recordings
+[fixed] Group by directory: Don't lowercase the group
+[fixed] Check API return code after deleting a recording
+
 3.4.1
 [updated] to PVR API v5.9.0
 
