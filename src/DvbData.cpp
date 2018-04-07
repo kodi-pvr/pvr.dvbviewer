@@ -15,23 +15,6 @@
 using namespace ADDON;
 using namespace P8PLATFORM;
 
-/* private copy until https://github.com/xbmc/kodi-platform/pull/2 get merged */
-static bool XMLUtils_GetString(const TiXmlNode* pRootNode, const char* strTag,
-    std::string& strStringValue)
-{
-  const TiXmlElement* pElement = pRootNode->FirstChildElement(strTag);
-  if (!pElement)
-    return false;
-  const TiXmlNode* pNode = pElement->FirstChild();
-  if (pNode != NULL)
-  {
-    strStringValue = pNode->ValueStr();
-    return true;
-  }
-  strStringValue.clear();
-  return true;
-}
-
 Dvb::Dvb()
   : m_state(PVR_CONNECTION_STATE_UNKNOWN), m_backendVersion(0), m_currentChannel(0),
   m_nextTimerId(1)
@@ -155,17 +138,17 @@ bool Dvb::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channelinfo,
 
     // since RS 1.26.0 the correct language is already merged into the elements
     TiXmlNode *xTitles = xEntry->FirstChild("titles");
-    if (!xTitles || !XMLUtils_GetString(xTitles, "title", entry.title))
+    if (!xTitles || !XMLUtils::GetString(xTitles, "title", entry.title))
       continue;
 
     TiXmlNode *xDescriptions = xEntry->FirstChild("descriptions");
     if (xDescriptions)
-      XMLUtils_GetString(xDescriptions, "description", entry.plot);
+      XMLUtils::GetString(xDescriptions, "description", entry.plot);
 
     TiXmlNode *xEvents = xEntry->FirstChild("events");
     if (xEvents)
     {
-      XMLUtils_GetString(xEvents, "event", entry.plotOutline);
+      XMLUtils::GetString(xEvents, "event", entry.plotOutline);
       if (entry.plot.empty())
       {
         entry.plot = entry.plotOutline;
@@ -532,9 +515,9 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
     DvbRecording recording;
     recording.id = xRecording->Attribute("id");
     xRecording->QueryUnsignedAttribute("content", &recording.genre);
-    XMLUtils_GetString(xRecording, "title", recording.title);
-    XMLUtils_GetString(xRecording, "info",  recording.plotOutline);
-    XMLUtils_GetString(xRecording, "desc",  recording.plot);
+    XMLUtils::GetString(xRecording, "title", recording.title);
+    XMLUtils::GetString(xRecording, "info",  recording.plotOutline);
+    XMLUtils::GetString(xRecording, "desc",  recording.plot);
     if (recording.plot.empty())
     {
       recording.plot = recording.plotOutline;
@@ -548,7 +531,7 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
     }
 
     /* fetch and search channel */
-    XMLUtils_GetString(xRecording, "channel", recording.channelName);
+    XMLUtils::GetString(xRecording, "channel", recording.channelName);
     recording.channel = GetChannel([&] (const DvbChannel *channel)
         {
           return (channel->backendName == recording.channelName);
@@ -557,7 +540,7 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
       recording.channelName = recording.channel->name;
 
     std::string thumbnail;
-    if (!g_lowPerformance && XMLUtils_GetString(xRecording, "image", thumbnail))
+    if (!g_lowPerformance && XMLUtils::GetString(xRecording, "image", thumbnail))
       recording.thumbnail = BuildURL("upnp/thumbnails/video/%s",
           thumbnail.c_str());
 
@@ -574,7 +557,7 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
       case DvbRecording::Grouping::BY_DIRECTORY:
         {
           std::string file;
-          if (!XMLUtils_GetString(xRecording, "file", file))
+          if (!XMLUtils::GetString(xRecording, "file", file))
             break;
           for (auto &recf : m_recfolders)
           {
@@ -598,7 +581,7 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
         group = recording.channelName;
         break;
       case DvbRecording::Grouping::BY_SERIES:
-        XMLUtils_GetString(xRecording, "series", group);
+        XMLUtils::GetString(xRecording, "series", group);
         break;
       case DvbRecording::Grouping::BY_TITLE:
         group = recording.title;
@@ -924,7 +907,7 @@ bool Dvb::LoadChannels()
     return false;
   }
 
-  m_channels.clear();
+  m_channels.clear(); //TODO: this leaks all channels
   m_channelAmount = 0;
   m_groups.clear();
   m_groupAmount = 0;
@@ -990,7 +973,7 @@ bool Dvb::LoadChannels()
         channel->backendIds.push_back(backendId);
 
         std::string logo;
-        if (!g_lowPerformance && XMLUtils_GetString(xChannel, "logo", logo))
+        if (!g_lowPerformance && XMLUtils::GetString(xChannel, "logo", logo))
           channel->logo = BuildURL("%s", logo.c_str());
 
         for (TiXmlElement* xSubChannel = xChannel->FirstChildElement("subchannel");
@@ -1217,10 +1200,10 @@ DvbTimers_t Dvb::LoadTimers()
   {
     DvbTimer timer;
 
-    if (!XMLUtils_GetString(xTimer, "GUID", timer.guid))
+    if (!XMLUtils::GetString(xTimer, "GUID", timer.guid))
       continue;
     XMLUtils::GetUInt(xTimer, "ID", timer.backendId);
-    XMLUtils_GetString(xTimer, "Descr", timer.title);
+    XMLUtils::GetString(xTimer, "Descr", timer.title);
 
     //TODO: DMS 2.0.4.17 adds the EPGID. do the search with that
     uint64_t backendId = 0;
@@ -1265,8 +1248,8 @@ DvbTimers_t Dvb::LoadTimers()
       timer.type = DvbTimer::Type::MANUAL_REPEATING;
 
     xTimer->QueryIntAttribute("Priority", &timer.priority);
-    timer.updateState = DvbTimer::State::NEW;
-    timer.state       = PVR_TIMER_STATE_SCHEDULED;
+    timer.syncState = DvbTimer::State::NEW;
+    timer.state     = PVR_TIMER_STATE_SCHEDULED;
     if (xTimer->Attribute("Enabled")[0] == '0')
       timer.state = PVR_TIMER_STATE_DISABLED;
 
@@ -1277,7 +1260,7 @@ DvbTimers_t Dvb::LoadTimers()
 
     timer.recfolder = -1;
     std::string recfolder;
-    if (XMLUtils_GetString(xTimer, "Folder", recfolder))
+    if (XMLUtils::GetString(xTimer, "Folder", recfolder))
     {
       auto pos = std::distance(m_recfolders.begin(),
           std::find(m_recfolders.begin(), m_recfolders.end(), recfolder));
@@ -1297,7 +1280,7 @@ DvbTimers_t Dvb::LoadTimers()
 void Dvb::TimerUpdates()
 {
   for (auto &timer : m_timers)
-    timer.updateState = DvbTimer::State::NONE;
+    timer.syncState = DvbTimer::State::NONE;
 
   DvbTimers_t &&newtimers = LoadTimers();
   unsigned int updated = 0, unchanged = 0;
@@ -1310,12 +1293,12 @@ void Dvb::TimerUpdates()
 
       if (timer.updateFrom(newtimer))
       {
-        timer.updateState = newtimer.updateState = DvbTimer::State::UPDATED;
+        timer.syncState = newtimer.syncState = DvbTimer::State::UPDATED;
         ++updated;
       }
       else
       {
-        timer.updateState = newtimer.updateState = DvbTimer::State::FOUND;
+        timer.syncState = newtimer.syncState = DvbTimer::State::FOUND;
         ++unchanged;
       }
       break;
@@ -1325,7 +1308,7 @@ void Dvb::TimerUpdates()
   unsigned int removed = 0;
   for (auto it = m_timers.begin(); it != m_timers.end();)
   {
-    if (it->updateState == DvbTimer::State::NONE)
+    if (it->syncState == DvbTimer::State::NONE)
     {
       XBMC->Log(LOG_DEBUG, "%s: Removed timer '%s': id=%u", __FUNCTION__,
           it->title.c_str(), it->id);
@@ -1339,7 +1322,7 @@ void Dvb::TimerUpdates()
   unsigned int added = 0;
   for (auto &newtimer : newtimers)
   {
-    if (newtimer.updateState == DvbTimer::State::NEW)
+    if (newtimer.syncState == DvbTimer::State::NEW)
     {
       newtimer.id = m_nextTimerId;
       XBMC->Log(LOG_DEBUG, "%s: New timer '%s': id=%u", __FUNCTION__,

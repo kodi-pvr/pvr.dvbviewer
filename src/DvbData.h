@@ -4,6 +4,7 @@
 #define PVR_DVBVIEWER_DVBDATA_H
 
 #include "RecordingReader.h"
+
 #include "libXBMC_pvr.h"
 #include "p8-platform/threads/threads.h"
 #include <list>
@@ -113,7 +114,7 @@ public:
   };
 
   DvbTimer()
-    : type(Type::MANUAL_ONCE), updateState(State::NEW)
+    : type(Type::MANUAL_ONCE), syncState(State::NEW)
   {}
 
 #define TIMER_UPDATE_MEMBER(member) \
@@ -121,7 +122,7 @@ public:
   { \
     member = source.member; \
     updated = true; \
-   }
+  }
 
   bool updateFrom(const DvbTimer &source)
   {
@@ -152,15 +153,15 @@ public:
   Type type;
   DvbChannel *channel;
   std::string title;
-  uint64_t channelId;
   time_t start, end;
   unsigned int pre, post;
   int priority;
   unsigned int weekdays;
   /*!< @brief index to m_recfolders or -1 */
   int recfolder;
+
   PVR_TIMER_STATE state;
-  State updateState;
+  State syncState;
 };
 
 class DvbRecording
