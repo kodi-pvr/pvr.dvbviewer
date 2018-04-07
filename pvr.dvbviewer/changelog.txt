@@ -1,3 +1,6 @@
+3.4.2
+[added] Add support for processing Recorded TV Edit Decision Lists (EDL) (by pOpY)
+
 3.4.1
 [updated] to PVR API v5.9.0
 

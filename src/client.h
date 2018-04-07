@@ -53,9 +53,10 @@
 /* calcuate bitrate for file while reading */
 #define READ_BITRATE 0x10
 
-#define DEFAULT_HOST             "127.0.0.1"
-#define DEFAULT_WEB_PORT         8089
-#define DEFAULT_TSBUFFERPATH     "special://userdata/addon_data/pvr.dvbviewer"
+#define DEFAULT_HOST                 "127.0.0.1"
+#define DEFAULT_WEB_PORT             8089
+#define DEFAULT_TSBUFFERPATH         "special://userdata/addon_data/pvr.dvbviewer"
+#define DEFAULT_RECORDING_EDL_FOLDER ""
 
 enum class Timeshift
   : int // same type as addon settings
@@ -93,6 +94,10 @@ extern bool           g_useFavourites;
 extern bool           g_useFavouritesFile;
 extern std::string    g_favouritesFile;
 extern DvbRecording::Grouping g_groupRecordings;
+extern bool           g_enable_recording_edl;
+extern std::string    g_recordingEdlFolder;
+extern int            g_recording_edl_start_padding;
+extern int            g_recording_edl_end_padding ;
 extern Timeshift      g_timeshift;
 extern std::string    g_timeshiftBufferPath;
 extern PrependOutline g_prependOutline;

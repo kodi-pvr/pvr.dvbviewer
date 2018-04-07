@@ -34,22 +34,26 @@ using namespace ADDON;
  * Default values are defined inside client.h
  * and exported to the other source files.
  */
-std::string    g_hostname             = DEFAULT_HOST;
-int            g_webPort              = DEFAULT_WEB_PORT;
-std::string    g_username             = "";
-std::string    g_password             = "";
-bool           g_useWoL               = false;
-std::string    g_mac                  = "";
-bool           g_useFavourites        = false;
-bool           g_useFavouritesFile    = false;
-std::string    g_favouritesFile       = "";
-DvbRecording::Grouping g_groupRecordings = DvbRecording::Grouping::DISABLED;
-Timeshift      g_timeshift            = Timeshift::OFF;
-std::string    g_timeshiftBufferPath  = DEFAULT_TSBUFFERPATH;
-PrependOutline g_prependOutline       = PrependOutline::IN_EPG;
-bool           g_lowPerformance       = false;
-Transcoding    g_transcoding          = Transcoding::OFF;
-std::string    g_transcodingParams    = "";
+std::string    g_hostname                     = DEFAULT_HOST;
+int            g_webPort                      = DEFAULT_WEB_PORT;
+std::string    g_username                     = "";
+std::string    g_password                     = "";
+bool           g_useWoL                       = false;
+std::string    g_mac                          = "";
+bool           g_useFavourites                = false;
+bool           g_useFavouritesFile            = false;
+std::string    g_favouritesFile               = "";
+DvbRecording::Grouping g_groupRecordings      = DvbRecording::Grouping::DISABLED;
+bool           g_enable_recording_edl         = false;
+std::string    g_recordingEdlFolder           = DEFAULT_RECORDING_EDL_FOLDER;
+int            g_recording_edl_start_padding  = 0;
+int            g_recording_edl_end_padding    = 0;
+Timeshift      g_timeshift                    = Timeshift::OFF;
+std::string    g_timeshiftBufferPath          = DEFAULT_TSBUFFERPATH;
+PrependOutline g_prependOutline               = PrependOutline::IN_EPG;
+bool           g_lowPerformance               = false;
+Transcoding    g_transcoding                  = Transcoding::OFF;
+std::string    g_transcodingParams            = "";
 
 ADDON_STATUS m_curStatus    = ADDON_STATUS_UNKNOWN;
 CHelper_libXBMC_addon *XBMC = nullptr;
@@ -93,6 +97,18 @@ void ADDON_ReadSettings(void)
 
   if (!XBMC->GetSetting("grouprecordings", &g_groupRecordings))
     g_groupRecordings = DvbRecording::Grouping::DISABLED;
+
+  if (!XBMC->GetSetting("enable_recording_edl", &g_enable_recording_edl))
+    g_enable_recording_edl = false;
+
+  if (XBMC->GetSetting("recording_edl_folder", buffer) && !std::string(buffer).empty())
+    g_recordingEdlFolder = buffer;
+
+  if (!XBMC->GetSetting("recording_edl_start_padding", &g_recording_edl_start_padding))
+    g_recording_edl_start_padding = 0;
+
+  if (!XBMC->GetSetting("recording_edl_end_padding", &g_recording_edl_end_padding))
+    g_recording_edl_end_padding = 0;
 
   if (!XBMC->GetSetting("timeshift", &g_timeshift))
     g_timeshift = Timeshift::OFF;
@@ -144,6 +160,13 @@ void ADDON_ReadSettings(void)
   XBMC->Log(LOG_DEBUG, "Transcoding: %d", g_transcoding);
   if (g_transcoding != Transcoding::OFF)
     XBMC->Log(LOG_DEBUG, "Transcoding params: %s", g_transcodingParams.c_str());
+  XBMC->Log(LOG_DEBUG, "Enable recording EDL: %s", (g_enable_recording_edl) ? "yes" : "no");
+  if (g_enable_recording_edl)
+  {
+    XBMC->Log(LOG_DEBUG, "Recording EDL folder: %s", g_recordingEdlFolder.c_str());
+    XBMC->Log(LOG_DEBUG, "Recording EDL start padding: %d", g_recording_edl_start_padding);
+    XBMC->Log(LOG_DEBUG, "Recording EDL end padding: %d", g_recording_edl_end_padding);
+  }
 }
 
 ADDON_STATUS ADDON_Create(void *hdl, void *props)
@@ -246,6 +269,32 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
     if (g_groupRecordings != *(const DvbRecording::Grouping *)settingValue)
       return ADDON_STATUS_NEED_RESTART;
   }
+  else if (sname == "enable_recording_edl")
+  {
+    if (g_enable_recording_edl != *(bool *)settingValue)
+      return ADDON_STATUS_NEED_RESTART;
+  }
+  else if (sname == "recording_edl_folder")
+  {
+    std::string newValue = (const char *)settingValue;
+    if (g_recordingEdlFolder != newValue && !newValue.empty())
+    {
+      XBMC->Log(LOG_DEBUG, "%s: Changed setting '%s' from '%s' to '%s'",
+        __FUNCTION__, settingName, g_recordingEdlFolder.c_str(),
+        newValue.c_str());
+      g_recordingEdlFolder = newValue;
+    }
+  }
+  else if (sname == "recording_edl_start_padding")
+  {
+    if (g_recording_edl_start_padding != *(int *)settingValue)
+      return ADDON_STATUS_NEED_RESTART;
+  }
+  else if (sname == "recording_edl_end_padding")
+  {
+    if (g_recording_edl_end_padding != *(int *)settingValue)
+      return ADDON_STATUS_NEED_RESTART;
+  }
   else if (sname == "timeshift")
   {
     Timeshift newValue = *(const Timeshift *)settingValue;
@@ -330,7 +379,7 @@ PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
   pCapabilities->bHandlesDemuxing            = false;
   pCapabilities->bSupportsRecordingPlayCount = false;
   pCapabilities->bSupportsLastPlayedPosition = false;
-  pCapabilities->bSupportsRecordingEdl       = false;
+  pCapabilities->bSupportsRecordingEdl       = true;
   pCapabilities->bSupportsRecordingsRename   = false;
   pCapabilities->bSupportsRecordingsLifetimeChange = false;
   pCapabilities->bSupportsDescrambleInfo = false;
@@ -587,6 +636,13 @@ PVR_ERROR DeleteRecording(const PVR_RECORDING &recording)
     ? PVR_ERROR_NO_ERROR : PVR_ERROR_SERVER_ERROR;
 }
 
+PVR_ERROR GetRecordingEdl(PVR_RECORDING const& recording, PVR_EDL_ENTRY edl[], int* count)
+{
+  return (DvbData && DvbData->IsConnected()
+    && DvbData->GetRecordingEdl(recording, edl, count))
+    ? PVR_ERROR_NO_ERROR : PVR_ERROR_SERVER_ERROR;
+}
+
 bool OpenRecordedStream(const PVR_RECORDING &recording)
 {
   if (recReader)
@@ -644,7 +700,6 @@ PVR_ERROR SetRecordingLastPlayedPosition(const PVR_RECORDING&, int) { return PVR
 PVR_ERROR SetRecordingLifetime(const PVR_RECORDING*) { return PVR_ERROR_NOT_IMPLEMENTED; }
 int GetRecordingLastPlayedPosition(const PVR_RECORDING&) { return -1; }
 PVR_ERROR RenameRecording(const PVR_RECORDING&) { return PVR_ERROR_NOT_IMPLEMENTED; }
-PVR_ERROR GetRecordingEdl(const PVR_RECORDING&, PVR_EDL_ENTRY[], int*) { return PVR_ERROR_NOT_IMPLEMENTED; };
 PVR_ERROR UndeleteRecording(const PVR_RECORDING&) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR DeleteAllRecordingsFromTrash() { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR SetEPGTimeFrame(int) { return PVR_ERROR_NOT_IMPLEMENTED; }

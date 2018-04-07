@@ -9,6 +9,7 @@
 #include <iterator>
 #include <sstream>
 #include <algorithm>
+#include <memory>
 
 using namespace ADDON;
 using namespace P8PLATFORM;
@@ -544,6 +545,172 @@ bool Dvb::DeleteRecording(const PVR_RECORDING &recinfo)
 
   PVR->TriggerRecordingUpdate();
   return true;
+}
+
+// edltype_to_string
+//
+// Converts a PVR_EDL_TYPE enumeration value into a string
+static char const* const edltype_to_string(PVR_EDL_TYPE const& type)
+{
+  switch (type) {
+
+  case PVR_EDL_TYPE::PVR_EDL_TYPE_CUT: return "CUT";
+  case PVR_EDL_TYPE::PVR_EDL_TYPE_MUTE: return "MUTE";
+  case PVR_EDL_TYPE::PVR_EDL_TYPE_SCENE: return "SCENE";
+  case PVR_EDL_TYPE::PVR_EDL_TYPE_COMBREAK: return "COMBREAK";
+  }
+
+  return "<UNKNOWN>";
+}
+
+//---------------------------------------------------------------------------
+// GetRecordingEdl
+//
+// Retrieve the edit decision list (EDL) of a recording on the backend
+//
+// Arguments:
+//
+//	recording	- The recording
+//	edl			- The function has to write the EDL list into this array
+//	count		- in: The maximum size of the EDL, out: the actual size of the EDL
+
+bool Dvb::GetRecordingEdl(PVR_RECORDING const& recording, PVR_EDL_ENTRY edl[], int* count)
+{
+  CLockObject lock(m_mutex);
+  std::vector<PVR_EDL_ENTRY>    entries;                // vector<> of PVR_EDL_ENTRYs
+
+  if (count == nullptr) return false;
+  if ((*count) && (edl == nullptr)) return false;
+
+  memset(edl, 0, sizeof(PVR_EDL_ENTRY) * (*count));     // Initialize [out] array
+
+  XBMC->Log(LOG_DEBUG, "%s: kodi requests edl for recording '%s': id='%s'",
+  __FUNCTION__, recording.strTitle, recording.strRecordingId);
+
+  // check if EDL is enabled
+  if (!g_enable_recording_edl) return false;
+
+  // Verify that the specified directory for the EDL files exists
+  if (!XBMC->DirectoryExists(g_recordingEdlFolder.c_str()))
+  {
+    XBMC->Log(LOG_INFO, "%s: specified edit decision list file directory '%s' cannot be accessed",
+      __FUNCTION__, g_recordingEdlFolder.c_str());
+    return false;
+  }
+
+  // Request recordings to get filename of recording.strRecordingId
+  httpResponse &&res = GetHttpXML(BuildURL("api/recordings.html?utf8=1"
+    "&images=1"));
+  if (res.error)
+  {
+    SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
+    return false;
+  }
+
+  TiXmlDocument doc;
+  RemoveNullChars(res.content);
+  doc.Parse(res.content.c_str());
+  if (doc.Error())
+  {
+    XBMC->Log(LOG_ERROR, "Unable to parse recordings. Error: %s",
+      doc.ErrorDesc());
+    return false;
+  }
+
+  TiXmlElement *root = doc.RootElement();
+
+  // parse recordings and try to find our requested recording id
+  for (TiXmlNode *xNode = root->LastChild("recording");
+    xNode; xNode = xNode->PreviousSibling("recording"))
+  {
+    TiXmlElement *xRecording = xNode->ToElement();
+    if (!xRecording)
+      continue;
+
+    // parse recording id
+    std::string basename;
+    std::string recording_id;
+    recording_id = xRecording->Attribute("id");
+    XMLUtils_GetString(xRecording, "file", basename);
+
+    // is this our recording id?
+    if (recording_id.compare(recording.strRecordingId) == 0)
+    {
+      //we have found our recording -> Generate the full name of the .EDL file and if it exists, attempt to process it
+      std::string filename = g_recordingEdlFolder;
+      filename.append(basename.substr(basename.find_last_of("\\/") + 1, basename.size() - 4 - basename.find_last_of("\\/"))).append(".edl");
+
+      XBMC->Log(LOG_DEBUG, "%s: TFILE: '%s'",
+        __FUNCTION__, filename.c_str());
+
+      //check if edl file exists
+      if (XBMC->FileExists(filename.c_str(), false)) {
+
+        // 2 KiB should be more than sufficient to hold a single line from the .edl file
+        std::unique_ptr<char[]> line(new char[2048]);
+
+        // Attempt to open the input edit decision list file
+        void* handle = XBMC->OpenFile(filename.c_str(), 0);
+        if (handle != nullptr) {
+
+          size_t linenumber = 0;
+          XBMC->Log(LOG_INFO, "%s: processing edit decision list file: '%s'",
+            __FUNCTION__, filename.c_str());
+
+          // Process each line of the file individually
+          while (XBMC->ReadFileString(handle, &line[0], 2048)) {
+
+            // The only currently supported format for EDL is the {float|float|[int]} format, as the
+            // frame rate of the recording would be required to process the {#frame|#frame|[int]} format
+
+            // Increment the line number
+            ++linenumber;
+
+            // Starting point, in milliseconds
+            float  start = 0.0F;
+
+            // Ending point, in milliseconds
+            float  end = 0.0F;
+
+            // Type of edit to be made
+            int    type = PVR_EDL_TYPE_CUT;
+
+            if (sscanf(&line[0], "%f %f %i", &start, &end, &type) >= 2) {
+
+              // Apply any user-specified adjustments to the start and end times accordingly
+              start += (static_cast<float>(g_recording_edl_start_padding) / 1000.0F);
+              end -= (static_cast<float>(g_recording_edl_end_padding) / 1000.0F);
+
+              // Ensure the start and end times are positive and do not overlap
+              start = std::min(std::max(start, 0.0F), std::max(end, 0.0F));
+              end = std::max(std::max(end, 0.0F), std::max(start, 0.0F));
+
+              // Log the adjusted values for the entry and add a PVR_EDL_ENTRY to the vector<>
+              XBMC->Log(LOG_INFO, "%s: adding edit decision list entry (start=%f ms, end=%f ms, type=%s)", __FUNCTION__,start,end, edltype_to_string(static_cast<PVR_EDL_TYPE>(type)));
+              entries.emplace_back(PVR_EDL_ENTRY{ static_cast<int64_t>(start * 1000.0F), static_cast<int64_t>(end * 1000.0F), static_cast<PVR_EDL_TYPE>(type) });
+            }
+
+            else XBMC->Log(LOG_ERROR, "%s: invalid edit decision list entry detected at line #%i", __FUNCTION__, linenumber);
+          }
+
+          XBMC->CloseFile(handle);
+        }
+
+        else XBMC->Log(LOG_ERROR, "%s: unable to open edit decision list file: %s", __FUNCTION__, filename.c_str());
+      }
+
+      // Copy the parsed entries, if any, from the vector<> into the output array
+      *count = static_cast<int>(std::min(entries.size(), static_cast<size_t>(*count)));
+      memcpy(edl, entries.data(), (*count * sizeof(PVR_EDL_ENTRY)));
+
+      return true;
+    }
+  }
+
+  XBMC->Log(LOG_DEBUG, "%s: recording id='%s' not found! do not return any edl information to kodi!",
+    __FUNCTION__, recording.strRecordingId);
+
+  return false;
 }
 
 unsigned int Dvb::GetRecordingsAmount()
