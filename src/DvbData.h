@@ -10,7 +10,12 @@
 #include <map>
 #include <functional>
 
-#define CHANNELDAT_HEADER_SIZE       (7)
+// minimum version required
+#define DMS_MIN_VERSION_MAJOR   1
+#define DMS_MIN_VERSION_MINOR   33
+#define DMS_MIN_VERSION_PATCH1  2
+#define DMS_MIN_VERSION_PATCH2  0
+
 #define ENCRYPTED_FLAG               (1 << 0)
 #define RDS_DATA_FLAG                (1 << 2)
 #define VIDEO_FLAG                   (1 << 3)
@@ -19,15 +24,15 @@
 #define DAY_SECS                     (24 * 60 * 60)
 #define DELPHI_DATE                  (25569)
 
-// minimum version required
-#define RS_VERSION_MAJOR   1
-#define RS_VERSION_MINOR   33
-#define RS_VERSION_PATCH1  2
-#define RS_VERSION_PATCH2  0
-#define RS_VERSION_NUM  (RS_VERSION_MAJOR << 24 | RS_VERSION_MINOR << 16 | \
-                          RS_VERSION_PATCH1 << 8 | RS_VERSION_PATCH2)
-#define RS_VERSION_STR  STR(RS_VERSION_MAJOR) "." STR(RS_VERSION_MINOR) \
-                          "." STR(RS_VERSION_PATCH1) "." STR(RS_VERSION_PATCH2)
+#define DMS_VERSION_NUM(a, b, c, d) (a << 24 | b << 16 | c << 8 | d)
+#define DMS_MIN_VERSION_NUM  DMS_VERSION_NUM(DMS_MIN_VERSION_MAJOR,  \
+                                             DMS_MIN_VERSION_MINOR,  \
+                                             DMS_MIN_VERSION_PATCH1, \
+                                             DMS_MIN_VERSION_PATCH2)
+#define DMS_MIN_VERSION_STR  STR(DMS_MIN_VERSION_MAJOR)  "." \
+                             STR(DMS_MIN_VERSION_MINOR)  "." \
+                             STR(DMS_MIN_VERSION_PATCH1) "." \
+                             STR(DMS_MIN_VERSION_PATCH2)
 
 /* forward declaration */
 class DvbGroup;

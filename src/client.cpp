@@ -372,7 +372,7 @@ const char *GetBackendHostname(void)
 PVR_ERROR SignalStatus(PVR_SIGNAL_STATUS &signalStatus)
 {
   // the RS api doesn't provide information about signal quality (yet)
-  strncpy(signalStatus.strAdapterName, "DVBViewer Recording Service",
+  strncpy(signalStatus.strAdapterName, "DVBViewer Media Server",
       sizeof(signalStatus.strAdapterName));
   strncpy(signalStatus.strAdapterStatus, "OK",
       sizeof(signalStatus.strAdapterStatus));

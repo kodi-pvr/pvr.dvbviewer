@@ -410,7 +410,7 @@ bool Dvb::AddTimer(const PVR_TIMER &timer, bool update)
   unsigned int pre = timer.iMarginStart, post = timer.iMarginEnd;
   time_t startTime = (timer.startTime) ? timer.startTime - pre*60 : time(nullptr);
   time_t endTime   = timer.endTime + post*60;
-  if (endTime - startTime >= 24*60*60)
+  if (endTime - startTime >= DAY_SECS)
   {
     XBMC->QueueNotification(QUEUE_ERROR, XBMC->GetLocalizedString(30510));
     return false;
@@ -783,7 +783,7 @@ void *Dvb::Process()
       {
         m_updateEPG = false;
         m_mutex.Unlock();
-        Sleep(8000); /* Sleep enough time to let the recording service grab the EPG data */
+        Sleep(8000); /* Sleep enough time to let the media server grab the EPG data */
         m_mutex.Lock();
         XBMC->Log(LOG_INFO, "Performing forced EPG update!");
         PVR->TriggerEpgUpdate(m_currentChannel);
@@ -1418,12 +1418,12 @@ bool Dvb::CheckBackendVersion()
   }
   XBMC->Log(LOG_NOTICE, "Version: %u", m_backendVersion);
 
-  if (m_backendVersion < RS_VERSION_NUM)
+  if (m_backendVersion < DMS_MIN_VERSION_NUM)
   {
-    XBMC->Log(LOG_ERROR, "Recording Service version %s or higher required",
-        RS_VERSION_STR);
+    XBMC->Log(LOG_ERROR, "DVBViewer Media Server version %s or higher required",
+        DMS_MIN_VERSION_STR);
     SetConnectionState(PVR_CONNECTION_STATE_VERSION_MISMATCH,
-      XBMC->GetLocalizedString(30501), RS_VERSION_STR);
+      XBMC->GetLocalizedString(30501), DMS_MIN_VERSION_STR);
     return false;
   }
 

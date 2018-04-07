@@ -19,7 +19,7 @@ msgstr ""
 #settings labels
 
 msgctxt "#30000"
-msgid "DVBViewer Recording Service IP Address"
+msgid "DVBViewer Media Server IP Address"
 msgstr ""
 
 msgctxt "#30001"
@@ -224,11 +224,11 @@ msgstr ""
 #notifications
 
 msgctxt "#30500"
-msgid "Unable to connect to the DVBViewer Recording Service"
+msgid "Unable to connect to the DVBViewer Media Server"
 msgstr ""
 
 msgctxt "#30501"
-msgid "DVBViewer Recording Service version %s or higher required"
+msgid "DVBViewer Media Server version %s or higher required"
 msgstr ""
 
 msgctxt "#30502"
