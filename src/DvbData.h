@@ -10,7 +10,12 @@
 #include <map>
 #include <functional>
 
-#define CHANNELDAT_HEADER_SIZE       (7)
+// minimum version required
+#define DMS_MIN_VERSION_MAJOR   1
+#define DMS_MIN_VERSION_MINOR   33
+#define DMS_MIN_VERSION_PATCH1  2
+#define DMS_MIN_VERSION_PATCH2  0
+
 #define ENCRYPTED_FLAG               (1 << 0)
 #define RDS_DATA_FLAG                (1 << 2)
 #define VIDEO_FLAG                   (1 << 3)
@@ -19,15 +24,15 @@
 #define DAY_SECS                     (24 * 60 * 60)
 #define DELPHI_DATE                  (25569)
 
-// minimum version required
-#define RS_VERSION_MAJOR   1
-#define RS_VERSION_MINOR   33
-#define RS_VERSION_PATCH1  2
-#define RS_VERSION_PATCH2  0
-#define RS_VERSION_NUM  (RS_VERSION_MAJOR << 24 | RS_VERSION_MINOR << 16 | \
-                          RS_VERSION_PATCH1 << 8 | RS_VERSION_PATCH2)
-#define RS_VERSION_STR  STR(RS_VERSION_MAJOR) "." STR(RS_VERSION_MINOR) \
-                          "." STR(RS_VERSION_PATCH1) "." STR(RS_VERSION_PATCH2)
+#define DMS_VERSION_NUM(a, b, c, d) (a << 24 | b << 16 | c << 8 | d)
+#define DMS_MIN_VERSION_NUM  DMS_VERSION_NUM(DMS_MIN_VERSION_MAJOR,  \
+                                             DMS_MIN_VERSION_MINOR,  \
+                                             DMS_MIN_VERSION_PATCH1, \
+                                             DMS_MIN_VERSION_PATCH2)
+#define DMS_MIN_VERSION_STR  STR(DMS_MIN_VERSION_MAJOR)  "." \
+                             STR(DMS_MIN_VERSION_MINOR)  "." \
+                             STR(DMS_MIN_VERSION_PATCH1) "." \
+                             STR(DMS_MIN_VERSION_PATCH2)
 
 /* forward declaration */
 class DvbGroup;
@@ -83,16 +88,21 @@ public:
   unsigned int id;
   DvbChannel *channel;
   std::string title;
-  time_t start;
-  time_t end;
+  time_t start, end;
   unsigned int genre;
-  std::string plotOutline;
-  std::string plot;
+  std::string plot, plotOutline;
 };
 
 class DvbTimer
 {
 public:
+  enum Type
+    : unsigned int // same type as PVR_TIMER_TYPE.iId
+  {
+    MANUAL_ONCE      = PVR_TIMER_TYPE_NONE + 1,
+    MANUAL_REPEATING = PVR_TIMER_TYPE_NONE + 2,
+  };
+
   enum class State
     : uint8_t
   {
@@ -103,7 +113,7 @@ public:
   };
 
   DvbTimer()
-    : updateState(State::NEW)
+    : type(Type::MANUAL_ONCE), updateState(State::NEW)
   {}
 
 #define TIMER_UPDATE_MEMBER(member) \
@@ -120,8 +130,11 @@ public:
     TIMER_UPDATE_MEMBER(title);
     TIMER_UPDATE_MEMBER(start);
     TIMER_UPDATE_MEMBER(end);
+    TIMER_UPDATE_MEMBER(pre);
+    TIMER_UPDATE_MEMBER(post);
     TIMER_UPDATE_MEMBER(priority);
     TIMER_UPDATE_MEMBER(weekdays);
+    TIMER_UPDATE_MEMBER(recfolder);
     TIMER_UPDATE_MEMBER(state);
     return updated;
   }
@@ -136,13 +149,16 @@ public:
   /*!< @brief timer id on backend. unique at a time */
   unsigned int backendId;
 
+  Type type;
   DvbChannel *channel;
   std::string title;
   uint64_t channelId;
-  time_t start;
-  time_t end;
+  time_t start, end;
+  unsigned int pre, post;
   int priority;
   unsigned int weekdays;
+  /*!< @brief index to m_recfolders or -1 */
+  int recfolder;
   PVR_TIMER_STATE state;
   State updateState;
 };
@@ -173,8 +189,7 @@ public:
   int duration;
   unsigned int genre;
   std::string title;
-  std::string plot;
-  std::string plotOutline;
+  std::string plot, plotOutline;
   std::string thumbnail;
   /*!< @brief channel name provided by the backend */
   std::string channelName;
@@ -212,6 +227,7 @@ public:
       const PVR_CHANNEL_GROUP &group);
   unsigned int GetChannelGroupsAmount(void);
 
+  bool GetTimerTypes(PVR_TIMER_TYPE types[], int *size);
   bool GetTimers(ADDON_HANDLE handle);
   bool AddTimer(const PVR_TIMER &timer, bool update = false);
   bool DeleteTimer(const PVR_TIMER &timer);
@@ -232,8 +248,8 @@ protected:
 
 private:
   // functions
-  struct httpResponse { bool error; std::string content; };
-  httpResponse GetHttpXML(const std::string& url);
+  struct httpResponse { bool error; unsigned short code; std::string content; };
+  httpResponse GetFromAPI(const char* format, ...);
   std::string URLEncode(const std::string& data);
   bool LoadChannels();
   DvbTimers_t LoadTimers();
@@ -249,14 +265,12 @@ private:
       const char *message = nullptr, ...);
   time_t ParseDateTime(const std::string& strDate, bool iso8601 = true);
   std::string BuildURL(const char* path, ...);
-  std::string BuildExtURL(const std::string& baseURL, const char* path, ...);
   std::string ConvertToUtf8(const std::string& src);
   long GetGMTOffset();
 
 private:
   PVR_CONNECTION_STATE m_state;
   unsigned int m_backendVersion;
-  std::string m_url;
 
   long m_timezone;
   struct { long long total, used; } m_diskspace;

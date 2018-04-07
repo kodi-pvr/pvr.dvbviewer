@@ -3,6 +3,7 @@
 #include "util/XMLUtils.h"
 #include "p8-platform/util/util.h"
 #include "p8-platform/util/StringUtils.h"
+
 #include <tinyxml.h>
 #include <inttypes.h>
 #include <set>
@@ -36,14 +37,6 @@ Dvb::Dvb()
   m_nextTimerId(1)
 {
   TiXmlBase::SetCondenseWhiteSpace(false);
-
-  // simply add user@pass in front of the URL if username/password is set
-  std::string auth("");
-  if (!g_username.empty() && !g_password.empty())
-    auth = StringUtils::Format("%s:%s@", URLEncode(g_username).c_str(),
-        URLEncode(g_password).c_str());
-  m_url = StringUtils::Format("http://%s%s:%u/", auth.c_str(), g_hostname.c_str(),
-      g_webPort);
 
   m_updateTimers = false;
   m_updateEPG    = false;
@@ -89,6 +82,9 @@ bool Dvb::GetDriveSpace(long long *total, long long *used)
   return true;
 }
 
+/***************************************************************************
+ * Channels
+ **************************************************************************/
 unsigned int Dvb::GetCurrentClientChannel(void)
 {
   CLockObject lock(m_mutex);
@@ -124,10 +120,9 @@ bool Dvb::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channelinfo,
 {
   DvbChannel *channel = m_channels[channelinfo.iUniqueId - 1];
 
-  const std::string &url = BuildURL("api/epg.html?lvl=2&channel=%" PRIu64
+  const httpResponse &res = GetFromAPI("api/epg.html?lvl=2&channel=%" PRIu64
       "&start=%f&end=%f", channel->epgId, start/86400.0 + DELPHI_DATE,
       end/86400.0 + DELPHI_DATE);
-  const httpResponse &res = GetHttpXML(url);
   if (res.error)
   {
     SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
@@ -217,7 +212,9 @@ unsigned int Dvb::GetChannelsAmount()
   return m_channelAmount;
 }
 
-
+/***************************************************************************
+ * Channel groups
+ **************************************************************************/
 bool Dvb::GetChannelGroups(ADDON_HANDLE handle, bool radio)
 {
   for (auto &group : m_groups)
@@ -270,6 +267,111 @@ unsigned int Dvb::GetChannelGroupsAmount()
   return m_groupAmount;
 }
 
+/***************************************************************************
+ * Timers
+ **************************************************************************/
+bool Dvb::GetTimerTypes(PVR_TIMER_TYPE types[], int *size)
+{
+  struct TimerType
+    : PVR_TIMER_TYPE
+  {
+    TimerType(unsigned int id, unsigned int attributes,
+      const std::string &description = std::string(),
+      const std::vector< std::pair<int, std::string> > &priorityValues
+        = std::vector< std::pair<int, std::string> >(),
+      const std::vector< std::pair<int, std::string> > &groupValues
+        = std::vector< std::pair<int, std::string> >())
+    {
+      int i;
+      memset(this, 0, sizeof(PVR_TIMER_TYPE));
+
+      iId         = id;
+      iAttributes = attributes;
+      PVR_STRCPY(strDescription, description.c_str());
+      //TODO: add support for deDup + CheckRecTitle, CheckRecSubtitle
+
+      if ((iPrioritiesSize = priorityValues.size()))
+        iPrioritiesDefault = priorityValues[0].first;
+      i = 0;
+      for (auto &priority : priorityValues)
+      {
+        priorities[i].iValue = priority.first;
+        PVR_STRCPY(priorities[i].strDescription, priority.second.c_str());
+        ++i;
+      }
+
+      if ((iRecordingGroupSize = groupValues.size()))
+        iRecordingGroupDefault = groupValues[0].first;
+      i = 0;
+      for (auto &group : groupValues)
+      {
+        recordingGroup[i].iValue = group.first;
+        PVR_STRCPY(recordingGroup[i].strDescription, group.second.c_str());
+        ++i;
+      }
+    }
+  };
+
+  /* PVR_Timer.iPriority values and presentation.*/
+  static std::vector< std::pair<int, std::string> > priorityValues = {
+    { -1,  XBMC->GetLocalizedString(30400) }, //default
+    { 0,   XBMC->GetLocalizedString(30401) },
+    { 25,  XBMC->GetLocalizedString(30402) },
+    { 50,  XBMC->GetLocalizedString(30403) },
+    { 75,  XBMC->GetLocalizedString(30404) },
+    { 100, XBMC->GetLocalizedString(30405) },
+  };
+
+  /* PVR_Timer.iRecordingGroup values and presentation.*/
+  std::vector< std::pair<int, std::string> > groupValues = {
+    { 0, XBMC->GetLocalizedString(30410) }, //automatic
+  };
+  for (auto &recf : m_recfolders)
+    groupValues.emplace_back(groupValues.size(), recf);
+
+  std::vector< std::unique_ptr<TimerType> > timerTypes;
+
+  //TODO: use std::make_unique with C++14
+  timerTypes.emplace_back(
+    /* One-shot manual (time and channel based) */
+    std::unique_ptr<TimerType>(new TimerType(
+      DvbTimer::Type::MANUAL_ONCE,
+      PVR_TIMER_TYPE_IS_MANUAL                 |
+      PVR_TIMER_TYPE_SUPPORTS_ENABLE_DISABLE   |
+      PVR_TIMER_TYPE_SUPPORTS_CHANNELS         |
+      PVR_TIMER_TYPE_SUPPORTS_START_TIME       |
+      PVR_TIMER_TYPE_SUPPORTS_END_TIME         |
+      PVR_TIMER_TYPE_SUPPORTS_START_END_MARGIN |
+      PVR_TIMER_TYPE_SUPPORTS_PRIORITY         |
+      PVR_TIMER_TYPE_SUPPORTS_RECORDING_GROUP,
+      "", /* Let Kodi generate the description */
+      priorityValues, groupValues)));
+
+  timerTypes.emplace_back(
+    /* Repeating manual (time and channel based) */
+    std::unique_ptr<TimerType>(new TimerType(
+      DvbTimer::Type::MANUAL_REPEATING,
+      PVR_TIMER_TYPE_IS_MANUAL                 |
+      PVR_TIMER_TYPE_IS_REPEATING              |
+      PVR_TIMER_TYPE_SUPPORTS_ENABLE_DISABLE   |
+      PVR_TIMER_TYPE_SUPPORTS_CHANNELS         |
+      PVR_TIMER_TYPE_SUPPORTS_START_TIME       |
+      PVR_TIMER_TYPE_SUPPORTS_END_TIME         |
+      PVR_TIMER_TYPE_SUPPORTS_WEEKDAYS         |
+      PVR_TIMER_TYPE_SUPPORTS_START_END_MARGIN |
+      PVR_TIMER_TYPE_SUPPORTS_PRIORITY         |
+      PVR_TIMER_TYPE_SUPPORTS_RECORDING_GROUP,
+      "", /* Let Kodi generate the description */
+      priorityValues, groupValues)));
+
+
+  int i = 0;
+  for (auto &timer : timerTypes)
+    types[i++] = *timer;
+  *size = timerTypes.size();
+  XBMC->Log(LOG_DEBUG, "transfered %u timers", *size);
+  return true;
+}
 
 bool Dvb::GetTimers(ADDON_HANDLE handle)
 {
@@ -284,10 +386,12 @@ bool Dvb::GetTimers(ADDON_HANDLE handle)
     tag.iClientChannelUid = timer.channel->id;
     tag.startTime         = timer.start;
     tag.endTime           = timer.end;
+    tag.iMarginStart      = timer.pre;
+    tag.iMarginEnd        = timer.post;
     tag.state             = timer.state;
-    /* TODO: Implement own timer types to get support for the timer features introduced with PVR API 1.9.7 */
-    tag.iTimerType        = PVR_TIMER_TYPE_NONE;
+    tag.iTimerType        = timer.type;
     tag.iPriority         = timer.priority;
+    tag.iRecordingGroup   = timer.recfolder + 1; /* first entry is automatic */
     tag.firstDay          = (timer.weekdays != 0) ? timer.start : 0;
     tag.iWeekdays         = timer.weekdays;
 
@@ -302,10 +406,15 @@ bool Dvb::AddTimer(const PVR_TIMER &timer, bool update)
       __FUNCTION__, timer.iClientChannelUid, timer.strTitle);
   CLockObject lock(m_mutex);
 
-  time_t startTime = timer.startTime - timer.iMarginStart * 60;
-  time_t endTime   = timer.endTime   + timer.iMarginEnd * 60;
-  if (!timer.startTime)
-    startTime = time(NULL);
+  // DMS API requires starttime/endtime to include the margins
+  unsigned int pre = timer.iMarginStart, post = timer.iMarginEnd;
+  time_t startTime = (timer.startTime) ? timer.startTime - pre*60 : time(nullptr);
+  time_t endTime   = timer.endTime + post*60;
+  if (endTime - startTime >= DAY_SECS)
+  {
+    XBMC->QueueNotification(QUEUE_ERROR, XBMC->GetLocalizedString(30510));
+    return false;
+  }
 
   unsigned int date = ((startTime + m_timezone) / DAY_SECS) + DELPHI_DATE;
   struct tm *timeinfo;
@@ -322,25 +431,32 @@ bool Dvb::AddTimer(const PVR_TIMER &timer, bool update)
   }
 
   uint64_t backendId = m_channels[timer.iClientChannelUid - 1]->backendIds.front();
-  if (!update)
-    GetHttpXML(BuildURL("api/timeradd.html?ch=%" PRIu64 "&dor=%u&enable=1"
-        "&start=%u&stop=%u&prio=%d&days=%s&title=%s&encoding=255",
-        backendId, date, start, stop, timer.iPriority, repeat,
-        URLEncode(timer.strTitle).c_str()));
-  else
-  {
+  std::string params = StringUtils::Format("encoding=255&ch=%" PRIu64 "&dor=%u"
+      "&start=%u&stop=%u&pre=%u&post=%u&prio=%d&days=%s&enable=%d",
+      backendId, date, start, stop, pre, post, timer.iPriority, repeat,
+      (timer.state != PVR_TIMER_STATE_DISABLED));
+  params += "&title="  + URLEncode(timer.strTitle);
+  params += "&folder=" + URLEncode((timer.iRecordingGroup == 0) ? "Auto"
+      : m_recfolders[timer.iRecordingGroup - 1]);
+  if (update) {
     auto t = GetTimer([&] (const DvbTimer &t)
         {
           return (t.id == timer.iClientIndex);
         });
     if (!t)
+    {
+      XBMC->Log(LOG_ERROR, "Timer %u is unknown", timer.iClientIndex);
       return false;
+    }
+    params += StringUtils::Format("&id=%d", t->backendId);
+  }
 
-    short enabled = (timer.state == PVR_TIMER_STATE_CANCELLED) ? 0 : 1;
-    GetHttpXML(BuildURL("api/timeredit.html?id=%d&ch=%" PRIu64 "&dor=%u"
-        "&enable=%d&start=%u&stop=%u&prio=%d&days=%s&title=%s&encoding=255",
-        t->backendId, backendId, date, enabled, start, stop, timer.iPriority,
-        repeat, URLEncode(timer.strTitle).c_str()));
+  const httpResponse &res = GetFromAPI("api/timer%s.html?%s",
+      (update) ? "edit" : "add", params.c_str());
+  if (res.error)
+  {
+    XBMC->Log(LOG_ERROR, "Unable to add/edit timer");
+    return false;
   }
 
   //TODO: instead of syncing all timers, we could only sync the new/modified
@@ -359,7 +475,7 @@ bool Dvb::DeleteTimer(const PVR_TIMER &timer)
   if (!t)
     return false;
 
-  GetHttpXML(BuildURL("api/timerdelete.html?id=%u", t->backendId));
+  GetFromAPI("api/timerdelete.html?id=%u", t->backendId);
 
   //TODO: instead of syncing all timers, we could only sync the new/modified
   m_updateTimers = true;
@@ -372,12 +488,13 @@ unsigned int Dvb::GetTimersAmount()
   return m_timers.size();
 }
 
-
+/***************************************************************************
+ * Recordings
+ **************************************************************************/
 bool Dvb::GetRecordings(ADDON_HANDLE handle)
 {
   CLockObject lock(m_mutex);
-  httpResponse &&res = GetHttpXML(BuildURL("api/recordings.html?utf8=1"
-      "&images=1"));
+  httpResponse &&res = GetFromAPI("api/recordings.html?utf8=1&images=1");
   if (res.error)
   {
     SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
@@ -415,9 +532,9 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
     DvbRecording recording;
     recording.id = xRecording->Attribute("id");
     xRecording->QueryUnsignedAttribute("content", &recording.genre);
-    XMLUtils_GetString(xRecording, "title",   recording.title);
-    XMLUtils_GetString(xRecording, "info",    recording.plotOutline);
-    XMLUtils_GetString(xRecording, "desc",    recording.plot);
+    XMLUtils_GetString(xRecording, "title", recording.title);
+    XMLUtils_GetString(xRecording, "info",  recording.plotOutline);
+    XMLUtils_GetString(xRecording, "desc",  recording.plot);
     if (recording.plot.empty())
     {
       recording.plot = recording.plotOutline;
@@ -455,17 +572,19 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
     switch(g_groupRecordings)
     {
       case DvbRecording::Grouping::BY_DIRECTORY:
-        if (!XMLUtils_GetString(xRecording, "file", group))
-          break;
-        StringUtils::ToLower(group);
-        for (auto &recf : m_recfolders)
         {
-          if (!StringUtils::StartsWith(group, recf))
-            continue;
-          group = group.substr(recf.length(), group.rfind('\\') - recf.length());
-          StringUtils::Replace(group, '\\', '/');
-          StringUtils::TrimLeft(group, "/");
-          break;
+          std::string file;
+          if (!XMLUtils_GetString(xRecording, "file", file))
+            break;
+          for (auto &recf : m_recfolders)
+          {
+            if (!StringUtils::StartsWithNoCase(file, recf))
+              continue;
+            group = file.substr(recf.length(), file.rfind('\\') - recf.length());
+            StringUtils::Replace(group, '\\', '/');
+            StringUtils::TrimLeft(group, "/");
+            break;
+          }
         }
         break;
       case DvbRecording::Grouping::BY_DATE:
@@ -473,7 +592,7 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
             startTime.substr(4, 2).c_str());
         break;
       case DvbRecording::Grouping::BY_FIRST_LETTER:
-        group = toupper(recording.title[0]);
+        group = ::toupper(recording.title[0]);
         break;
       case DvbRecording::Grouping::BY_TV_CHANNEL:
         group = recording.channelName;
@@ -537,12 +656,10 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
 
 bool Dvb::DeleteRecording(const PVR_RECORDING &recinfo)
 {
-  // RS api doesn't return a result
-  // TODO: check for http 200 / http 423
-  // but kodi curl wrapper doesn't expose m_httpresponse
-  GetHttpXML(BuildURL("api/recdelete.html?recid=%s&delfile=1",
-      recinfo.strRecordingId));
-
+  const httpResponse &res = GetFromAPI("api/recdelete.html?recid=%s&delfile=1",
+      recinfo.strRecordingId);
+  if (res.error)
+    return false;
   PVR->TriggerRecordingUpdate();
   return true;
 }
@@ -722,12 +839,12 @@ unsigned int Dvb::GetRecordingsAmount()
 RecordingReader *Dvb::OpenRecordedStream(const PVR_RECORDING &recinfo)
 {
   CLockObject lock(m_mutex);
-  time_t now = time(NULL), end = 0;
+  time_t now = time(nullptr), end = 0;
   std::string channelName = recinfo.strChannelName;
   auto timer = GetTimer([&] (const DvbTimer &timer)
       {
         return (timer.start <= now && now <= timer.end
-            && timer.state != PVR_TIMER_STATE_CANCELLED
+            && timer.state != PVR_TIMER_STATE_DISABLED
             && timer.channel->name == channelName);
       });
   if (timer)
@@ -737,7 +854,9 @@ RecordingReader *Dvb::OpenRecordedStream(const PVR_RECORDING &recinfo)
         recinfo.strRecordingId), end);
 }
 
-
+/***************************************************************************
+ * Livestream
+ **************************************************************************/
 bool Dvb::OpenLiveStream(const PVR_CHANNEL &channelinfo)
 {
   XBMC->Log(LOG_DEBUG, "%s: channel=%u", __FUNCTION__, channelinfo.iUniqueId);
@@ -780,6 +899,9 @@ const std::string Dvb::GetLiveStreamURL(const PVR_CHANNEL &channelinfo)
   return BuildURL("upnp/channelstream/%" PRIu64 ".ts", backendId);
 }
 
+/***************************************************************************
+ * Internal
+ **************************************************************************/
 void *Dvb::Process()
 {
   XBMC->Log(LOG_DEBUG, "%s: Running...", __FUNCTION__);
@@ -827,7 +949,7 @@ void *Dvb::Process()
       {
         m_updateEPG = false;
         m_mutex.Unlock();
-        Sleep(8000); /* Sleep enough time to let the recording service grab the EPG data */
+        Sleep(8000); /* Sleep enough time to let the media server grab the EPG data */
         m_mutex.Lock();
         XBMC->Log(LOG_INFO, "Performing forced EPG update!");
         PVR->TriggerEpgUpdate(m_currentChannel);
@@ -857,23 +979,69 @@ void *Dvb::Process()
   return nullptr;
 }
 
-
-Dvb::httpResponse Dvb::GetHttpXML(const std::string& url)
+Dvb::httpResponse Dvb::GetFromAPI(const char* format, ...)
 {
-  // TODO Kodi CURL api doesn't expose the http code. need to replace it
-  // afterwards handle connection failures here
-  // (PVR_CONNECTION_STATE_SERVER_UNREACHABLE)
-  httpResponse res = { true, "" };
-  void *fileHandle = XBMC->OpenFile(url.c_str(), READ_NO_CACHE);
-  if (fileHandle)
+  static const std::string baseUrl = StringUtils::Format("http://%s:%u/",
+      g_hostname.c_str(), g_webPort);
+  va_list argList;
+  va_start(argList, format);
+  std::string url = baseUrl + StringUtils::FormatV(format, argList);
+  va_end(argList);
+
+  httpResponse res = { true, 0, "" };
+  void *file = XBMC->CURLCreate(url.c_str());
+  if (!file)
   {
-    res.error = false;
-    char buffer[1024];
-    while (int bytesRead = XBMC->ReadFile(fileHandle, buffer, 1024))
-      res.content.append(buffer, bytesRead);
-    XBMC->CloseFile(fileHandle);
+    XBMC->Log(LOG_ERROR, "Unable to create curl handle for %s", url.c_str());
+    SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
     return res;
   }
+
+  XBMC->CURLAddOption(file, XFILE::CURL_OPTION_PROTOCOL, "user-agent", "Kodi PVR");
+  XBMC->CURLAddOption(file, XFILE::CURL_OPTION_HEADER, "Accept", "text/xml");
+  if (!g_username.empty() && !g_password.empty())
+    XBMC->CURLAddOption(file, XFILE::CURL_OPTION_CREDENTIALS,
+        g_username.c_str(), g_password.c_str());
+
+  /*
+   * FIXME
+   * CURLOpen fails on http!=2xy responses and the underlaying handle gets
+   * deleted. So we can't parse the status line anymore.
+   */
+  if (!XBMC->CURLOpen(file, XFILE::READ_NO_CACHE))
+  {
+    XBMC->Log(LOG_ERROR, "Unable to open url: %s", url.c_str());
+    XBMC->CloseFile(file);
+    return res;
+  }
+
+  char *status = XBMC->GetFilePropertyValue(file,
+    XFILE::FILE_PROPERTY_RESPONSE_PROTOCOL, "");
+  if (!status)
+  {
+    XBMC->Log(LOG_ERROR, "Endpoint %s didn't return a status line.", url.c_str());
+    XBMC->CloseFile(file);
+    SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
+    return res;
+  }
+
+  std::istringstream ss(status);
+  ss.ignore(10, ' ');
+  ss >> res.code;
+  if (!ss.good())
+  {
+    XBMC->Log(LOG_ERROR, "Endpoint %s returned an invalid status line: ",
+      url.c_str(), status);
+    XBMC->CloseFile(file);
+    SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
+    return res;
+  }
+
+  res.error = (res.code >= 300);
+  char buffer[1024];
+  while (int bytesRead = XBMC->ReadFile(file, buffer, 1024))
+    res.content.append(buffer, bytesRead);
+  XBMC->CloseFile(file);
   return res;
 }
 
@@ -903,8 +1071,8 @@ std::string Dvb::URLEncode(const std::string& data)
 
 bool Dvb::LoadChannels()
 {
-  const httpResponse &res = GetHttpXML(BuildURL("api/getchannelsxml.html"
-      "?fav=1&subchannels=1&logo=1"));
+  const httpResponse &res = GetFromAPI("api/getchannelsxml.html"
+      "?fav=1&subchannels=1&logo=1");
   if (res.error)
   {
     SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
@@ -950,7 +1118,7 @@ bool Dvb::LoadChannels()
   if (g_useFavourites && !g_useFavouritesFile && !hasFavourites)
   {
     XBMC->Log(LOG_NOTICE, "Favourites enabled but non defined");
-    XBMC->QueueNotification(QUEUE_WARNING, XBMC->GetLocalizedString(30509));
+    XBMC->QueueNotification(QUEUE_ERROR, XBMC->GetLocalizedString(30509));
     return false; // empty favourites is an error
   }
 
@@ -1191,7 +1359,7 @@ DvbTimers_t Dvb::LoadTimers()
   DvbTimers_t timers;
 
   // utf8=2 is correct here
-  httpResponse &&res = GetHttpXML(BuildURL("api/timerlist.html?utf8=2"));
+  httpResponse &&res = GetFromAPI("api/timerlist.html?utf8=2");
   if (res.error)
   {
     SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
@@ -1220,6 +1388,7 @@ DvbTimers_t Dvb::LoadTimers()
     XMLUtils::GetUInt(xTimer, "ID", timer.backendId);
     XMLUtils_GetString(xTimer, "Descr", timer.title);
 
+    //TODO: DMS 2.0.4.17 adds the EPGID. do the search with that
     uint64_t backendId = 0;
     std::istringstream ss(xTimer->FirstChildElement("Channel")->Attribute("ID"));
     ss >> backendId;
@@ -1233,12 +1402,23 @@ DvbTimers_t Dvb::LoadTimers()
               != channel->backendIds.end());
         });
     if (!timer.channel)
+    {
+      XBMC->Log(LOG_NOTICE, "Found timer for unknown channel (backendid=%"
+        PRIu64 "). Ignoring.", backendId);
       continue;
+    }
 
     std::string startDate = xTimer->Attribute("Date");
     startDate += xTimer->Attribute("Start");
     timer.start = ParseDateTime(startDate, false);
     timer.end   = timer.start + atoi(xTimer->Attribute("Dur")) * 60;
+
+    timer.pre = timer.post = 0;
+    xTimer->QueryUnsignedAttribute("PreEPG",  &timer.pre);
+    xTimer->QueryUnsignedAttribute("PostEPG", &timer.post);
+    // Kodi requires starttime/endtime to exclude the margins
+    timer.start += timer.pre * 60;
+    timer.end   -= timer.post * 60;
 
     timer.weekdays = PVR_WEEKDAY_NONE;
     const char *weekdays = xTimer->Attribute("Days");
@@ -1247,21 +1427,33 @@ DvbTimers_t Dvb::LoadTimers()
       if (weekdays[j] != '-')
         timer.weekdays += (1 << j);
     }
+    if (timer.weekdays != PVR_WEEKDAY_NONE)
+      timer.type = DvbTimer::Type::MANUAL_REPEATING;
 
-    timer.priority    = atoi(xTimer->Attribute("Priority"));
+    xTimer->QueryIntAttribute("Priority", &timer.priority);
     timer.updateState = DvbTimer::State::NEW;
     timer.state       = PVR_TIMER_STATE_SCHEDULED;
     if (xTimer->Attribute("Enabled")[0] == '0')
-      timer.state = PVR_TIMER_STATE_CANCELLED;
+      timer.state = PVR_TIMER_STATE_DISABLED;
 
     int tmp;
     XMLUtils::GetInt(xTimer, "Recording", tmp);
     if (tmp == -1)
       timer.state = PVR_TIMER_STATE_RECORDING;
 
-    timers.push_back(timer);
-    XBMC->Log(LOG_DEBUG, "%s: Loaded timer entry '%s': start=%u, end=%u",
-        __FUNCTION__, timer.title.c_str(), timer.start, timer.end);
+    timer.recfolder = -1;
+    std::string recfolder;
+    if (XMLUtils_GetString(xTimer, "Folder", recfolder))
+    {
+      auto pos = std::distance(m_recfolders.begin(),
+          std::find(m_recfolders.begin(), m_recfolders.end(), recfolder));
+      if (pos < m_recfolders.size())
+        timer.recfolder = pos;
+    }
+
+    timers.emplace_back(timer);
+    XBMC->Log(LOG_DEBUG, "%s: Loaded timer entry '%s': type=%u, start=%u, end=%u",
+        __FUNCTION__, timer.title.c_str(), timer.type, timer.start, timer.end);
   }
 
   XBMC->Log(LOG_INFO, "Loaded %u timer entries", timers.size());
@@ -1363,15 +1555,14 @@ void Dvb::RemoveNullChars(std::string& str)
 
 bool Dvb::CheckBackendVersion()
 {
-  const httpResponse &res = GetHttpXML(BuildURL("api/version.html"));
+  const httpResponse &res = GetFromAPI("api/version.html");
+  if (res.code == 401)
+    SetConnectionState(PVR_CONNECTION_STATE_ACCESS_DENIED);
   if (res.error)
   {
     SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
     return false;
   }
-
-  // TODO check access denied (PVR_CONNECTION_STATE_ACCESS_DENIED) vs timeout
-  // but kodi curl wrapper doesn't expose m_httpresponse
 
   TiXmlDocument doc;
   doc.Parse(res.content.c_str());
@@ -1393,12 +1584,12 @@ bool Dvb::CheckBackendVersion()
   }
   XBMC->Log(LOG_NOTICE, "Version: %u", m_backendVersion);
 
-  if (m_backendVersion < RS_VERSION_NUM)
+  if (m_backendVersion < DMS_MIN_VERSION_NUM)
   {
-    XBMC->Log(LOG_ERROR, "Recording Service version %s or higher required",
-        RS_VERSION_STR);
+    XBMC->Log(LOG_ERROR, "DVBViewer Media Server version %s or higher required",
+        DMS_MIN_VERSION_STR);
     SetConnectionState(PVR_CONNECTION_STATE_VERSION_MISMATCH,
-      XBMC->GetLocalizedString(30501), RS_VERSION_STR);
+      XBMC->GetLocalizedString(30501), DMS_MIN_VERSION_STR);
     return false;
   }
 
@@ -1407,7 +1598,7 @@ bool Dvb::CheckBackendVersion()
 
 bool Dvb::UpdateBackendStatus(bool updateSettings)
 {
-  const httpResponse &res = GetHttpXML(BuildURL("api/status2.html"));
+  const httpResponse &res = GetFromAPI("api/status2.html");
   if (res.error)
   {
     SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
@@ -1431,8 +1622,7 @@ bool Dvb::UpdateBackendStatus(bool updateSettings)
 
   // compute disk space. duplicates are detected by their identical values
   TiXmlElement *root = doc.RootElement();
-  typedef std::pair<long long, long long> Recfolder_t;
-  std::set<Recfolder_t> folders;
+  std::set< std::pair<long long, long long> > folders;
   m_diskspace.total = m_diskspace.used = 0;
   for (TiXmlElement *xFolder = root->FirstChild("recfolders")->FirstChildElement("folder");
       xFolder; xFolder = xFolder->NextSiblingElement("folder"))
@@ -1441,26 +1631,18 @@ bool Dvb::UpdateBackendStatus(bool updateSettings)
     xFolder->QueryValueAttribute<long long>("size", &size);
     xFolder->QueryValueAttribute<long long>("free", &free);
 
-    if (folders.insert(std::make_pair(size, free)).second)
+    if (folders.emplace(size, free).second)
     {
       m_diskspace.total += size / 1024;
       m_diskspace.used += (size - free) / 1024;
     }
 
-    if (updateSettings && g_groupRecordings == DvbRecording::Grouping::BY_DIRECTORY)
+    if (updateSettings)
     {
       std::string recf = xFolder->GetText();
-      StringUtils::ToLower(recf);
-      m_recfolders.push_back(recf);
+      m_recfolders.emplace_back(recf);
     }
   }
-
-  if (updateSettings && g_groupRecordings == DvbRecording::Grouping::BY_DIRECTORY)
-    std::sort(m_recfolders.begin(), m_recfolders.end(),
-        [](const std::string& a, const std::string& b)
-        {
-          return (a.length() < b.length());
-        });
 
   return true;
 }
@@ -1508,27 +1690,13 @@ time_t Dvb::ParseDateTime(const std::string& date, bool iso8601)
 
 std::string Dvb::BuildURL(const char* path, ...)
 {
-  std::string url(m_url);
-  va_list argList;
-  va_start(argList, path);
-  url += StringUtils::FormatV(path, argList);
-  va_end(argList);
-  return url;
-}
+  static const std::string auth = (g_username.empty() || g_password.empty()) ? ""
+      : StringUtils::Format("%s:%s@", URLEncode(g_username).c_str(),
+          URLEncode(g_password).c_str());
+  static const std::string baseUrl = StringUtils::Format("http://%s%s:%u/",
+      auth.c_str(), g_hostname.c_str(), g_webPort);
 
-std::string Dvb::BuildExtURL(const std::string& baseURL, const char* path, ...)
-{
-  std::string url(baseURL);
-  // simply add user@pass in front of the URL if username/password is set
-  //TODO: maybe use special authorization option (see CurlFile.cpp)?
-  if (!g_username.empty() && !g_password.empty())
-  {
-    std::string auth = StringUtils::Format("%s:%s@",
-        URLEncode(g_username).c_str(), URLEncode(g_password).c_str());
-    std::string::size_type pos = url.find("://");
-    if (pos != std::string::npos)
-      url.insert(pos + strlen("://"), auth);
-  }
+  std::string url(baseUrl);
   va_list argList;
   va_start(argList, path);
   url += StringUtils::FormatV(path, argList);
@@ -1549,7 +1717,7 @@ long Dvb::GetGMTOffset()
 #ifdef TARGET_POSIX
   struct tm t;
   tzset();
-  time_t tt = time(NULL);
+  time_t tt = time(nullptr);
   if (localtime_r(&tt, &t))
     return t.tm_gmtoff;
 #else
