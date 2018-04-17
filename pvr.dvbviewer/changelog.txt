@@ -1,3 +1,7 @@
+3.4.3
+[fixed] Creating timers from epg guide
+[updated] Timers code cleanup
+
 3.4.2
 [updated] Rename RS to DMS
 [updated] Add support for custom timers
