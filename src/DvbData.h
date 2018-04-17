@@ -4,6 +4,7 @@
 #define PVR_DVBVIEWER_DVBDATA_H
 
 #include "RecordingReader.h"
+#include "Timers.h"
 
 #include "libXBMC_pvr.h"
 #include "p8-platform/threads/threads.h"
@@ -35,6 +36,15 @@
                              STR(DMS_MIN_VERSION_PATCH1) "." \
                              STR(DMS_MIN_VERSION_PATCH2)
 
+namespace dvbviewer
+{
+  std::string URLEncode(const std::string& data);
+  time_t ParseDateTime(const std::string& date, bool iso8601);
+  long UTCOffset();
+  void RemoveNullChars(std::string& str);
+  std::string ConvertToUtf8(const std::string& src);
+}; // namespace dvbviewer
+
 /* forward declaration */
 class DvbGroup;
 
@@ -46,7 +56,7 @@ public:
   {}
 
 public:
-  /*!< @brief unique id passed to kodi's database.
+  /*!< @brief unique id passed to Kodi as PVR_CHANNEL.iUniqueId.
    * starts at 1 and increases by each channel regardless of hidden state.
    * see FIXME for more details
    */
@@ -94,76 +104,6 @@ public:
   std::string plot, plotOutline;
 };
 
-class DvbTimer
-{
-public:
-  enum Type
-    : unsigned int // same type as PVR_TIMER_TYPE.iId
-  {
-    MANUAL_ONCE      = PVR_TIMER_TYPE_NONE + 1,
-    MANUAL_REPEATING = PVR_TIMER_TYPE_NONE + 2,
-  };
-
-  enum class State
-    : uint8_t
-  {
-    NONE,
-    NEW,
-    FOUND,
-    UPDATED
-  };
-
-  DvbTimer()
-    : type(Type::MANUAL_ONCE), syncState(State::NEW)
-  {}
-
-#define TIMER_UPDATE_MEMBER(member) \
-  if (member != source.member) \
-  { \
-    member = source.member; \
-    updated = true; \
-  }
-
-  bool updateFrom(const DvbTimer &source)
-  {
-    bool updated = false;
-    TIMER_UPDATE_MEMBER(channel);
-    TIMER_UPDATE_MEMBER(title);
-    TIMER_UPDATE_MEMBER(start);
-    TIMER_UPDATE_MEMBER(end);
-    TIMER_UPDATE_MEMBER(pre);
-    TIMER_UPDATE_MEMBER(post);
-    TIMER_UPDATE_MEMBER(priority);
-    TIMER_UPDATE_MEMBER(weekdays);
-    TIMER_UPDATE_MEMBER(recfolder);
-    TIMER_UPDATE_MEMBER(state);
-    return updated;
-  }
-
-public:
-  /*!< @brief unique id passed to kodi's database
-   * starts at 1 and increases by each new timer. never decreases.
-   */
-  unsigned int id;
-  /*!< @brief unique guid provided by backend. unique every time */
-  std::string guid;
-  /*!< @brief timer id on backend. unique at a time */
-  unsigned int backendId;
-
-  Type type;
-  DvbChannel *channel;
-  std::string title;
-  time_t start, end;
-  unsigned int pre, post;
-  int priority;
-  unsigned int weekdays;
-  /*!< @brief index to m_recfolders or -1 */
-  int recfolder;
-
-  PVR_TIMER_STATE state;
-  State syncState;
-};
-
 class DvbRecording
 {
 public:
@@ -202,7 +142,6 @@ public:
 
 typedef std::vector<DvbChannel *> DvbChannels_t;
 typedef std::vector<DvbGroup> DvbGroups_t;
-typedef std::vector<DvbTimer> DvbTimers_t;
 
 class Dvb
   : public P8PLATFORM::CThread
@@ -228,7 +167,7 @@ public:
       const PVR_CHANNEL_GROUP &group);
   unsigned int GetChannelGroupsAmount(void);
 
-  bool GetTimerTypes(PVR_TIMER_TYPE types[], int *size);
+  void GetTimerTypes(PVR_TIMER_TYPE types[], int *size);
   bool GetTimers(ADDON_HANDLE handle);
   bool AddTimer(const PVR_TIMER &timer, bool update = false);
   bool DeleteTimer(const PVR_TIMER &timer);
@@ -243,36 +182,34 @@ public:
   void CloseLiveStream();
   const std::string GetLiveStreamURL(const PVR_CHANNEL &channelinfo);
 
+  DvbChannel *GetChannel(unsigned int id)
+  { return (--id < m_channels.size()) ? m_channels[id] : nullptr; };
+  DvbChannel *GetChannel(std::function<bool (const DvbChannel*)> func);
+  const std::vector<std::string>& GetRecordingFolders()
+  { return m_recfolders; };
+
+  struct httpResponse { bool error; unsigned short code; std::string content; };
+  httpResponse GetFromAPI(const char* format, ...);
+
 protected:
   virtual void *Process(void) override;
 
 private:
   // functions
-  struct httpResponse { bool error; unsigned short code; std::string content; };
-  httpResponse GetFromAPI(const char* format, ...);
-  std::string URLEncode(const std::string& data);
   bool LoadChannels();
-  DvbTimers_t LoadTimers();
   void TimerUpdates();
-  DvbChannel *GetChannel(std::function<bool (const DvbChannel*)> func);
-  DvbTimer *GetTimer(std::function<bool (const DvbTimer&)> func);
 
   // helper functions
-  void RemoveNullChars(std::string& str);
   bool CheckBackendVersion();
   bool UpdateBackendStatus(bool updateSettings = false);
   void SetConnectionState(PVR_CONNECTION_STATE state,
       const char *message = nullptr, ...);
-  time_t ParseDateTime(const std::string& strDate, bool iso8601 = true);
   std::string BuildURL(const char* path, ...);
-  std::string ConvertToUtf8(const std::string& src);
-  long GetGMTOffset();
 
 private:
   PVR_CONNECTION_STATE m_state;
   unsigned int m_backendVersion;
 
-  long m_timezone;
   struct { long long total, used; } m_diskspace;
   std::vector<std::string> m_recfolders;
 
@@ -291,8 +228,7 @@ private:
   bool m_updateEPG;
   unsigned int m_recordingAmount;
 
-  DvbTimers_t m_timers;
-  unsigned int m_nextTimerId;
+  dvbviewer::Timers m_timers;
 
   P8PLATFORM::CMutex m_mutex;
 };

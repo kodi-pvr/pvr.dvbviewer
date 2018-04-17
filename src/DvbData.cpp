@@ -12,12 +12,102 @@
 #include <algorithm>
 #include <memory>
 
+using namespace dvbviewer;
 using namespace ADDON;
 using namespace P8PLATFORM;
 
+/* Copied from xbmc/URL.cpp */
+std::string dvbviewer::URLEncode(const std::string& data)
+{
+  std::string result;
+
+  /* wonder what a good value is here is, depends on how often it occurs */
+  result.reserve(data.length() * 2);
+
+  for (size_t i = 0; i < data.size(); ++i)
+  {
+    const char kar = data[i];
+
+    // Don't URL encode "-_.!()" according to RFC1738
+    // TODO: Update it to "-_.~" after Gotham according to RFC3986
+    if (StringUtils::isasciialphanum(kar) || kar == '-' || kar == '.'
+        || kar == '_' || kar == '!' || kar == '(' || kar == ')')
+      result.push_back(kar);
+    else
+      result += StringUtils::Format("%%%2.2X", (unsigned int)((unsigned char)kar));
+  }
+
+  return result;
+}
+
+time_t dvbviewer::ParseDateTime(const std::string& date, bool iso8601 = true)
+{
+  struct tm timeinfo;
+
+  memset(&timeinfo, 0, sizeof(tm));
+  if (iso8601)
+    sscanf(date.c_str(), "%04d%02d%02d%02d%02d%02d", &timeinfo.tm_year,
+        &timeinfo.tm_mon, &timeinfo.tm_mday, &timeinfo.tm_hour,
+        &timeinfo.tm_min, &timeinfo.tm_sec);
+  else
+    sscanf(date.c_str(), "%02d.%02d.%04d%02d:%02d:%02d", &timeinfo.tm_mday,
+        &timeinfo.tm_mon, &timeinfo.tm_year, &timeinfo.tm_hour,
+        &timeinfo.tm_min, &timeinfo.tm_sec);
+  timeinfo.tm_mon  -= 1;
+  timeinfo.tm_year -= 1900;
+  timeinfo.tm_isdst = -1;
+
+  return mktime(&timeinfo);
+}
+
+// XXX: not thread safe
+long dvbviewer::UTCOffset()
+{
+  static long offset;
+  static bool initialized = false;
+  if (!initialized) {
+#ifdef TARGET_POSIX
+    struct tm t;
+    tzset();
+    time_t tt = time(nullptr);
+    if (localtime_r(&tt, &t))
+      offset = t.tm_gmtoff;
+#else
+    TIME_ZONE_INFORMATION tz;
+    switch(GetTimeZoneInformation(&tz))
+    {
+      case TIME_ZONE_ID_DAYLIGHT:
+        offset = (tz.Bias + tz.DaylightBias) * -60;
+        break;
+      case TIME_ZONE_ID_STANDARD:
+        offset = (tz.Bias + tz.StandardBias) * -60;
+        break;
+      case TIME_ZONE_ID_UNKNOWN:
+        offset = tz.Bias * -60;
+        break;
+    }
+#endif
+  }
+  return offset;
+}
+
+void dvbviewer::RemoveNullChars(std::string& str)
+{
+  /* favourites.xml and timers.xml sometimes have null chars that screw the xml */
+  str.erase(std::remove(str.begin(), str.end(), '\0'), str.end());
+}
+
+std::string dvbviewer::ConvertToUtf8(const std::string& src)
+{
+  char *tmp = XBMC->UnknownToUTF8(src.c_str());
+  std::string dest(tmp);
+  XBMC->FreeString(tmp);
+  return dest;
+}
+
 Dvb::Dvb()
   : m_state(PVR_CONNECTION_STATE_UNKNOWN), m_backendVersion(0), m_currentChannel(0),
-  m_nextTimerId(1)
+  m_timers(*this)
 {
   TiXmlBase::SetCondenseWhiteSpace(false);
 
@@ -101,7 +191,7 @@ bool Dvb::GetChannels(ADDON_HANDLE handle, bool radio)
 bool Dvb::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channelinfo,
     time_t start, time_t end)
 {
-  DvbChannel *channel = m_channels[channelinfo.iUniqueId - 1];
+  DvbChannel *channel = GetChannel(channelinfo.iUniqueId);
 
   const httpResponse &res = GetFromAPI("api/epg.html?lvl=2&channel=%" PRIu64
       "&start=%f&end=%f", channel->epgId, start/86400.0 + DELPHI_DATE,
@@ -253,133 +343,31 @@ unsigned int Dvb::GetChannelGroupsAmount()
 /***************************************************************************
  * Timers
  **************************************************************************/
-bool Dvb::GetTimerTypes(PVR_TIMER_TYPE types[], int *size)
+void Dvb::GetTimerTypes(PVR_TIMER_TYPE types[], int *size)
 {
-  struct TimerType
-    : PVR_TIMER_TYPE
+  std::vector<PVR_TIMER_TYPE> timerTypes;
   {
-    TimerType(unsigned int id, unsigned int attributes,
-      const std::string &description = std::string(),
-      const std::vector< std::pair<int, std::string> > &priorityValues
-        = std::vector< std::pair<int, std::string> >(),
-      const std::vector< std::pair<int, std::string> > &groupValues
-        = std::vector< std::pair<int, std::string> >())
-    {
-      int i;
-      memset(this, 0, sizeof(PVR_TIMER_TYPE));
-
-      iId         = id;
-      iAttributes = attributes;
-      PVR_STRCPY(strDescription, description.c_str());
-      //TODO: add support for deDup + CheckRecTitle, CheckRecSubtitle
-
-      if ((iPrioritiesSize = priorityValues.size()))
-        iPrioritiesDefault = priorityValues[0].first;
-      i = 0;
-      for (auto &priority : priorityValues)
-      {
-        priorities[i].iValue = priority.first;
-        PVR_STRCPY(priorities[i].strDescription, priority.second.c_str());
-        ++i;
-      }
-
-      if ((iRecordingGroupSize = groupValues.size()))
-        iRecordingGroupDefault = groupValues[0].first;
-      i = 0;
-      for (auto &group : groupValues)
-      {
-        recordingGroup[i].iValue = group.first;
-        PVR_STRCPY(recordingGroup[i].strDescription, group.second.c_str());
-        ++i;
-      }
-    }
-  };
-
-  /* PVR_Timer.iPriority values and presentation.*/
-  static std::vector< std::pair<int, std::string> > priorityValues = {
-    { -1,  XBMC->GetLocalizedString(30400) }, //default
-    { 0,   XBMC->GetLocalizedString(30401) },
-    { 25,  XBMC->GetLocalizedString(30402) },
-    { 50,  XBMC->GetLocalizedString(30403) },
-    { 75,  XBMC->GetLocalizedString(30404) },
-    { 100, XBMC->GetLocalizedString(30405) },
-  };
-
-  /* PVR_Timer.iRecordingGroup values and presentation.*/
-  std::vector< std::pair<int, std::string> > groupValues = {
-    { 0, XBMC->GetLocalizedString(30410) }, //automatic
-  };
-  for (auto &recf : m_recfolders)
-    groupValues.emplace_back(groupValues.size(), recf);
-
-  std::vector< std::unique_ptr<TimerType> > timerTypes;
-
-  //TODO: use std::make_unique with C++14
-  timerTypes.emplace_back(
-    /* One-shot manual (time and channel based) */
-    std::unique_ptr<TimerType>(new TimerType(
-      DvbTimer::Type::MANUAL_ONCE,
-      PVR_TIMER_TYPE_IS_MANUAL                 |
-      PVR_TIMER_TYPE_SUPPORTS_ENABLE_DISABLE   |
-      PVR_TIMER_TYPE_SUPPORTS_CHANNELS         |
-      PVR_TIMER_TYPE_SUPPORTS_START_TIME       |
-      PVR_TIMER_TYPE_SUPPORTS_END_TIME         |
-      PVR_TIMER_TYPE_SUPPORTS_START_END_MARGIN |
-      PVR_TIMER_TYPE_SUPPORTS_PRIORITY         |
-      PVR_TIMER_TYPE_SUPPORTS_RECORDING_GROUP,
-      "", /* Let Kodi generate the description */
-      priorityValues, groupValues)));
-
-  timerTypes.emplace_back(
-    /* Repeating manual (time and channel based) */
-    std::unique_ptr<TimerType>(new TimerType(
-      DvbTimer::Type::MANUAL_REPEATING,
-      PVR_TIMER_TYPE_IS_MANUAL                 |
-      PVR_TIMER_TYPE_IS_REPEATING              |
-      PVR_TIMER_TYPE_SUPPORTS_ENABLE_DISABLE   |
-      PVR_TIMER_TYPE_SUPPORTS_CHANNELS         |
-      PVR_TIMER_TYPE_SUPPORTS_START_TIME       |
-      PVR_TIMER_TYPE_SUPPORTS_END_TIME         |
-      PVR_TIMER_TYPE_SUPPORTS_WEEKDAYS         |
-      PVR_TIMER_TYPE_SUPPORTS_START_END_MARGIN |
-      PVR_TIMER_TYPE_SUPPORTS_PRIORITY         |
-      PVR_TIMER_TYPE_SUPPORTS_RECORDING_GROUP,
-      "", /* Let Kodi generate the description */
-      priorityValues, groupValues)));
-
+    CLockObject lock(m_mutex);
+    m_timers.GetTimerTypes(timerTypes);
+  }
 
   int i = 0;
   for (auto &timer : timerTypes)
-    types[i++] = *timer;
+    types[i++] = timer;
   *size = timerTypes.size();
   XBMC->Log(LOG_DEBUG, "transfered %u timers", *size);
-  return true;
 }
 
 bool Dvb::GetTimers(ADDON_HANDLE handle)
 {
-  CLockObject lock(m_mutex);
-  for (auto &timer : m_timers)
+  std::vector<PVR_TIMER> timers;
   {
-    PVR_TIMER tag;
-    memset(&tag, 0, sizeof(PVR_TIMER));
-
-    PVR_STRCPY(tag.strTitle, timer.title.c_str());
-    tag.iClientIndex      = timer.id;
-    tag.iClientChannelUid = timer.channel->id;
-    tag.startTime         = timer.start;
-    tag.endTime           = timer.end;
-    tag.iMarginStart      = timer.pre;
-    tag.iMarginEnd        = timer.post;
-    tag.state             = timer.state;
-    tag.iTimerType        = timer.type;
-    tag.iPriority         = timer.priority;
-    tag.iRecordingGroup   = timer.recfolder + 1; /* first entry is automatic */
-    tag.firstDay          = (timer.weekdays != 0) ? timer.start : 0;
-    tag.iWeekdays         = timer.weekdays;
-
-    PVR->TransferTimerEntry(handle, &tag);
+    CLockObject lock(m_mutex);
+    m_timers.GetTimers(timers);
   }
+
+  for (auto &timer : timers)
+    PVR->TransferTimerEntry(handle, &timer);
   return true;
 }
 
@@ -389,61 +377,22 @@ bool Dvb::AddTimer(const PVR_TIMER &timer, bool update)
       __FUNCTION__, timer.iClientChannelUid, timer.strTitle);
   CLockObject lock(m_mutex);
 
-  // DMS API requires starttime/endtime to include the margins
-  unsigned int pre = timer.iMarginStart, post = timer.iMarginEnd;
-  time_t startTime = (timer.startTime) ? timer.startTime - pre*60 : time(nullptr);
-  time_t endTime   = timer.endTime + post*60;
-  if (endTime - startTime >= DAY_SECS)
+  Timers::Error err = m_timers.AddUpdateTimer(timer, update);
+  if (err != Timers::SUCCESS)
   {
-    XBMC->QueueNotification(QUEUE_ERROR, XBMC->GetLocalizedString(30510));
-    return false;
-  }
-
-  unsigned int date = ((startTime + m_timezone) / DAY_SECS) + DELPHI_DATE;
-  struct tm *timeinfo;
-  timeinfo = localtime(&startTime);
-  unsigned int start = timeinfo->tm_hour * 60 + timeinfo->tm_min;
-  timeinfo = localtime(&endTime);
-  unsigned int stop = timeinfo->tm_hour * 60 + timeinfo->tm_min;
-
-  char repeat[8] = "-------";
-  for (int i = 0; i < 7; ++i)
-  {
-    if (timer.iWeekdays & (1 << i))
-      repeat[i] = 'T';
-  }
-
-  uint64_t backendId = m_channels[timer.iClientChannelUid - 1]->backendIds.front();
-  std::string params = StringUtils::Format("encoding=255&ch=%" PRIu64 "&dor=%u"
-      "&start=%u&stop=%u&pre=%u&post=%u&prio=%d&days=%s&enable=%d",
-      backendId, date, start, stop, pre, post, timer.iPriority, repeat,
-      (timer.state != PVR_TIMER_STATE_DISABLED));
-  params += "&title="  + URLEncode(timer.strTitle);
-  params += "&folder=" + URLEncode((timer.iRecordingGroup == 0) ? "Auto"
-      : m_recfolders[timer.iRecordingGroup - 1]);
-  if (update) {
-    auto t = GetTimer([&] (const DvbTimer &t)
-        {
-          return (t.id == timer.iClientIndex);
-        });
-    if (!t)
-    {
+    if (err == Timers::TIMESPAN_OVERFLOW)
+      XBMC->QueueNotification(QUEUE_ERROR, XBMC->GetLocalizedString(30510));
+    else if (err == Timers::TIMER_UNKNOWN)
       XBMC->Log(LOG_ERROR, "Timer %u is unknown", timer.iClientIndex);
-      return false;
-    }
-    params += StringUtils::Format("&id=%d", t->backendId);
-  }
-
-  const httpResponse &res = GetFromAPI("api/timer%s.html?%s",
-      (update) ? "edit" : "add", params.c_str());
-  if (res.error)
-  {
-    XBMC->Log(LOG_ERROR, "Unable to add/edit timer");
+    else if (err == Timers::CHANNEL_UNKNOWN)
+      XBMC->Log(LOG_ERROR, "Channel is unknown");
+    else if (err == Timers::RECFOLDER_UNKNOWN)
+      XBMC->Log(LOG_ERROR, "Recording folder is unknown");
+    else
+      XBMC->Log(LOG_ERROR, "Unexpected error while add/edit timer");
     return false;
   }
-
-  //TODO: instead of syncing all timers, we could only sync the new/modified
-  // in case the timer has already started we should check the recordings too
+  // full timer sync here to get the backend specific properties
   m_updateTimers = true;
   return true;
 }
@@ -451,24 +400,18 @@ bool Dvb::AddTimer(const PVR_TIMER &timer, bool update)
 bool Dvb::DeleteTimer(const PVR_TIMER &timer)
 {
   CLockObject lock(m_mutex);
-  auto t = GetTimer([&] (const DvbTimer &t)
-      {
-        return (t.id == timer.iClientIndex);
-      });
-  if (!t)
+  Timers::Error err = m_timers.DeleteTimer(timer);
+  if (err != Timers::SUCCESS)
     return false;
 
-  GetFromAPI("api/timerdelete.html?id=%u", t->backendId);
-
-  //TODO: instead of syncing all timers, we could only sync the new/modified
-  m_updateTimers = true;
+  PVR->TriggerTimerUpdate();
   return true;
 }
 
 unsigned int Dvb::GetTimersAmount()
 {
   CLockObject lock(m_mutex);
-  return m_timers.size();
+  return m_timers.GetTimerCount();
 }
 
 /***************************************************************************
@@ -658,11 +601,9 @@ RecordingReader *Dvb::OpenRecordedStream(const PVR_RECORDING &recinfo)
   CLockObject lock(m_mutex);
   time_t now = time(nullptr), end = 0;
   std::string channelName = recinfo.strChannelName;
-  auto timer = GetTimer([&] (const DvbTimer &timer)
+  auto timer = m_timers.GetTimer([&] (const Timer &timer)
       {
-        return (timer.start <= now && now <= timer.end
-            && timer.state != PVR_TIMER_STATE_DISABLED
-            && timer.channel->name == channelName);
+        return timer.isRunning(&now, &channelName);
       });
   if (timer)
     end = timer->end;
@@ -696,7 +637,7 @@ void Dvb::CloseLiveStream(void)
 
 const std::string Dvb::GetLiveStreamURL(const PVR_CHANNEL &channelinfo)
 {
-  DvbChannel *channel = m_channels[channelinfo.iUniqueId - 1];
+  DvbChannel *channel = GetChannel(channelinfo.iUniqueId);
   uint64_t backendId = channel->backendIds.front();
   switch(g_transcoding)
   {
@@ -860,30 +801,6 @@ Dvb::httpResponse Dvb::GetFromAPI(const char* format, ...)
     res.content.append(buffer, bytesRead);
   XBMC->CloseFile(file);
   return res;
-}
-
-/* Copied from xbmc/URL.cpp */
-std::string Dvb::URLEncode(const std::string& data)
-{
-  std::string result;
-
-  /* wonder what a good value is here is, depends on how often it occurs */
-  result.reserve(data.length() * 2);
-
-  for (size_t i = 0; i < data.size(); ++i)
-  {
-    const char kar = data[i];
-
-    // Don't URL encode "-_.!()" according to RFC1738
-    // TODO: Update it to "-_.~" after Gotham according to RFC3986
-    if (StringUtils::isasciialphanum(kar) || kar == '-' || kar == '.'
-        || kar == '_' || kar == '!' || kar == '(' || kar == ')')
-      result.push_back(kar);
-    else
-      result += StringUtils::Format("%%%2.2X", (unsigned int)((unsigned char)kar));
-  }
-
-  return result;
 }
 
 bool Dvb::LoadChannels()
@@ -1171,176 +1088,21 @@ bool Dvb::LoadChannels()
   return true;
 }
 
-DvbTimers_t Dvb::LoadTimers()
-{
-  DvbTimers_t timers;
-
-  // utf8=2 is correct here
-  httpResponse &&res = GetFromAPI("api/timerlist.html?utf8=2");
-  if (res.error)
-  {
-    SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
-    return timers;
-  }
-
-  TiXmlDocument doc;
-  RemoveNullChars(res.content);
-  doc.Parse(res.content.c_str());
-  if (doc.Error())
-  {
-    XBMC->Log(LOG_ERROR, "Unable to parse timers. Error: %s",
-        doc.ErrorDesc());
-    SetConnectionState(PVR_CONNECTION_STATE_SERVER_MISMATCH,
-        XBMC->GetLocalizedString(30506));
-    return timers;
-  }
-
-  for (TiXmlElement *xTimer = doc.RootElement()->FirstChildElement("Timer");
-      xTimer; xTimer = xTimer->NextSiblingElement("Timer"))
-  {
-    DvbTimer timer;
-
-    if (!XMLUtils::GetString(xTimer, "GUID", timer.guid))
-      continue;
-    XMLUtils::GetUInt(xTimer, "ID", timer.backendId);
-    XMLUtils::GetString(xTimer, "Descr", timer.title);
-
-    //TODO: DMS 2.0.4.17 adds the EPGID. do the search with that
-    uint64_t backendId = 0;
-    std::istringstream ss(xTimer->FirstChildElement("Channel")->Attribute("ID"));
-    ss >> backendId;
-    if (!backendId)
-      continue;
-
-    timer.channel = GetChannel([&] (const DvbChannel *channel)
-        {
-          return (std::find(channel->backendIds.begin(),
-                channel->backendIds.end(), backendId)
-              != channel->backendIds.end());
-        });
-    if (!timer.channel)
-    {
-      XBMC->Log(LOG_NOTICE, "Found timer for unknown channel (backendid=%"
-        PRIu64 "). Ignoring.", backendId);
-      continue;
-    }
-
-    std::string startDate = xTimer->Attribute("Date");
-    startDate += xTimer->Attribute("Start");
-    timer.start = ParseDateTime(startDate, false);
-    timer.end   = timer.start + atoi(xTimer->Attribute("Dur")) * 60;
-
-    timer.pre = timer.post = 0;
-    xTimer->QueryUnsignedAttribute("PreEPG",  &timer.pre);
-    xTimer->QueryUnsignedAttribute("PostEPG", &timer.post);
-    // Kodi requires starttime/endtime to exclude the margins
-    timer.start += timer.pre * 60;
-    timer.end   -= timer.post * 60;
-
-    timer.weekdays = PVR_WEEKDAY_NONE;
-    const char *weekdays = xTimer->Attribute("Days");
-    for (unsigned int j = 0; weekdays && weekdays[j] != '\0'; ++j)
-    {
-      if (weekdays[j] != '-')
-        timer.weekdays += (1 << j);
-    }
-    if (timer.weekdays != PVR_WEEKDAY_NONE)
-      timer.type = DvbTimer::Type::MANUAL_REPEATING;
-
-    xTimer->QueryIntAttribute("Priority", &timer.priority);
-    timer.syncState = DvbTimer::State::NEW;
-    timer.state     = PVR_TIMER_STATE_SCHEDULED;
-    if (xTimer->Attribute("Enabled")[0] == '0')
-      timer.state = PVR_TIMER_STATE_DISABLED;
-
-    int tmp;
-    XMLUtils::GetInt(xTimer, "Recording", tmp);
-    if (tmp == -1)
-      timer.state = PVR_TIMER_STATE_RECORDING;
-
-    timer.recfolder = -1;
-    std::string recfolder;
-    if (XMLUtils::GetString(xTimer, "Folder", recfolder))
-    {
-      auto pos = std::distance(m_recfolders.begin(),
-          std::find(m_recfolders.begin(), m_recfolders.end(), recfolder));
-      if (pos < m_recfolders.size())
-        timer.recfolder = pos;
-    }
-
-    timers.emplace_back(timer);
-    XBMC->Log(LOG_DEBUG, "%s: Loaded timer entry '%s': type=%u, start=%u, end=%u",
-        __FUNCTION__, timer.title.c_str(), timer.type, timer.start, timer.end);
-  }
-
-  XBMC->Log(LOG_INFO, "Loaded %u timer entries", timers.size());
-  return timers;
-}
-
 void Dvb::TimerUpdates()
 {
-  for (auto &timer : m_timers)
-    timer.syncState = DvbTimer::State::NONE;
-
-  DvbTimers_t &&newtimers = LoadTimers();
-  unsigned int updated = 0, unchanged = 0;
-  for (auto &newtimer : newtimers)
+  CLockObject lock(m_mutex);
+  Timers::Error err = m_timers.RefreshTimers();
+  if (err != Timers::SUCCESS)
   {
-    for (auto &timer : m_timers)
-    {
-      if (timer.guid != newtimer.guid)
-        continue;
-
-      if (timer.updateFrom(newtimer))
-      {
-        timer.syncState = newtimer.syncState = DvbTimer::State::UPDATED;
-        ++updated;
-      }
-      else
-      {
-        timer.syncState = newtimer.syncState = DvbTimer::State::FOUND;
-        ++unchanged;
-      }
-      break;
-    }
+    if (err == Timers::RESPONSE_ERROR)
+      SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
+    else if (err == Timers::GENERIC_PARSE_ERROR)
+      SetConnectionState(PVR_CONNECTION_STATE_SERVER_MISMATCH,
+          XBMC->GetLocalizedString(30506));
+    return;
   }
-
-  unsigned int removed = 0;
-  for (auto it = m_timers.begin(); it != m_timers.end();)
-  {
-    if (it->syncState == DvbTimer::State::NONE)
-    {
-      XBMC->Log(LOG_DEBUG, "%s: Removed timer '%s': id=%u", __FUNCTION__,
-          it->title.c_str(), it->id);
-      it = m_timers.erase(it);
-      ++removed;
-    }
-    else
-      ++it;
-  }
-
-  unsigned int added = 0;
-  for (auto &newtimer : newtimers)
-  {
-    if (newtimer.syncState == DvbTimer::State::NEW)
-    {
-      newtimer.id = m_nextTimerId;
-      XBMC->Log(LOG_DEBUG, "%s: New timer '%s': id=%u", __FUNCTION__,
-          newtimer.title.c_str(), newtimer.id);
-      m_timers.push_back(newtimer);
-      ++m_nextTimerId;
-      ++added;
-    }
-  }
-
-  XBMC->Log(LOG_DEBUG, "%s: Timers update: removed=%u, unchanged=%u, updated=%u, added=%u",
-      __FUNCTION__, removed, unchanged, updated, added);
-
-  if (removed || updated || added)
-  {
-    XBMC->Log(LOG_INFO, "Changes in timerlist detected, triggering an update!");
-    PVR->TriggerTimerUpdate();
-  }
+  XBMC->Log(LOG_INFO, "Changes in timerlist detected, triggering an update!");
+  PVR->TriggerTimerUpdate();
 }
 
 DvbChannel *Dvb::GetChannel(std::function<bool (const DvbChannel*)> func)
@@ -1351,23 +1113,6 @@ DvbChannel *Dvb::GetChannel(std::function<bool (const DvbChannel*)> func)
       return channel;
   }
   return nullptr;
-}
-
-DvbTimer *Dvb::GetTimer(std::function<bool (const DvbTimer&)> func)
-{
-  for (auto &timer : m_timers)
-  {
-    if (func(timer))
-      return &timer;
-  }
-  return nullptr;
-}
-
-
-void Dvb::RemoveNullChars(std::string& str)
-{
-  /* favourites.xml and timers.xml sometimes have null chars that screw the xml */
-  str.erase(std::remove(str.begin(), str.end(), '\0'), str.end());
 }
 
 bool Dvb::CheckBackendVersion()
@@ -1432,10 +1177,7 @@ bool Dvb::UpdateBackendStatus(bool updateSettings)
   }
 
   if (updateSettings)
-  {
-    m_timezone = GetGMTOffset();
     m_recfolders.clear();
-  }
 
   // compute disk space. duplicates are detected by their identical values
   TiXmlElement *root = doc.RootElement();
@@ -1485,26 +1227,6 @@ void Dvb::SetConnectionState(PVR_CONNECTION_STATE state,
   }
 }
 
-time_t Dvb::ParseDateTime(const std::string& date, bool iso8601)
-{
-  struct tm timeinfo;
-
-  memset(&timeinfo, 0, sizeof(tm));
-  if (iso8601)
-    sscanf(date.c_str(), "%04d%02d%02d%02d%02d%02d", &timeinfo.tm_year,
-        &timeinfo.tm_mon, &timeinfo.tm_mday, &timeinfo.tm_hour,
-        &timeinfo.tm_min, &timeinfo.tm_sec);
-  else
-    sscanf(date.c_str(), "%02d.%02d.%04d%02d:%02d:%02d", &timeinfo.tm_mday,
-        &timeinfo.tm_mon, &timeinfo.tm_year, &timeinfo.tm_hour,
-        &timeinfo.tm_min, &timeinfo.tm_sec);
-  timeinfo.tm_mon  -= 1;
-  timeinfo.tm_year -= 1900;
-  timeinfo.tm_isdst = -1;
-
-  return mktime(&timeinfo);
-}
-
 std::string Dvb::BuildURL(const char* path, ...)
 {
   static const std::string auth = (g_username.empty() || g_password.empty()) ? ""
@@ -1519,38 +1241,4 @@ std::string Dvb::BuildURL(const char* path, ...)
   url += StringUtils::FormatV(path, argList);
   va_end(argList);
   return url;
-}
-
-std::string Dvb::ConvertToUtf8(const std::string& src)
-{
-  char *tmp = XBMC->UnknownToUTF8(src.c_str());
-  std::string dest(tmp);
-  XBMC->FreeString(tmp);
-  return dest;
-}
-
-long Dvb::GetGMTOffset()
-{
-#ifdef TARGET_POSIX
-  struct tm t;
-  tzset();
-  time_t tt = time(nullptr);
-  if (localtime_r(&tt, &t))
-    return t.tm_gmtoff;
-#else
-  TIME_ZONE_INFORMATION tz;
-  switch(GetTimeZoneInformation(&tz))
-  {
-    case TIME_ZONE_ID_DAYLIGHT:
-      return (tz.Bias + tz.DaylightBias) * -60;
-      break;
-    case TIME_ZONE_ID_STANDARD:
-      return (tz.Bias + tz.StandardBias) * -60;
-      break;
-    case TIME_ZONE_ID_UNKNOWN:
-      return tz.Bias * -60;
-      break;
-  }
-#endif
-  return 0;
 }

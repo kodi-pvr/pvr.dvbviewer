@@ -20,8 +20,9 @@ add_definitions(-D__STDC_FORMAT_MACROS)
 
 set(DVBVIEWER_SOURCES src/client.cpp
                       src/DvbData.cpp
-                      src/StreamReader.cpp
                       src/RecordingReader.cpp
+                      src/StreamReader.cpp
+                      src/Timers.cpp
                       src/TimeshiftBuffer.cpp)
 
 set(DVBVIEWER_HEADERS src/client.h
@@ -29,6 +30,7 @@ set(DVBVIEWER_HEADERS src/client.h
                       src/IStreamReader.h
                       src/RecordingReader.h
                       src/StreamReader.h
+                      src/Timers.h
                       src/TimeshiftBuffer.h)
 
 set(DEPLIBS ${kodiplatform_LIBRARIES}
