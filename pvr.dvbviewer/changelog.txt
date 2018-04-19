@@ -3,6 +3,7 @@
 [updated] Timers code cleanup
 
 3.4.2
+[added] Add support for processing Recorded TV Edit Decision Lists (EDL) (by pOpY)
 [updated] Rename RS to DMS
 [updated] Add support for custom timers
 [fixed] Playback of ongoing recordings

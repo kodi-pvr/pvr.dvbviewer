@@ -175,6 +175,7 @@ public:
 
   bool GetRecordings(ADDON_HANDLE handle);
   bool DeleteRecording(const PVR_RECORDING &recinfo);
+  bool GetRecordingEdl(PVR_RECORDING const& recording, PVR_EDL_ENTRY edl[], int* count);
   unsigned int GetRecordingsAmount();
   RecordingReader *OpenRecordedStream(const PVR_RECORDING &recinfo);
 
