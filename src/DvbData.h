@@ -13,10 +13,15 @@
 #include <functional>
 
 // minimum version required
-#define DMS_MIN_VERSION_MAJOR   1
-#define DMS_MIN_VERSION_MINOR   33
-#define DMS_MIN_VERSION_PATCH1  2
-#define DMS_MIN_VERSION_PATCH2  0
+#define DMS_MIN_VERSION 1, 33, 2, 0
+
+#define DMS_MIN_VERSION_NUM DMS_VERSION_NUM(DMS_MIN_VERSION)
+#define DMS_MIN_VERSION_STR DMS_VERSION_STR(DMS_MIN_VERSION)
+
+#define DMS_VERSION_NUM(...) DMS_VERSION_NUM2(__VA_ARGS__)
+#define DMS_VERSION_STR(...) DMS_VERSION_STR2(__VA_ARGS__)
+#define DMS_VERSION_NUM2(a, b, c, d) (a << 24 | b << 16 | c << 8 | d)
+#define DMS_VERSION_STR2(a, b, c, d) STR(a) "." STR(b) "." STR(c) "." STR(d)
 
 #define ENCRYPTED_FLAG               (1 << 0)
 #define RDS_DATA_FLAG                (1 << 2)
@@ -25,16 +30,6 @@
 #define ADDITIONAL_AUDIO_TRACK_FLAG  (1 << 7)
 #define DAY_SECS                     (24 * 60 * 60)
 #define DELPHI_DATE                  (25569)
-
-#define DMS_VERSION_NUM(a, b, c, d) (a << 24 | b << 16 | c << 8 | d)
-#define DMS_MIN_VERSION_NUM  DMS_VERSION_NUM(DMS_MIN_VERSION_MAJOR,  \
-                                             DMS_MIN_VERSION_MINOR,  \
-                                             DMS_MIN_VERSION_PATCH1, \
-                                             DMS_MIN_VERSION_PATCH2)
-#define DMS_MIN_VERSION_STR  STR(DMS_MIN_VERSION_MAJOR)  "." \
-                             STR(DMS_MIN_VERSION_MINOR)  "." \
-                             STR(DMS_MIN_VERSION_PATCH1) "." \
-                             STR(DMS_MIN_VERSION_PATCH2)
 
 namespace dvbviewer
 {
@@ -177,6 +172,8 @@ public:
   bool DeleteRecording(const PVR_RECORDING &recinfo);
   unsigned int GetRecordingsAmount();
   RecordingReader *OpenRecordedStream(const PVR_RECORDING &recinfo);
+  bool GetRecordingEdl(const PVR_RECORDING &recinfo, PVR_EDL_ENTRY edl[],
+      int *count);
 
   bool OpenLiveStream(const PVR_CHANNEL &channelinfo);
   void CloseLiveStream();
@@ -188,7 +185,14 @@ public:
   const std::vector<std::string>& GetRecordingFolders()
   { return m_recfolders; };
 
-  struct httpResponse { bool error; unsigned short code; std::string content; };
+  struct httpResponse {
+      void *file;
+      bool error;
+      unsigned short code;
+      std::string content;
+  };
+  httpResponse OpenFromAPI(const char* format, va_list args);
+  httpResponse OpenFromAPI(const char* format, ...);
   httpResponse GetFromAPI(const char* format, ...);
 
 protected:

@@ -612,6 +612,63 @@ RecordingReader *Dvb::OpenRecordedStream(const PVR_RECORDING &recinfo)
         recinfo.strRecordingId), end);
 }
 
+bool Dvb::GetRecordingEdl(const PVR_RECORDING &recinfo, PVR_EDL_ENTRY edl[],
+    int *count)
+{
+  int max_entries = *count;
+  *count = 0;
+
+  if (m_backendVersion < DMS_VERSION_NUM(2, 1, 0, 0))
+  {
+    XBMC->Log(LOG_ERROR, "Backend server is too old. Disabling EDL support.");
+    XBMC->QueueNotification(QUEUE_ERROR, XBMC->GetLocalizedString(30511),
+      DMS_VERSION_STR(2, 1, 0, 0));
+    g_edl.enabled = false;
+    return false;
+  }
+
+  const httpResponse &res = OpenFromAPI("api/sideload.html?rec=1&file=.edl"
+    "&fileid=%s", recinfo.strRecordingId);
+  if (res.error)
+    return true;
+
+  int idx = 0;
+  size_t lineNumber = 0;
+  char buffer[2048];
+  while(XBMC->ReadFileString(res.file, buffer, 2048))
+  {
+    float start = 0.0f, stop = 0.0f;
+    PVR_EDL_TYPE type = PVR_EDL_TYPE_CUT;
+    ++lineNumber;
+    if (sscanf(buffer, "%f %f %u", &start, &stop, &type) < 2)
+    {
+      XBMC->Log(LOG_NOTICE, "Unable to parse EDL entry at line %zu. Skipping.",
+          lineNumber);
+      continue;
+    }
+
+    start += g_edl.padding_start / 1000.0f;
+    stop  += g_edl.padding_stop  / 1000.0f;
+
+    start = std::max(start, 0.0f);
+    stop  = std::max(stop,  0.0f);
+    start = std::min(start, stop);
+    stop  = std::max(start, stop);
+
+    XBMC->Log(LOG_DEBUG, "edl line=%zu start=%f stop=%f type=%d", lineNumber,
+        start, stop, type);
+
+    edl[idx].start = static_cast<int64_t>(start * 1000.0f);
+    edl[idx].end   = static_cast<int64_t>(stop  * 1000.0f);
+    edl[idx].type  = type;
+    ++idx;
+  }
+
+  *count = idx;
+  XBMC->CloseFile(res.file);
+  return true;
+}
+
 /***************************************************************************
  * Livestream
  **************************************************************************/
@@ -679,11 +736,11 @@ void *Dvb::Process()
           XBMC->Log(LOG_ERROR, "Error sending WoL packet to %s", g_mac.c_str());
       }
 
-      XBMC->Log(LOG_INFO, "Trying to connect to the backend service...");
+      XBMC->Log(LOG_INFO, "Trying to connect to the backend server...");
 
       if (CheckBackendVersion() && UpdateBackendStatus(true) && LoadChannels())
       {
-        XBMC->Log(LOG_INFO, "Connection to the backend service successful.");
+        XBMC->Log(LOG_INFO, "Connection to the backend server successful.");
         SetConnectionState(PVR_CONNECTION_STATE_CONNECTED);
 
         TimerUpdates();
@@ -692,7 +749,7 @@ void *Dvb::Process()
       }
       else
       {
-        XBMC->Log(LOG_INFO, "Connection to the backend service failed."
+        XBMC->Log(LOG_INFO, "Connection to the backend server failed."
           " Retrying in 10 seconds...");
         Sleep(10000);
       }
@@ -737,16 +794,13 @@ void *Dvb::Process()
   return nullptr;
 }
 
-Dvb::httpResponse Dvb::GetFromAPI(const char* format, ...)
+Dvb::httpResponse Dvb::OpenFromAPI(const char* format, va_list args)
 {
   static const std::string baseUrl = StringUtils::Format("http://%s:%u/",
       g_hostname.c_str(), g_webPort);
-  va_list argList;
-  va_start(argList, format);
-  std::string url = baseUrl + StringUtils::FormatV(format, argList);
-  va_end(argList);
+  std::string url = baseUrl + StringUtils::FormatV(format, args);
 
-  httpResponse res = { true, 0, "" };
+  httpResponse res = { nullptr, true, 0, "" };
   void *file = XBMC->CURLCreate(url.c_str());
   if (!file)
   {
@@ -789,17 +843,51 @@ Dvb::httpResponse Dvb::GetFromAPI(const char* format, ...)
   if (!ss.good())
   {
     XBMC->Log(LOG_ERROR, "Endpoint %s returned an invalid status line: ",
-      url.c_str(), status);
+        url.c_str(), status);
     XBMC->CloseFile(file);
     SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
     return res;
   }
 
-  res.error = (res.code >= 300);
-  char buffer[1024];
-  while (int bytesRead = XBMC->ReadFile(file, buffer, 1024))
-    res.content.append(buffer, bytesRead);
-  XBMC->CloseFile(file);
+  // everything non 2xx is an error
+  // NOTE: this doesn't work for now. see above
+  if (res.code >= 300)
+  {
+    XBMC->Log(LOG_NOTICE, "Endpoint %s returned non-successful status code %hu",
+        url.c_str(), res.code);
+    XBMC->CloseFile(file);
+    return res;
+  }
+
+  res.file  = file;
+  res.error = false;
+  return res;
+}
+
+Dvb::httpResponse Dvb::OpenFromAPI(const char* format, ...)
+{
+  va_list args;
+  va_start(args, format);
+  httpResponse &&res = OpenFromAPI(format, args);
+  va_end(args);
+  return res;
+}
+
+Dvb::httpResponse Dvb::GetFromAPI(const char* format, ...)
+{
+  va_list args;
+  va_start(args, format);
+  httpResponse &&res = OpenFromAPI(format, args);
+  va_end(args);
+
+  if (res.file)
+  {
+    char buffer[1024];
+    while (int bytesRead = XBMC->ReadFile(res.file, buffer, 1024))
+      res.content.append(buffer, bytesRead);
+    XBMC->CloseFile(res.file);
+    res.file = nullptr;
+  }
   return res;
 }
 
@@ -1130,7 +1218,7 @@ bool Dvb::CheckBackendVersion()
   doc.Parse(res.content.c_str());
   if (doc.Error())
   {
-    XBMC->Log(LOG_ERROR, "Unable to connect to the backend service. Error: %s",
+    XBMC->Log(LOG_ERROR, "Unable to connect to the backend server. Error: %s",
         doc.ErrorDesc());
     SetConnectionState(PVR_CONNECTION_STATE_SERVER_MISMATCH);
     return false;

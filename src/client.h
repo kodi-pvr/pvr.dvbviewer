@@ -72,6 +72,12 @@ enum class Transcoding
   FLV,
 };
 
+struct EdlSettings
+{
+  bool enabled;
+  int padding_start, padding_stop;
+};
+
 extern std::string    g_hostname;
 extern int            g_webPort;
 extern std::string    g_username;
@@ -81,9 +87,10 @@ extern std::string    g_mac;
 extern bool           g_useFavourites;
 extern bool           g_useFavouritesFile;
 extern std::string    g_favouritesFile;
-extern DvbRecording::Grouping g_groupRecordings;
 extern Timeshift      g_timeshift;
 extern std::string    g_timeshiftBufferPath;
+extern DvbRecording::Grouping g_groupRecordings;
+extern EdlSettings    g_edl;
 extern PrependOutline g_prependOutline;
 extern bool           g_lowPerformance;
 extern Transcoding    g_transcoding;

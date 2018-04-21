@@ -1,7 +1,7 @@
 # Kodi Media Center language file
 # Addon Name: DVBViewer Client
 # Addon id: pvr.dvbviewer
-# Addon Provider: A600, Manuel Mausz
+# Addon Provider: Manuel Mausz
 msgid ""
 msgstr ""
 "Project-Id-Version: KODI Main\n"
@@ -170,7 +170,21 @@ msgctxt "#30077"
 msgid "Transcoding URL parameters"
 msgstr ""
 
-#empty strings from id 30078 to 30099
+#empty strings from id 30078 to 30079
+
+msgctxt "#30080"
+msgid "Enable EDL support"
+msgstr ""
+
+msgctxt "#30081"
+msgid "Start time padding"
+msgstr ""
+
+msgctxt "#30082"
+msgid "Stop time padding"
+msgstr ""
+
+#empty strings from id 30083 to 30099
 #sections
 
 msgctxt "#30100"
@@ -189,7 +203,34 @@ msgctxt "#30103"
 msgid "Live TV"
 msgstr ""
 
-#empty strings from id 30104 to 30399
+msgctxt "#30103"
+msgid "Live TV"
+msgstr ""
+
+#empty strings from id 30104 to 30109
+#subsection labels
+
+msgctxt "#30110"
+msgid "Wake-on-LAN"
+msgstr ""
+
+msgctxt "#30111"
+msgid "Favourites"
+msgstr ""
+
+msgctxt "#30112"
+msgid "Timeshift"
+msgstr ""
+
+msgctxt "#30113"
+msgid "Edit Decision List"
+msgstr ""
+
+msgctxt "#30114"
+msgid "Transcoding"
+msgstr ""
+
+#empty strings from id 30115 to 30399
 #timers
 
 msgctxt "#30400"
@@ -265,4 +306,8 @@ msgstr ""
 
 msgctxt "#30510"
 msgid "The time period cannot span more than 24 hours"
+msgstr ""
+
+msgctxt "#30511"
+msgid "EDL support requires DVBViewer Media Server %s or higher"
 msgstr ""

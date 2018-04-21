@@ -43,9 +43,10 @@ std::string    g_mac                  = "";
 bool           g_useFavourites        = false;
 bool           g_useFavouritesFile    = false;
 std::string    g_favouritesFile       = "";
-DvbRecording::Grouping g_groupRecordings = DvbRecording::Grouping::DISABLED;
 Timeshift      g_timeshift            = Timeshift::OFF;
 std::string    g_timeshiftBufferPath  = DEFAULT_TSBUFFERPATH;
+DvbRecording::Grouping g_groupRecordings = DvbRecording::Grouping::DISABLED;
+EdlSettings    g_edl                  = { false, 0, 0 };
 PrependOutline g_prependOutline       = PrependOutline::IN_EPG;
 bool           g_lowPerformance       = false;
 Transcoding    g_transcoding          = Transcoding::OFF;
@@ -88,7 +89,7 @@ void ADDON_ReadSettings(void)
   if (!XBMC->GetSetting("usefavouritesfile", &g_useFavouritesFile))
     g_useFavouritesFile = false;
 
-  if (g_useFavouritesFile && XBMC->GetSetting("favouritesfile", buffer))
+  if (XBMC->GetSetting("favouritesfile", buffer))
     g_favouritesFile = buffer;
 
   if (!XBMC->GetSetting("grouprecordings", &g_groupRecordings))
@@ -102,6 +103,15 @@ void ADDON_ReadSettings(void)
 
   if (!XBMC->GetSetting("prependoutline", &g_prependOutline))
     g_prependOutline = PrependOutline::IN_EPG;
+
+  if (!XBMC->GetSetting("edl", &g_edl.enabled))
+    g_edl.enabled = false;
+
+  if (!XBMC->GetSetting("edl_padding_start", &g_edl.padding_start))
+    g_edl.padding_start = 0;
+
+  if (!XBMC->GetSetting("edl_padding_stop", &g_edl.padding_stop))
+    g_edl.padding_stop = 0;
 
   if (!XBMC->GetSetting("lowperformance", &g_lowPerformance))
     g_lowPerformance = false;
@@ -136,6 +146,9 @@ void ADDON_ReadSettings(void)
   /* recordings tab */
   if (g_groupRecordings != DvbRecording::Grouping::DISABLED)
     XBMC->Log(LOG_DEBUG, "Group recordings: %d", g_groupRecordings);
+  if (g_edl.enabled)
+    XBMC->Log(LOG_DEBUG, "EDL enabled. Padding: start=%d stop=%d",
+      g_edl.padding_start, g_edl.padding_stop);
 
   /* advanced tab */
   if (g_prependOutline != PrependOutline::NEVER)
@@ -241,11 +254,6 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
     if (g_favouritesFile.compare((const char *)settingValue) != 0)
       return ADDON_STATUS_NEED_RESTART;
   }
-  else if (sname == "grouprecordings")
-  {
-    if (g_groupRecordings != *(const DvbRecording::Grouping *)settingValue)
-      return ADDON_STATUS_NEED_RESTART;
-  }
   else if (sname == "timeshift")
   {
     Timeshift newValue = *(const Timeshift *)settingValue;
@@ -266,6 +274,23 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
           newValue.c_str());
       g_timeshiftBufferPath = newValue;
     }
+  }
+  else if (sname == "edl")
+  {
+    g_edl.enabled = *(bool *)settingValue;
+  }
+  else if (sname == "edl_padding_start")
+  {
+    g_edl.padding_start = *(int *)settingValue;
+  }
+  else if (sname == "edl_padding_stop")
+  {
+    g_edl.padding_stop = *(int *)settingValue;
+  }
+  else if (sname == "usefavouritesfile")
+  {
+    if (g_useFavouritesFile != *(bool *)settingValue)
+      return ADDON_STATUS_NEED_RESTART;
   }
   else if (sname == "prependoutline")
   {
@@ -330,7 +355,7 @@ PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
   pCapabilities->bHandlesDemuxing            = false;
   pCapabilities->bSupportsRecordingPlayCount = false;
   pCapabilities->bSupportsLastPlayedPosition = false;
-  pCapabilities->bSupportsRecordingEdl       = false;
+  pCapabilities->bSupportsRecordingEdl       = true;
   pCapabilities->bSupportsRecordingsRename   = false;
   pCapabilities->bSupportsRecordingsLifetimeChange = false;
   pCapabilities->bSupportsDescrambleInfo     = false;
@@ -628,6 +653,16 @@ long long LengthRecordedStream(void)
   return recReader->Length();
 }
 
+PVR_ERROR GetRecordingEdl(const PVR_RECORDING &recording, PVR_EDL_ENTRY edl[],
+    int *count)
+{
+  if (!g_edl.enabled)
+    return PVR_ERROR_NO_ERROR;
+  return (DvbData && DvbData->IsConnected()
+      && DvbData->GetRecordingEdl(recording, edl, count))
+    ? PVR_ERROR_NO_ERROR : PVR_ERROR_SERVER_ERROR;
+}
+
 /** UNUSED API FUNCTIONS */
 PVR_ERROR GetStreamProperties(PVR_STREAM_PROPERTIES*) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR GetChannelStreamProperties(const PVR_CHANNEL*, PVR_NAMED_VALUE*, unsigned int*) { return PVR_ERROR_NOT_IMPLEMENTED; }
@@ -647,7 +682,6 @@ PVR_ERROR SetRecordingLastPlayedPosition(const PVR_RECORDING&, int) { return PVR
 PVR_ERROR SetRecordingLifetime(const PVR_RECORDING*) { return PVR_ERROR_NOT_IMPLEMENTED; }
 int GetRecordingLastPlayedPosition(const PVR_RECORDING&) { return -1; }
 PVR_ERROR RenameRecording(const PVR_RECORDING&) { return PVR_ERROR_NOT_IMPLEMENTED; }
-PVR_ERROR GetRecordingEdl(const PVR_RECORDING&, PVR_EDL_ENTRY[], int*) { return PVR_ERROR_NOT_IMPLEMENTED; };
 PVR_ERROR UndeleteRecording(const PVR_RECORDING&) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR DeleteAllRecordingsFromTrash() { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR SetEPGTimeFrame(int) { return PVR_ERROR_NOT_IMPLEMENTED; }
