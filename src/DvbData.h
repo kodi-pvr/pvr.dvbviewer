@@ -173,7 +173,7 @@ public:
   unsigned int GetRecordingsAmount();
   RecordingReader *OpenRecordedStream(const PVR_RECORDING &recinfo);
   bool GetRecordingEdl(const PVR_RECORDING &recinfo, PVR_EDL_ENTRY edl[],
-      int *count);
+      int *size);
 
   bool OpenLiveStream(const PVR_CHANNEL &channelinfo);
   void CloseLiveStream();

@@ -654,12 +654,12 @@ long long LengthRecordedStream(void)
 }
 
 PVR_ERROR GetRecordingEdl(const PVR_RECORDING &recording, PVR_EDL_ENTRY edl[],
-    int *count)
+    int *size)
 {
   if (!g_edl.enabled)
     return PVR_ERROR_NO_ERROR;
   return (DvbData && DvbData->IsConnected()
-      && DvbData->GetRecordingEdl(recording, edl, count))
+      && DvbData->GetRecordingEdl(recording, edl, size))
     ? PVR_ERROR_NO_ERROR : PVR_ERROR_SERVER_ERROR;
 }
 

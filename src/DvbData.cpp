@@ -613,10 +613,10 @@ RecordingReader *Dvb::OpenRecordedStream(const PVR_RECORDING &recinfo)
 }
 
 bool Dvb::GetRecordingEdl(const PVR_RECORDING &recinfo, PVR_EDL_ENTRY edl[],
-    int *count)
+    int *size)
 {
-  int max_entries = *count;
-  *count = 0;
+  int maxSize = *size;
+  *size = 0;
 
   if (m_backendVersion < DMS_VERSION_NUM(2, 1, 0, 0))
   {
@@ -630,13 +630,16 @@ bool Dvb::GetRecordingEdl(const PVR_RECORDING &recinfo, PVR_EDL_ENTRY edl[],
   const httpResponse &res = OpenFromAPI("api/sideload.html?rec=1&file=.edl"
     "&fileid=%s", recinfo.strRecordingId);
   if (res.error)
-    return true;
+    return true; // no EDL file found
 
   int idx = 0;
   size_t lineNumber = 0;
   char buffer[2048];
   while(XBMC->ReadFileString(res.file, buffer, 2048))
   {
+    if (idx >= maxSize)
+      break;
+
     float start = 0.0f, stop = 0.0f;
     PVR_EDL_TYPE type = PVR_EDL_TYPE_CUT;
     ++lineNumber;
@@ -664,7 +667,7 @@ bool Dvb::GetRecordingEdl(const PVR_RECORDING &recinfo, PVR_EDL_ENTRY edl[],
     ++idx;
   }
 
-  *count = idx;
+  *size = idx;
   XBMC->CloseFile(res.file);
   return true;
 }
