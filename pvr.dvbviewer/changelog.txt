@@ -1,3 +1,6 @@
+3.4.4
+[added] EDL support for recordings. Requires DMS 2.1.0.0 or higher
+
 3.4.3
 [fixed] Creating timers from epg guide
 [updated] Timers code cleanup
