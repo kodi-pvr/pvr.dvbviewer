@@ -15,13 +15,14 @@
 // minimum version required
 #define DMS_MIN_VERSION 1, 33, 2, 0
 
-#define DMS_MIN_VERSION_NUM DMS_VERSION_NUM(DMS_MIN_VERSION)
-#define DMS_MIN_VERSION_STR DMS_VERSION_STR(DMS_MIN_VERSION)
+#define DMS_MIN_VERSION_NUM DMS_VERSION_NUM2(DMS_MIN_VERSION)
+#define DMS_MIN_VERSION_STR DMS_VERSION_STR2(DMS_MIN_VERSION)
 
-#define DMS_VERSION_NUM(...) DMS_VERSION_NUM2(__VA_ARGS__)
-#define DMS_VERSION_STR(...) DMS_VERSION_STR2(__VA_ARGS__)
-#define DMS_VERSION_NUM2(a, b, c, d) (a << 24 | b << 16 | c << 8 | d)
-#define DMS_VERSION_STR2(a, b, c, d) STR(a) "." STR(b) "." STR(c) "." STR(d)
+#define MSVC_EXPAND(x) x
+#define DMS_VERSION_NUM2(...) MSVC_EXPAND(DMS_VERSION_NUM(__VA_ARGS__))
+#define DMS_VERSION_STR2(...) MSVC_EXPAND(DMS_VERSION_STR(__VA_ARGS__))
+#define DMS_VERSION_NUM(a, b, c, d) (a << 24 | b << 16 | c << 8 | d)
+#define DMS_VERSION_STR(a, b, c, d) STR(a) "." STR(b) "." STR(c) "." STR(d)
 
 #define ENCRYPTED_FLAG               (1 << 0)
 #define RDS_DATA_FLAG                (1 << 2)
