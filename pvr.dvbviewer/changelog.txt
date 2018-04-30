@@ -1,3 +1,6 @@
+3.4.5
+[fixed] Recording playback if EDL is disabled
+
 3.4.4
 [added] EDL support for recordings. Requires DMS 2.1.0.0 or higher
 
