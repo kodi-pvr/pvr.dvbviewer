@@ -1,3 +1,6 @@
+3.4.6
+[added] Support for guest privileges
+
 3.4.5
 [fixed] Recording playback if EDL is disabled
 
