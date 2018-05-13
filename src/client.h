@@ -91,6 +91,7 @@ extern Timeshift      g_timeshift;
 extern std::string    g_timeshiftBufferPath;
 extern DvbRecording::Grouping g_groupRecordings;
 extern EdlSettings    g_edl;
+extern int            g_readTimeout;
 extern PrependOutline g_prependOutline;
 extern bool           g_lowPerformance;
 extern Transcoding    g_transcoding;

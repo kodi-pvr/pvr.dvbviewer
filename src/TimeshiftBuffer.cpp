@@ -3,17 +3,20 @@
 #include "client.h"
 #include "p8-platform/util/util.h"
 
-#define STREAM_READ_BUFFER_SIZE 32768
-#define BUFFER_READ_TIMEOUT     10000
-#define BUFFER_READ_WAITTIME    50
+#define BUFFER_SIZE 32 * 1024
+#define DEFAULT_READ_TIMEOUT 10 * 1000
+#define READ_WAITTIME 50
 
 using namespace ADDON;
 
 TimeshiftBuffer::TimeshiftBuffer(IStreamReader *strReader,
     const std::string &bufferPath)
-  : m_strReader(strReader), m_bufferPath(bufferPath), m_start(0)
+  : m_strReader(strReader), m_bufferPath(bufferPath + "/tsbuffer.ts"),
+  m_start(0), m_readTimeout(DEFAULT_READ_TIMEOUT)
 {
-  m_bufferPath += "/tsbuffer.ts";
+  if (g_readTimeout)
+    m_readTimeout = g_readTimeout * 1000;
+
   m_filebufferWriteHandle = XBMC->OpenFileForWrite(m_bufferPath.c_str(), true);
 #ifndef TARGET_POSIX
   m_writePos = 0;
@@ -57,7 +60,7 @@ bool TimeshiftBuffer::Start()
 void *TimeshiftBuffer::Process()
 {
   XBMC->Log(LOG_DEBUG, "Timeshift: Thread started");
-  uint8_t buffer[STREAM_READ_BUFFER_SIZE];
+  uint8_t buffer[BUFFER_SIZE];
 
   m_strReader->Start();
   while (!IsStopped())
@@ -113,13 +116,13 @@ ssize_t TimeshiftBuffer::ReadData(unsigned char *buffer, unsigned int size)
   unsigned int timeWaited = 0;
   while (readPos + size > Length())
   {
-    if (timeWaited > BUFFER_READ_TIMEOUT)
+    if (timeWaited > m_readTimeout)
     {
       XBMC->Log(LOG_DEBUG, "Timeshift: Read timed out; waited %u", timeWaited);
       return -1;
     }
-    Sleep(BUFFER_READ_WAITTIME);
-    timeWaited += BUFFER_READ_WAITTIME;
+    Sleep(READ_WAITTIME);
+    timeWaited += READ_WAITTIME;
   }
 
   return XBMC->ReadFile(m_filebufferReadHandle, buffer, size);

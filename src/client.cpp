@@ -47,6 +47,7 @@ Timeshift      g_timeshift            = Timeshift::OFF;
 std::string    g_timeshiftBufferPath  = DEFAULT_TSBUFFERPATH;
 DvbRecording::Grouping g_groupRecordings = DvbRecording::Grouping::DISABLED;
 EdlSettings    g_edl                  = { false, 0, 0 };
+int            g_readTimeout          = 0;
 PrependOutline g_prependOutline       = PrependOutline::IN_EPG;
 bool           g_lowPerformance       = false;
 Transcoding    g_transcoding          = Transcoding::OFF;
@@ -101,6 +102,9 @@ void ADDON_ReadSettings(void)
   if (XBMC->GetSetting("timeshiftpath", buffer) && !std::string(buffer).empty())
     g_timeshiftBufferPath = buffer;
 
+  if (!XBMC->GetSetting("readtimeout", &g_readTimeout))
+    g_readTimeout = 0;
+
   if (!XBMC->GetSetting("prependoutline", &g_prependOutline))
     g_prependOutline = PrependOutline::IN_EPG;
 
@@ -151,6 +155,8 @@ void ADDON_ReadSettings(void)
       g_edl.padding_start, g_edl.padding_stop);
 
   /* advanced tab */
+  if (g_readTimeout)
+    XBMC->Log(LOG_DEBUG, "Custom connection/read timeout: %d", g_readTimeout);
   if (g_prependOutline != PrependOutline::NEVER)
     XBMC->Log(LOG_DEBUG, "Prepend outline: %d", g_prependOutline);
   XBMC->Log(LOG_DEBUG, "Low performance mode: %s", (g_lowPerformance) ? "yes" : "no");
@@ -291,6 +297,10 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
   {
     if (g_useFavouritesFile != *(bool *)settingValue)
       return ADDON_STATUS_NEED_RESTART;
+  }
+  else if (sname == "readtimeout")
+  {
+    g_readTimeout = *(int *)settingValue;
   }
   else if (sname == "prependoutline")
   {

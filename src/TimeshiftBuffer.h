@@ -30,6 +30,7 @@ private:
   void *m_filebufferReadHandle;
   void *m_filebufferWriteHandle;
   time_t m_start;
+  int m_readTimeout;
 #ifndef TARGET_POSIX
   P8PLATFORM::CMutex m_mutex;
   uint64_t m_writePos;

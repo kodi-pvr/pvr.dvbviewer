@@ -6,7 +6,11 @@ using namespace ADDON;
 StreamReader::StreamReader(const std::string &streamURL)
   : m_start(time(nullptr))
 {
-  m_streamHandle = XBMC->OpenFile(streamURL.c_str(), XFILE::READ_NO_CACHE);
+  m_streamHandle = XBMC->CURLCreate(streamURL.c_str());
+  if (g_readTimeout)
+    XBMC->CURLAddOption(m_streamHandle, XFILE::CURL_OPTION_PROTOCOL,
+      "connection-timeout", std::to_string(g_readTimeout).c_str());
+
   XBMC->Log(LOG_DEBUG, "StreamReader: Started; url=%s", streamURL.c_str());
 }
 
@@ -19,7 +23,7 @@ StreamReader::~StreamReader(void)
 
 bool StreamReader::Start()
 {
-  return (m_streamHandle != nullptr);
+  return XBMC->CURLOpen(m_streamHandle, XFILE::READ_NO_CACHE);
 }
 
 ssize_t StreamReader::ReadData(unsigned char *buffer, unsigned int size)
