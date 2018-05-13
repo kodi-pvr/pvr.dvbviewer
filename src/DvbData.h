@@ -151,6 +151,8 @@ public:
   std::string GetBackendName();
   std::string GetBackendVersion();
   bool GetDriveSpace(long long *total, long long *used);
+  bool IsGuest()
+  { return m_isguest; }
 
   unsigned int GetCurrentClientChannel(void);
   bool GetChannels(ADDON_HANDLE handle, bool radio);
@@ -214,6 +216,7 @@ private:
 private:
   PVR_CONNECTION_STATE m_state;
   unsigned int m_backendVersion;
+  bool m_isguest;
 
   struct { long long total, used; } m_diskspace;
   std::vector<std::string> m_recfolders;

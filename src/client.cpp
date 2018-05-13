@@ -361,6 +361,10 @@ PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
   pCapabilities->bSupportsDescrambleInfo     = false;
 
   pCapabilities->iRecordingsLifetimesSize = 0;
+
+  if (DvbData && DvbData->IsConnected() && DvbData->IsGuest())
+    pCapabilities->bSupportsTimers = false;
+
   return PVR_ERROR_NO_ERROR;
 }
 
@@ -656,10 +660,12 @@ long long LengthRecordedStream(void)
 PVR_ERROR GetRecordingEdl(const PVR_RECORDING &recording, PVR_EDL_ENTRY edl[],
     int *size)
 {
-  if (!g_edl.enabled) {
+  if (!g_edl.enabled)
+  {
     *size = 0;
     return PVR_ERROR_NO_ERROR;
   }
+
   return (DvbData && DvbData->IsConnected()
       && DvbData->GetRecordingEdl(recording, edl, size))
     ? PVR_ERROR_NO_ERROR : PVR_ERROR_SERVER_ERROR;

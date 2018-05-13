@@ -106,8 +106,8 @@ std::string dvbviewer::ConvertToUtf8(const std::string& src)
 }
 
 Dvb::Dvb()
-  : m_state(PVR_CONNECTION_STATE_UNKNOWN), m_backendVersion(0), m_currentChannel(0),
-  m_timers(*this)
+  : m_state(PVR_CONNECTION_STATE_UNKNOWN), m_backendVersion(0), m_isguest(false),
+  m_currentChannel(0), m_timers(*this)
 {
   TiXmlBase::SetCondenseWhiteSpace(false);
 
@@ -582,6 +582,12 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
 
 bool Dvb::DeleteRecording(const PVR_RECORDING &recinfo)
 {
+  if (m_isguest)
+  {
+    XBMC->QueueNotification(QUEUE_ERROR, XBMC->GetLocalizedString(30512));
+    return false;
+  }
+
   const httpResponse &res = GetFromAPI("api/recdelete.html?recid=%s&delfile=1",
       recinfo.strRecordingId);
   if (res.error)
@@ -1292,6 +1298,14 @@ bool Dvb::UpdateBackendStatus(bool updateSettings)
       std::string recf = xFolder->GetText();
       m_recfolders.emplace_back(recf);
     }
+  }
+
+  if (updateSettings)
+  {
+    std::string rights("");
+    XMLUtils::GetString(root, "rights", rights);
+    if ((m_isguest = (rights != "full")))
+      XBMC->Log(LOG_NOTICE, "Only guest permissions available!");
   }
 
   return true;
