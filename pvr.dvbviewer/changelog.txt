@@ -1,3 +1,6 @@
+3.4.7
+[added] Custom timeout setting for livetv connections and timeshift
+
 3.4.6
 [added] Support for guest privileges
 
