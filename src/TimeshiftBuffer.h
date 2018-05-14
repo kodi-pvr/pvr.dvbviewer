@@ -4,10 +4,14 @@
 #define PVR_DVBVIEWER_TIMESHIFTBUFFER_H
 
 #include "IStreamReader.h"
-#include "p8-platform/threads/threads.h"
+
+#include <atomic>
+#include <condition_variable>
+#include <thread>
+#include <mutex>
 
 class TimeshiftBuffer
-  : public IStreamReader, public P8PLATFORM::CThread
+  : public IStreamReader
 {
 public:
   TimeshiftBuffer(IStreamReader *strReader, const std::string &bufferPath);
@@ -19,22 +23,24 @@ public:
   int64_t Length() override;
   time_t TimeStart() override;
   time_t TimeEnd() override;
-  bool NearEnd() override;
+  bool IsRealTime() override;
   bool IsTimeshifting() override;
 
 private:
-  virtual void *Process(void) override;
+  void DoReadWrite();
 
   std::string m_bufferPath;
   IStreamReader *m_strReader;
   void *m_filebufferReadHandle;
   void *m_filebufferWriteHandle;
-  time_t m_start;
   int m_readTimeout;
-#ifndef TARGET_POSIX
-  P8PLATFORM::CMutex m_mutex;
-  uint64_t m_writePos;
-#endif
+  time_t m_start;
+  std::atomic<uint64_t> m_writePos;
+
+  std::atomic<bool> m_running;
+  std::thread m_inputThread;
+  std::condition_variable m_condition;
+  std::mutex m_mutex;
 };
 
 #endif

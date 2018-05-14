@@ -540,7 +540,7 @@ void CloseLiveStream(void)
 
 bool IsRealTimeStream()
 {
-  return (strReader) ? strReader->NearEnd() : false;
+  return (strReader) ? strReader->IsRealTime() : false;
 }
 
 bool CanPauseStream(void)

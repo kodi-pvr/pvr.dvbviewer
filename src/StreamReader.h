@@ -18,7 +18,7 @@ public:
   int64_t Length() override;
   time_t TimeStart() override;
   time_t TimeEnd() override;
-  bool NearEnd() override;
+  bool IsRealTime() override;
   bool IsTimeshifting() override;
 
 private:

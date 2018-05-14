@@ -56,7 +56,7 @@ time_t StreamReader::TimeEnd()
   return time(nullptr);
 }
 
-bool StreamReader::NearEnd()
+bool StreamReader::IsRealTime()
 {
   return true;
 }

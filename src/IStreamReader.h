@@ -16,7 +16,7 @@ public:
   virtual int64_t Length() = 0;
   virtual time_t TimeStart() = 0;
   virtual time_t TimeEnd() = 0;
-  virtual bool NearEnd() = 0;
+  virtual bool IsRealTime() = 0;
   virtual bool IsTimeshifting() = 0;
 };
 

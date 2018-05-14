@@ -4,7 +4,7 @@
 #include "p8-platform/util/util.h"
 
 #define BUFFER_SIZE 32 * 1024
-#define DEFAULT_READ_TIMEOUT 10 * 1000
+#define DEFAULT_READ_TIMEOUT 10
 #define READ_WAITTIME 50
 
 using namespace ADDON;
@@ -12,22 +12,20 @@ using namespace ADDON;
 TimeshiftBuffer::TimeshiftBuffer(IStreamReader *strReader,
     const std::string &bufferPath)
   : m_strReader(strReader), m_bufferPath(bufferPath + "/tsbuffer.ts"),
-  m_start(0), m_readTimeout(DEFAULT_READ_TIMEOUT)
+  m_start(0), m_writePos(0), m_running(false)
 {
-  if (g_readTimeout)
-    m_readTimeout = g_readTimeout * 1000;
+  m_readTimeout = (g_readTimeout) ? g_readTimeout : DEFAULT_READ_TIMEOUT;
 
   m_filebufferWriteHandle = XBMC->OpenFileForWrite(m_bufferPath.c_str(), true);
-#ifndef TARGET_POSIX
-  m_writePos = 0;
-#endif
-  Sleep(100);
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
   m_filebufferReadHandle = XBMC->OpenFile(m_bufferPath.c_str(), XFILE::READ_NO_CACHE);
 }
 
 TimeshiftBuffer::~TimeshiftBuffer(void)
 {
-  StopThread(0);
+  m_running = false;
+  if (m_inputThread.joinable())
+    m_inputThread.join();
 
   if (m_filebufferWriteHandle)
   {
@@ -49,34 +47,37 @@ bool TimeshiftBuffer::Start()
       || m_filebufferWriteHandle == nullptr
       || m_filebufferReadHandle == nullptr)
     return false;
-  if (IsRunning())
+  if (m_running)
     return true;
+
   XBMC->Log(LOG_INFO, "Timeshift: Started");
   m_start = time(nullptr);
-  CreateThread();
+  m_running = true;
+  m_inputThread = std::thread([&] { DoReadWrite(); });
+
   return true;
 }
 
-void *TimeshiftBuffer::Process()
+void TimeshiftBuffer::DoReadWrite()
 {
   XBMC->Log(LOG_DEBUG, "Timeshift: Thread started");
   uint8_t buffer[BUFFER_SIZE];
 
   m_strReader->Start();
-  while (!IsStopped())
+  while (m_running)
   {
     ssize_t read = m_strReader->ReadData(buffer, sizeof(buffer));
+
     // don't handle any errors here, assume write fully succeeds
     ssize_t write = XBMC->WriteFile(m_filebufferWriteHandle, buffer, read);
 
-#ifndef TARGET_POSIX
-    m_mutex.Lock();
+    std::lock_guard<std::mutex> lock(m_mutex);
     m_writePos += write;
-    m_mutex.Unlock();
-#endif
+
+    m_condition.notify_one();
   }
   XBMC->Log(LOG_DEBUG, "Timeshift: Thread stopped");
-  return NULL;
+  return;
 }
 
 int64_t TimeshiftBuffer::Seek(long long position, int whence)
@@ -91,38 +92,22 @@ int64_t TimeshiftBuffer::Position()
 
 int64_t TimeshiftBuffer::Length()
 {
-  // We can't use GetFileLength here as it's value will be cached
-  // by Kodi until we read or seek above it.
-  // see xbm/xbmc/filesystem/HDFile.cpp CHDFile::GetLength()
-  //return XBMC->GetFileLength(m_filebufferReadHandle);
-
-  int64_t writePos = 0;
-#ifdef TARGET_POSIX
-  /* refresh write position */
-  XBMC->SeekFile(m_filebufferWriteHandle, 0L, SEEK_CUR);
-  writePos = XBMC->GetFilePosition(m_filebufferWriteHandle);
-#else
-  m_mutex.Lock();
-  writePos = m_writePos;
-  m_mutex.Unlock();
-#endif
-  return writePos;
+  return m_writePos;
 }
 
 ssize_t TimeshiftBuffer::ReadData(unsigned char *buffer, unsigned int size)
 {
+  int64_t requiredLength = Position() + size;
+
   /* make sure we never read above the current write position */
-  int64_t readPos = XBMC->GetFilePosition(m_filebufferReadHandle);
-  unsigned int timeWaited = 0;
-  while (readPos + size > Length())
+  std::unique_lock<std::mutex> lock(m_mutex);
+  bool available = m_condition.wait_for(lock, std::chrono::seconds(m_readTimeout),
+    [&] { return Length() >= requiredLength; });
+
+  if (!available)
   {
-    if (timeWaited > m_readTimeout)
-    {
-      XBMC->Log(LOG_DEBUG, "Timeshift: Read timed out; waited %u", timeWaited);
-      return -1;
-    }
-    Sleep(READ_WAITTIME);
-    timeWaited += READ_WAITTIME;
+    XBMC->Log(LOG_DEBUG, "Timeshift: Read timed out; waited %d", m_readTimeout);
+    return -1;
   }
 
   return XBMC->ReadFile(m_filebufferReadHandle, buffer, size);
@@ -138,15 +123,11 @@ time_t TimeshiftBuffer::TimeEnd()
   return time(nullptr);
 }
 
-bool TimeshiftBuffer::NearEnd()
+bool TimeshiftBuffer::IsRealTime()
 {
-  //FIXME as soon as we return false here the players current time value starts
-  // flickering/jumping
-  return true;
-
   // other PVRs use 10 seconds here, but we aren't doing any demuxing
   // we'll therefore just asume 1 secs needs about 1mb
-  //return Length() - Position() <= 10 * 1048576;
+  return Length() - Position() <= 10 * 1048576;
 }
 
 bool TimeshiftBuffer::IsTimeshifting()
