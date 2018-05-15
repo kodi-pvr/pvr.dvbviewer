@@ -2,7 +2,9 @@
 #include "client.h"
 #include "p8-platform/util/util.h"
 #include "p8-platform/threads/mutex.h"
+
 #include <algorithm>
+#include <ctime>
 
 #define REOPEN_INTERVAL      30
 #define REOPEN_INTERVAL_FAST 10
@@ -15,7 +17,6 @@ RecordingReader::RecordingReader(const std::string &streamURL, time_t end)
   m_readHandle = XBMC->CURLCreate(m_streamURL.c_str());
   (void)XBMC->CURLOpen(m_readHandle, XFILE::READ_NO_CACHE);
   m_len = XBMC->GetFileLength(m_readHandle);
-  m_pos = 0;
   m_nextReopen = time(nullptr) + REOPEN_INTERVAL;
   XBMC->Log(LOG_DEBUG, "RecordingReader: Started; url=%s, end=%u",
       m_streamURL.c_str(), m_end);

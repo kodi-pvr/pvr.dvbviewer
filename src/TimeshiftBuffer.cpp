@@ -11,8 +11,7 @@ using namespace ADDON;
 
 TimeshiftBuffer::TimeshiftBuffer(IStreamReader *strReader,
     const std::string &bufferPath)
-  : m_strReader(strReader), m_bufferPath(bufferPath + "/tsbuffer.ts"),
-  m_start(0), m_writePos(0), m_running(false)
+  : m_strReader(strReader), m_bufferPath(bufferPath + "/tsbuffer.ts")
 {
   m_readTimeout = (g_readTimeout) ? g_readTimeout : DEFAULT_READ_TIMEOUT;
 

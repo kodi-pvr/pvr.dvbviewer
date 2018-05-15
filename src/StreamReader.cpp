@@ -4,7 +4,6 @@
 using namespace ADDON;
 
 StreamReader::StreamReader(const std::string &streamURL)
-  : m_start(time(nullptr))
 {
   m_streamHandle = XBMC->CURLCreate(streamURL.c_str());
   if (g_readTimeout)

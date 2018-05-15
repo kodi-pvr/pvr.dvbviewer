@@ -34,7 +34,7 @@ public:
     UPDATED
   };
 
-  Timer();
+  Timer() = default;
   bool updateFrom(const Timer &source);
   bool isScheduled() const;
   bool isRunning(time_t *now, std::string *channelName = nullptr) const;
@@ -49,23 +49,23 @@ public:
   /*!< @brief Timer id on backend. Unique at a time */
   unsigned int backendId;
 
-  Type        type;
+  Type        type = Type::MANUAL_ONCE;
   DvbChannel  *channel; //TODO: convert to shared_ptr
 
-  int         priority;
+  int         priority = 0;
   std::string title;
   // index to recfolders or -1 for automatic
-  int         recfolder; //TODO add method for resyncing
+  int         recfolder = -1; //TODO add method for resyncing
 
   // start/end include the margins
   time_t       start;
   time_t       end;
-  unsigned int marginStart;
-  unsigned int marginEnd;
+  unsigned int marginStart = 0;
+  unsigned int marginEnd = 0;
   unsigned int weekdays;
 
   PVR_TIMER_STATE state;
-  SyncState syncState;
+  SyncState syncState = SyncState::NEW;
 };
 
 class Timers
@@ -84,9 +84,7 @@ public:
   };
 
   Timers(Dvb &cli)
-    : m_cli(cli), m_nextTimerId(1)
-  {};
-  ~Timers()
+    : m_cli(cli)
   {};
 
   void GetTimerTypes(std::vector<PVR_TIMER_TYPE> &types);
@@ -107,7 +105,7 @@ private:
   Dvb &m_cli;
   /*!< @brief map of [timer.id, timer] pairs */
   std::map<unsigned int, Timer> m_timers;
-  unsigned int m_nextTimerId;
+  unsigned int m_nextTimerId = 1;
 };
 
 } //namespace dvbviewer

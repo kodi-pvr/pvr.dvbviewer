@@ -11,6 +11,7 @@
 #include <sstream>
 #include <algorithm>
 #include <memory>
+#include <ctime>
 
 using namespace dvbviewer;
 using namespace ADDON;
@@ -106,13 +107,9 @@ std::string dvbviewer::ConvertToUtf8(const std::string& src)
 }
 
 Dvb::Dvb()
-  : m_state(PVR_CONNECTION_STATE_UNKNOWN), m_backendVersion(0), m_isguest(false),
-  m_currentChannel(0), m_timers(*this)
 {
   TiXmlBase::SetCondenseWhiteSpace(false);
 
-  m_updateTimers = false;
-  m_updateEPG    = false;
   CreateThread();
 }
 
@@ -615,7 +612,7 @@ RecordingReader *Dvb::OpenRecordedStream(const PVR_RECORDING &recinfo)
     end = timer->end;
 
   return new RecordingReader(BuildURL("upnp/recordings/%s.ts",
-        recinfo.strRecordingId), end);
+    recinfo.strRecordingId), end);
 }
 
 bool Dvb::GetRecordingEdl(const PVR_RECORDING &recinfo, PVR_EDL_ENTRY edl[],

@@ -23,7 +23,7 @@ private:
   /*!< @brief end time of the recording in case this an ongoing recording */
   time_t m_end;
   time_t m_nextReopen;
-  uint64_t m_pos;
+  uint64_t m_pos = { 0 };
   uint64_t m_len;
 };
 

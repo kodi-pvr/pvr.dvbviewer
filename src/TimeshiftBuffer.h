@@ -34,10 +34,10 @@ private:
   void *m_filebufferReadHandle;
   void *m_filebufferWriteHandle;
   int m_readTimeout;
-  time_t m_start;
-  std::atomic<uint64_t> m_writePos;
+  time_t m_start = 0;
+  std::atomic<uint64_t> m_writePos = { 0 };
 
-  std::atomic<bool> m_running;
+  std::atomic<bool> m_running = { false };
   std::thread m_inputThread;
   std::condition_variable m_condition;
   std::mutex m_mutex;

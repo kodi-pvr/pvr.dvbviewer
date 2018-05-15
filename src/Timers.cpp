@@ -3,6 +3,7 @@
 #include "client.h"
 
 #include <algorithm>
+#include <ctime>
 
 #include "inttypes.h"
 #include "util/XMLUtils.h"
@@ -11,14 +12,6 @@
 
 using namespace dvbviewer;
 using namespace ADDON;
-
-Timer::Timer()
-{
-  type = Type::MANUAL_ONCE;
-  recfolder = -1;
-  marginStart = marginEnd = priority = 0;
-  syncState = SyncState::NEW;
-}
 
 #define TIMER_UPDATE_MEMBER(member) \
   if (member != source.member) \

@@ -47,9 +47,7 @@ class DvbGroup;
 class DvbChannel
 {
 public:
-  DvbChannel()
-    : epgId(0)
-  {}
+  DvbChannel() = default;
 
 public:
   /*!< @brief unique id passed to Kodi as PVR_CHANNEL.iUniqueId.
@@ -63,7 +61,7 @@ public:
    * the first entry is used for generating the stream url
    */
   std::list<uint64_t> backendIds;
-  uint64_t epgId;
+  uint64_t epgId = 0;
   std::string name;
   /*!< @brief name of the channel on the backend */
   std::string backendName;
@@ -87,16 +85,14 @@ public:
 class DvbEPGEntry
 {
 public:
-  DvbEPGEntry()
-    : genre(0)
-  {}
+  DvbEPGEntry() = default;
 
 public:
   unsigned int id;
   DvbChannel *channel;
   std::string title;
   time_t start, end;
-  unsigned int genre;
+  unsigned int genre = 0;
   std::string plot, plotOutline;
 };
 
@@ -116,15 +112,13 @@ public:
   };
 
 public:
-  DvbRecording()
-    : genre(0)
-  {}
+  DvbRecording() = default;
 
 public:
   std::string id;
   time_t start;
   int duration;
-  unsigned int genre;
+  unsigned int genre = 0;
   std::string title;
   std::string plot, plotOutline;
   std::string thumbnail;
@@ -143,7 +137,7 @@ class Dvb
   : public P8PLATFORM::CThread
 {
 public:
-  Dvb(void);
+  Dvb();
   ~Dvb();
 
   bool IsConnected();
@@ -214,9 +208,9 @@ private:
   std::string BuildURL(const char* path, ...);
 
 private:
-  PVR_CONNECTION_STATE m_state;
-  unsigned int m_backendVersion;
-  bool m_isguest;
+  PVR_CONNECTION_STATE m_state = PVR_CONNECTION_STATE_UNKNOWN;
+  unsigned int m_backendVersion = 0;
+  bool m_isguest = false;
 
   struct { long long total, used; } m_diskspace;
   std::vector<std::string> m_recfolders;
@@ -224,19 +218,19 @@ private:
   /* channels */
   DvbChannels_t m_channels;
   /* active (not hidden) channels */
-  unsigned int m_channelAmount;
-  unsigned int m_currentChannel;
+  unsigned int m_channelAmount = 0;
+  unsigned int m_currentChannel = 0;
 
   /* channel groups */
   DvbGroups_t m_groups;
   /* active (not hidden) groups */
-  unsigned int m_groupAmount;
+  unsigned int m_groupAmount = 0;
 
-  bool m_updateTimers;
-  bool m_updateEPG;
-  unsigned int m_recordingAmount;
+  bool m_updateTimers = false;
+  bool m_updateEPG = false;
+  unsigned int m_recordingAmount = 0;
 
-  dvbviewer::Timers m_timers;
+  dvbviewer::Timers m_timers = dvbviewer::Timers(*this);
 
   P8PLATFORM::CMutex m_mutex;
 };

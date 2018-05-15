@@ -5,6 +5,8 @@
 
 #include "IStreamReader.h"
 
+#include <ctime>
+
 class StreamReader
   : public IStreamReader
 {
@@ -23,7 +25,7 @@ public:
 
 private:
   void *m_streamHandle;
-  time_t m_start;
+  time_t m_start = time(nullptr);
 };
 
 #endif
