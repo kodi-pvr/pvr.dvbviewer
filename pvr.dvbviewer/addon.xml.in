@@ -3,7 +3,7 @@
   id="pvr.dvbviewer"
   version="3.5.0"
   name="DVBViewer Client"
-  provider-name="A600, Manuel Mausz">
+  provider-name="Manuel Mausz">
   <requires>@ADDON_DEPENDS@</requires>
   <extension
     point="xbmc.pvrclient"
