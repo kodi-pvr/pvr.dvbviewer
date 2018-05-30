@@ -1,59 +1,136 @@
-image: Visual Studio 2015
+matrix:
+  fast_finish: true
 
 environment:
   CONFIG: Release
   KODI_BRANCH: master # usually synced with APPVEYOR_REPO_BRANCH
   matrix:
-    - ARCH: win32
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+      PLATFORM: win32
       MSVC_PLATFORM: x86
-    - ARCH: win64
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+      PLATFORM: win64
       MSVC_PLATFORM: amd64
+    - APPVEYOR_BUILD_WORKER_IMAGE: ubuntu
+      PLATFORM: linux-x86_64
+    - APPVEYOR_BUILD_WORKER_IMAGE: ubuntu
+      PLATFORM: linux-clang-x86_64
+    - APPVEYOR_BUILD_WORKER_IMAGE: ubuntu
+      PLATFORM: rbpi-arm
 
 init:
-  ps: |
+  - ps: |
+      # set commit as build version
       $commit = (($env:APPVEYOR_REPO_TAG_NAME, $env:APPVEYOR_REPO_COMMIT.SubString(0, 7)) -ne $null)[0]
       Update-AppveyorBuild -Version ("{0}-{1}" -f $env:APPVEYOR_REPO_BRANCH, $commit)
-      # iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+
+      $env:ROOT = (Resolve-Path "$env:APPVEYOR_BUILD_FOLDER/..").Path
+
+install:
+  - sh: |
+      set -ex
+      case "$PLATFORM" in
+        "linux-clang-x86_64")
+          sudo apt-get install --yes --no-install-recommends --no-upgrade clang
+          export CC=clang CXX=clang++
+          ;;
+        "rbpi-arm")
+          git clone -q --depth=1 https://github.com/raspberrypi/tools.git $ROOT/tools
+          # we don't need the firmware. fake it
+          mkdir -p $ROOT/firmware/opt/vc/include
+          ;;
+      esac
+
+before_build:
+  - ps: |
+      # download kodi
+      $env:KODI = "$env:ROOT/kodi"
+      git clone -q --branch="$env:KODI_BRANCH" --depth=1 https://github.com/xbmc/xbmc.git $env:KODI
+
+  - sh: |
+      unset cd pushd popd
+      set -ex
+
+      # generate toolchain file
+      params=()
+      case "$PLATFORM" in
+        "rbpi-arm")
+          params+=(
+            --with-platform=raspberry-pi2
+            --host=arm-linux-gnueabihf
+            --with-toolchain="$ROOT/tools/arm-bcm2708/arm-linux-gnueabihf"
+            --with-firmware="$ROOT/firmware"
+            --build=x86_64-linux
+          )
+          ;;
+      esac
+
+      cd "$KODI/tools/depends"
+      sed -i 's/@platform_ldflags@//' target/Toolchain_binaddons.cmake.in
+      ./bootstrap
+      ./configure --prefix="$ROOT/kodi-build" --disable-debug ${params[@]}
+      sed -i 's/^$(TOOLCHAIN_FILE): /mytoolchain: /' xbmc-addons.include
+      make -C target/binary-addons mytoolchain
+      cp target/binary-addons/mytoolchain $ROOT/Toolchain_binaddons.cmake
+      echo "list(APPEND CMAKE_FIND_ROOT_PATH $ROOT)" >> $ROOT/Toolchain_binaddons.cmake
 
 build_script:
   # Setup Visual Studio compiler environment
-  - call "%VS140COMNTOOLS%..\..\VC\vcvarsall.bat" %MSVC_PLATFORM%
+  - cmd: call "%VS140COMNTOOLS%..\..\VC\vcvarsall.bat" %MSVC_PLATFORM%
 
   # Build addon
   - ps: |
-      # setup
-      cd "$env:APPVEYOR_BUILD_FOLDER\.."
-      mv "$env:APPVEYOR_PROJECT_SLUG" "$env:APPVEYOR_PROJECT_NAME"
-      $env:ROOT = (Resolve-Path .).Path
-
-      # download kodi
-      git clone -q --branch="$env:KODI_BRANCH" --depth=1 https://github.com/xbmc/xbmc.git
-      $env:KODI = "$env:ROOT\xbmc"
+      # rename pvr directory
+      Set-Location "$env:ROOT"
+      Move-Item "$env:APPVEYOR_PROJECT_SLUG" "$env:APPVEYOR_PROJECT_NAME"
 
       # create build directory
-      md -force "$env:ROOT\build"
-      pushd "$env:ROOT\build"
+      New-Item -ItemType Directory -Force -Path "$env:ROOT/build"
+      Set-Location "$env:ROOT/build"
+
+      # build arguments
+      $params = @()
+      If ($isWindows) {
+        $overrides = "{0}/cmake/scripts/windows" -f $env:KODI
+        $params += '-G"NMake Makefiles"', `
+          "-DCMAKE_USER_MAKE_RULES_OVERRIDE=`"$overrides/CFlagOverrides.cmake`"", `
+          "-DCMAKE_USER_MAKE_RULES_OVERRIDE_CXX=`"$overrides/CXXFlagOverrides.cmake`""
+      }
+      Else {
+        $params += '-G"Unix Makefiles"'
+      }
+
+      If ($f = Get-Item "$env:ROOT/Toolchain_binaddons.cmake" -ea SilentlyContinue) {
+        $params += ("-DCMAKE_TOOLCHAIN_FILE=`"{0}`"" -f $f.FullName)
+      }
+
+      $params += `
+        "-DADDON_SRC_PREFIX=`"$env:ROOT`"", `
+        "-DADDONS_TO_BUILD=`"$env:APPVEYOR_PROJECT_NAME`"", `
+        "-DCMAKE_INSTALL_PREFIX=`"$env:ROOT/addons`"", `
+        "-DCMAKE_BUILD_TYPE=`"$env:CONFIG`"", `
+        "-DPACKAGE_ZIP=ON", `
+        "-DPACKAGE_DIR=`"$env:ROOT/zips`"", `
+        "`"$env:KODI/cmake/addons`""
 
       # configure
-      cmake -G "NMake Makefiles" `
-            -DADDON_SRC_PREFIX="$env:ROOT" `
-            -DADDONS_TO_BUILD="$env:APPVEYOR_PROJECT_NAME" `
-            -DCMAKE_INSTALL_PREFIX="$env:ROOT\addons" `
-            -DCMAKE_BUILD_TYPE="$env:CONFIG" `
-            -DCMAKE_USER_MAKE_RULES_OVERRIDE="$env:KODI\cmake\scripts\windows\CFlagOverrides.cmake" `
-            -DCMAKE_USER_MAKE_RULES_OVERRIDE_CXX="$env:KODI\cmake\scripts\windows\CXXFlagOverrides.cmake" `
-            -DPACKAGE_ZIP=ON `
-            -DPACKAGE_DIR="$env:ROOT\zips" `
-            "$env:KODI\cmake\addons"
+      Write-Host -ForegroundColor "Yellow" -Separator "`n" "Executing: ", "cmake", $params, ""
+      & cmake $params
 
       # build
-      cmd /c 'cmake --build . --config %CONFIG% -- package-addons 2>&1'
+      If ($isWindows) {
+        # appveyor triggers stderr writes as failure
+        & cmd /c 'cmake --build . --config %CONFIG% -- package-addons 2>&1'
+      }
+      Else {
+        & cmake --build . --config $env:CONFIG -- package-addons VERBOSE=1
+      }
 
 after_build:
   - ps: |
       # rename and upload package
-      pushd "$env:ROOT\zips"
-      mv "$env:APPVEYOR_PROJECT_NAME-*.zip" "$env:APPVEYOR_PROJECT_NAME-$env:ARCH.zip"
+      Set-Location "$env:ROOT/zips"
+      Move-Item "$env:APPVEYOR_PROJECT_NAME-*.zip" "$env:APPVEYOR_PROJECT_NAME-$env:PLATFORM.zip"
       Get-ChildItem *.zip | % { Push-AppveyorArtifact $_.FullName -FileName $_.Name }
 
 test: off
