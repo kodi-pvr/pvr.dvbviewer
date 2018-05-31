@@ -1,6 +1,7 @@
 #include "Timers.h"
-#include "DvbData.h"
 #include "client.h"
+#include "DvbData.h"
+#include "LocalizedString.h"
 
 #include <algorithm>
 #include <ctime>
@@ -97,17 +98,17 @@ void Timers::GetTimerTypes(std::vector<PVR_TIMER_TYPE> &types)
 
   /* PVR_Timer.iPriority values and presentation.*/
   static std::vector< std::pair<int, std::string> > priorityValues = {
-    { -1,  XBMC->GetLocalizedString(30400) }, //default
-    { 0,   XBMC->GetLocalizedString(30401) },
-    { 25,  XBMC->GetLocalizedString(30402) },
-    { 50,  XBMC->GetLocalizedString(30403) },
-    { 75,  XBMC->GetLocalizedString(30404) },
-    { 100, XBMC->GetLocalizedString(30405) },
+    { -1,  LocalizedString(30400) }, //default
+    { 0,   LocalizedString(30401) },
+    { 25,  LocalizedString(30402) },
+    { 50,  LocalizedString(30403) },
+    { 75,  LocalizedString(30404) },
+    { 100, LocalizedString(30405) },
   };
 
   /* PVR_Timer.iRecordingGroup values and presentation.*/
   std::vector< std::pair<int, std::string> > groupValues = {
-    { 0, XBMC->GetLocalizedString(30410) }, //automatic
+    { 0, LocalizedString(30410) }, //automatic
   };
   for (auto &recf : m_cli.GetRecordingFolders())
     groupValues.emplace_back(groupValues.size(), recf);

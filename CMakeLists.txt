@@ -28,6 +28,7 @@ set(DVBVIEWER_SOURCES src/client.cpp
 set(DVBVIEWER_HEADERS src/client.h
                       src/DvbData.h
                       src/IStreamReader.h
+                      src/LocalizedString.h
                       src/RecordingReader.h
                       src/StreamReader.h
                       src/Timers.h

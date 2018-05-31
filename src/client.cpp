@@ -20,14 +20,18 @@
 
 #include "client.h"
 #include "DvbData.h"
+#include "LocalizedString.h"
 #include "StreamReader.h"
 #include "TimeshiftBuffer.h"
 #include "RecordingReader.h"
+
 #include "xbmc_pvr_dll.h"
 #include "p8-platform/util/util.h"
 #include "p8-platform/util/StringUtils.h"
+
 #include <stdlib.h>
 
+using namespace dvbviewer;
 using namespace ADDON;
 
 /* User adjustable settings are saved here.
@@ -310,7 +314,7 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
       g_prependOutline = newValue;
       // EPG view seems cached, so TriggerEpgUpdate isn't reliable
       // also if PVR is currently disabled we don't get notified at all
-      XBMC->QueueNotification(QUEUE_WARNING, XBMC->GetLocalizedString(30507));
+      XBMC->QueueNotification(QUEUE_WARNING, LocalizedString(30507).c_str());
     }
   }
   else if (sname == "lowperformance")

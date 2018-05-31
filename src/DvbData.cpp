@@ -1,5 +1,7 @@
 #include "DvbData.h"
 #include "client.h"
+#include "LocalizedString.h"
+
 #include "util/XMLUtils.h"
 #include "p8-platform/util/util.h"
 #include "p8-platform/util/StringUtils.h"
@@ -372,7 +374,7 @@ bool Dvb::AddTimer(const PVR_TIMER &timer, bool update)
   if (err != Timers::SUCCESS)
   {
     if (err == Timers::TIMESPAN_OVERFLOW)
-      XBMC->QueueNotification(QUEUE_ERROR, XBMC->GetLocalizedString(30510));
+      XBMC->QueueNotification(QUEUE_ERROR, LocalizedString(30510).c_str());
     else if (err == Timers::TIMER_UNKNOWN)
       XBMC->Log(LOG_ERROR, "Timer %u is unknown", timer.iClientIndex);
     else if (err == Timers::CHANNEL_UNKNOWN)
@@ -575,7 +577,7 @@ bool Dvb::DeleteRecording(const PVR_RECORDING &recinfo)
 {
   if (m_isguest)
   {
-    XBMC->QueueNotification(QUEUE_ERROR, XBMC->GetLocalizedString(30512));
+    XBMC->QueueNotification(QUEUE_ERROR, LocalizedString(30512).c_str());
     return false;
   }
 
@@ -618,7 +620,7 @@ bool Dvb::GetRecordingEdl(const PVR_RECORDING &recinfo, PVR_EDL_ENTRY edl[],
   if (m_backendVersion < DMS_VERSION_NUM(2, 1, 0, 0))
   {
     XBMC->Log(LOG_ERROR, "Backend server is too old. Disabling EDL support.");
-    XBMC->QueueNotification(QUEUE_ERROR, XBMC->GetLocalizedString(30511),
+    XBMC->QueueNotification(QUEUE_ERROR, LocalizedString(30511).c_str(),
       DMS_VERSION_STR(2, 1, 0, 0));
     g_edl.enabled = false;
     return false;
@@ -908,7 +910,7 @@ bool Dvb::LoadChannels()
     XBMC->Log(LOG_ERROR, "Unable to parse channels. Error: %s",
         doc.ErrorDesc());
     SetConnectionState(PVR_CONNECTION_STATE_SERVER_MISMATCH,
-        XBMC->GetLocalizedString(30502));
+        LocalizedString(30502).c_str());
     return false;
   }
 
@@ -940,7 +942,7 @@ bool Dvb::LoadChannels()
   if (g_useFavourites && !g_useFavouritesFile && !hasFavourites)
   {
     XBMC->Log(LOG_NOTICE, "Favourites enabled but non defined");
-    XBMC->QueueNotification(QUEUE_ERROR, XBMC->GetLocalizedString(30509));
+    XBMC->QueueNotification(QUEUE_ERROR, LocalizedString(30509).c_str());
     return false; // empty favourites is an error
   }
 
@@ -1035,7 +1037,7 @@ bool Dvb::LoadChannels()
         {
           XBMC->Log(LOG_NOTICE, "Favourites contains unresolvable channel: %s."
               " Ignoring.", xChannel->Attribute("name"));
-          XBMC->QueueNotification(QUEUE_WARNING, XBMC->GetLocalizedString(30508),
+          XBMC->QueueNotification(QUEUE_WARNING, LocalizedString(30508).c_str(),
               xChannel->Attribute("name"));
           continue;
         }
@@ -1056,7 +1058,7 @@ bool Dvb::LoadChannels()
     {
       XBMC->Log(LOG_ERROR, "Unable to open local favourites.xml");
       SetConnectionState(PVR_CONNECTION_STATE_SERVER_MISMATCH,
-          XBMC->GetLocalizedString(30504));
+          LocalizedString(30504).c_str());
       return false;
     }
 
@@ -1074,7 +1076,7 @@ bool Dvb::LoadChannels()
       XBMC->Log(LOG_ERROR, "Unable to parse favourites.xml. Error: %s",
           doc.ErrorDesc());
       SetConnectionState(PVR_CONNECTION_STATE_SERVER_MISMATCH,
-          XBMC->GetLocalizedString(30505));
+          LocalizedString(30505).c_str());
       return false;
     }
 
@@ -1141,7 +1143,7 @@ bool Dvb::LoadChannels()
             : channelName.c_str();
           XBMC->Log(LOG_NOTICE, "Favourites contains unresolvable channel: %s."
               " Ignoring.", descr);
-          XBMC->QueueNotification(QUEUE_WARNING, XBMC->GetLocalizedString(30508),
+          XBMC->QueueNotification(QUEUE_WARNING, LocalizedString(30508).c_str(),
               descr);
           continue;
         }
@@ -1186,7 +1188,7 @@ void Dvb::TimerUpdates()
       SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
     else if (err == Timers::GENERIC_PARSE_ERROR)
       SetConnectionState(PVR_CONNECTION_STATE_SERVER_MISMATCH,
-          XBMC->GetLocalizedString(30506));
+          LocalizedString(30506).c_str());
     return;
   }
   XBMC->Log(LOG_INFO, "Changes in timerlist detected, triggering an update!");
@@ -1240,7 +1242,7 @@ bool Dvb::CheckBackendVersion()
     XBMC->Log(LOG_ERROR, "DVBViewer Media Server version %s or higher required",
         DMS_MIN_VERSION_STR);
     SetConnectionState(PVR_CONNECTION_STATE_VERSION_MISMATCH,
-      XBMC->GetLocalizedString(30501), DMS_MIN_VERSION_STR);
+      LocalizedString(30501).c_str(), DMS_MIN_VERSION_STR);
     return false;
   }
 
