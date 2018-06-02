@@ -434,7 +434,7 @@ Timers::Error Timers::ParseTimerFrom(const TiXmlElement *xml, Timer &timer)
     auto recfolders = m_cli.GetRecordingFolders();
     auto pos = std::distance(recfolders.begin(),
         std::find(recfolders.begin(), recfolders.end(), recfolder));
-    if (pos < recfolders.size())
+    if (pos >= 0 && pos < static_cast<std::ptrdiff_t>(recfolders.size()))
       timer.recfolder = pos;
   }
 

@@ -2,7 +2,7 @@ matrix:
   fast_finish: true
 
 environment:
-  CONFIG: Release
+  CONFIG: Debug
   KODI_BRANCH: master # usually synced with APPVEYOR_REPO_BRANCH
   matrix:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
@@ -123,7 +123,7 @@ build_script:
         & cmd /c 'cmake --build . --config %CONFIG% -- package-addons 2>&1'
       }
       Else {
-        & cmake --build . --config $env:CONFIG -- package-addons VERBOSE=1
+        & cmake --build . --config $env:CONFIG -- package-addons
       }
 
 after_build:

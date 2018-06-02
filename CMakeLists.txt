@@ -76,6 +76,10 @@ if(NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
   unset(CMAKE_REQUIRED_FLAGS)
 endif()
 
+if(NOT MSVC)
+  add_options(ALL_LANGUAGES DEBUG "-g" "-D_DEBUG" "-Wall")
+endif()
+
 build_addon(pvr.dvbviewer DVBVIEWER DEPLIBS)
 
 include(CPack)

@@ -640,9 +640,10 @@ bool Dvb::GetRecordingEdl(const PVR_RECORDING &recinfo, PVR_EDL_ENTRY edl[],
       break;
 
     float start = 0.0f, stop = 0.0f;
-    PVR_EDL_TYPE type = PVR_EDL_TYPE_CUT;
+    unsigned int type = PVR_EDL_TYPE_CUT;
     ++lineNumber;
-    if (sscanf(buffer, "%f %f %u", &start, &stop, &type) < 2)
+    if (sscanf(buffer, "%f %f %u", &start, &stop, &type) < 2
+      || type > PVR_EDL_TYPE_COMBREAK)
     {
       XBMC->Log(LOG_NOTICE, "Unable to parse EDL entry at line %zu. Skipping.",
           lineNumber);
@@ -657,12 +658,12 @@ bool Dvb::GetRecordingEdl(const PVR_RECORDING &recinfo, PVR_EDL_ENTRY edl[],
     start = std::min(start, stop);
     stop  = std::max(start, stop);
 
-    XBMC->Log(LOG_DEBUG, "edl line=%zu start=%f stop=%f type=%d", lineNumber,
+    XBMC->Log(LOG_DEBUG, "edl line=%zu start=%f stop=%f type=%u", lineNumber,
         start, stop, type);
 
     edl[idx].start = static_cast<int64_t>(start * 1000.0f);
     edl[idx].end   = static_cast<int64_t>(stop  * 1000.0f);
-    edl[idx].type  = type;
+    edl[idx].type  = static_cast<PVR_EDL_TYPE>(type);
     ++idx;
   }
 
@@ -711,6 +712,8 @@ const std::string Dvb::GetLiveStreamURL(const PVR_CHANNEL &channelinfo)
     case Transcoding::FLV:
       return BuildURL("flashstream/stream.flv?chid=%" PRIu64 "&%s",
         backendId, g_transcodingParams.c_str());
+      break;
+    default:
       break;
   }
   return BuildURL("upnp/channelstream/%" PRIu64 ".ts", backendId);
