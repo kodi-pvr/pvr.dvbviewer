@@ -380,26 +380,37 @@ PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
 
 const char *GetBackendName(void)
 {
-  static const std::string &name = DvbData ? DvbData->GetBackendName()
-    : "unknown";
+  if (!DvbData || !DvbData->IsConnected())
+    return "unknown";
+
+  static std::string name;
+  name = DvbData->GetBackendName();
   return name.c_str();
 }
 
 const char *GetBackendVersion(void)
 {
-  static const std::string &version = DvbData ? DvbData->GetBackendVersion()
-    : "UNKNOWN";
+  if (!DvbData || !DvbData->IsConnected())
+    return "-1";
+
+  static std::string version;
+  unsigned int iver = DvbData->GetBackendVersion();
+  version = StringUtils::Format("%u.%u.%u.%u", iver >> 24 & 0xFF,
+      iver >> 16 & 0xFF, iver >> 8  & 0xFF, iver & 0xFF);
   return version.c_str();
 }
 
 const char *GetConnectionString(void)
 {
   static std::string conn;
-  if (DvbData)
-    conn = StringUtils::Format("%s%s", g_hostname.c_str(),
-      DvbData->IsConnected() ? "" : " (Not connected!)");
-  else
-    conn = StringUtils::Format("%s (addon error!)", g_hostname.c_str());
+  static const std::string backend = StringUtils::Format("%s:%u",
+      g_hostname.c_str(), g_webPort);
+
+  conn = backend;
+  if (!DvbData)
+    conn = backend + " (Addon error!)";
+  else if (!DvbData->IsConnected())
+    conn = backend + " (Not connected!)";
   return conn.c_str();
 }
 

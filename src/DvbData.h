@@ -143,7 +143,7 @@ public:
   bool IsConnected();
 
   std::string GetBackendName();
-  std::string GetBackendVersion();
+  unsigned int GetBackendVersion();
   bool GetDriveSpace(long long *total, long long *used);
   bool IsGuest()
   { return m_isguest; }
@@ -209,6 +209,7 @@ private:
 
 private:
   PVR_CONNECTION_STATE m_state = PVR_CONNECTION_STATE_UNKNOWN;
+  std::string m_backendName = "";
   unsigned int m_backendVersion = 0;
   bool m_isguest = false;
 

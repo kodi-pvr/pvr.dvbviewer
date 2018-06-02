@@ -128,18 +128,12 @@ bool Dvb::IsConnected()
 
 std::string Dvb::GetBackendName()
 {
-  // RS api doesn't provide a reliable way to extract the server name
-  return "DVBViewer";
+  return m_backendName;
 }
 
-std::string Dvb::GetBackendVersion()
+unsigned int Dvb::GetBackendVersion()
 {
-  std::string version = StringUtils::Format("%u.%u.%u.%u",
-      m_backendVersion >> 24 & 0xFF,
-      m_backendVersion >> 16 & 0xFF,
-      m_backendVersion >> 8 & 0xFF,
-      m_backendVersion & 0xFF);
-  return version;
+  return m_backendVersion;
 }
 
 bool Dvb::GetDriveSpace(long long *total, long long *used)
@@ -1230,6 +1224,7 @@ bool Dvb::CheckBackendVersion()
     return false;
   }
 
+  m_backendVersion = 0;
   XBMC->Log(LOG_NOTICE, "Checking backend version...");
   if (doc.RootElement()->QueryUnsignedAttribute("iver", &m_backendVersion)
       != TIXML_SUCCESS)
@@ -1249,6 +1244,7 @@ bool Dvb::CheckBackendVersion()
     return false;
   }
 
+  m_backendName = doc.RootElement()->GetText();
   return true;
 }
 
