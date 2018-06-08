@@ -1,6 +1,5 @@
 #include "RecordingReader.h"
 #include "client.h"
-#include "p8-platform/util/util.h"
 #include "p8-platform/threads/mutex.h"
 
 #include <algorithm>
@@ -11,7 +10,7 @@
 
 using namespace ADDON;
 
-RecordingReader::RecordingReader(const std::string &streamURL, time_t end)
+RecordingReader::RecordingReader(const std::string &streamURL, std::time_t end)
   : m_streamURL(streamURL), m_end(end)
 {
   m_readHandle = XBMC->CURLCreate(m_streamURL.c_str());
@@ -39,7 +38,7 @@ ssize_t RecordingReader::ReadData(unsigned char *buffer, unsigned int size)
   /* check for playback of ongoing recording */
   if (m_end)
   {
-    time_t now = time(nullptr);
+    std::time_t now = std::time(nullptr);
     if (m_pos == m_len || now > m_nextReopen)
     {
       /* reopen stream */

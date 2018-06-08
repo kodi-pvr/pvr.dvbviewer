@@ -1,12 +1,13 @@
 #pragma once
 
+#include "libXBMC_pvr.h"
+#include "tinyxml.h"
+
 #include <string>
 #include <map>
 #include <memory>
 #include <functional>
-
-#include "libXBMC_pvr.h"
-#include "tinyxml.h"
+#include <ctime>
 
 class Dvb;
 class DvbChannel;
@@ -23,6 +24,8 @@ public:
     MANUAL_ONCE      = PVR_TIMER_TYPE_NONE + 1,
     MANUAL_REPEATING = PVR_TIMER_TYPE_NONE + 2,
     EPG_ONCE         = PVR_TIMER_TYPE_NONE + 3,
+    EPG_AUTO_SEARCH  = PVR_TIMER_TYPE_NONE + 4,
+    EPG_AUTO_ONCE    = PVR_TIMER_TYPE_NONE + 5,
   };
 
   enum class SyncState
@@ -35,9 +38,14 @@ public:
   };
 
   Timer() = default;
-  bool updateFrom(const Timer &source);
+  bool updateFrom(const Timer &other);
   bool isScheduled() const;
-  bool isRunning(time_t *now, std::string *channelName = nullptr) const;
+  bool isRunning(std::time_t *now, std::string *channelName = nullptr) const;
+
+  bool operator!=(const Timer &other) const
+  {
+    return guid != other.guid;
+  };
 
 public:
   /*!< @brief Unique id passed to Kodi as PVR_TIMER.iClientIndex.
@@ -50,7 +58,7 @@ public:
   unsigned int backendId;
 
   Type        type = Type::MANUAL_ONCE;
-  DvbChannel  *channel; //TODO: convert to shared_ptr
+  DvbChannel  *channel = nullptr; //TODO: convert to shared_ptr
 
   int         priority = 0;
   std::string title;
@@ -58,14 +66,32 @@ public:
   int         recfolder = -1; //TODO add method for resyncing
 
   // start/end include the margins
-  time_t       start;
-  time_t       end;
+  std::time_t  start;
+  std::time_t  end;
   unsigned int marginStart = 0;
   unsigned int marginEnd = 0;
   unsigned int weekdays;
 
+  std::string source;
+
   PVR_TIMER_STATE state;
   SyncState syncState = SyncState::NEW;
+};
+
+class AutoTimer
+  : public Timer
+{
+public:
+  AutoTimer() = default;
+  bool updateFrom(const AutoTimer &other);
+  void CalcGUID();
+
+public:
+  std::time_t firstDay = 0;
+  std::string searchPhrase;
+  bool searchFulltext = false;
+  bool startAnyTime = false;
+  bool endAnyTime   = false;
 };
 
 class Timers
@@ -79,8 +105,8 @@ public:
     TIMER_UNKNOWN,
     CHANNEL_UNKNOWN,
     RECFOLDER_UNKNOWN,
+    EMPTY_SEARCH_PHRASE,
     RESPONSE_ERROR,
-    NO_TIMER_CHANGES,
   };
 
   Timers(Dvb &cli)
@@ -88,23 +114,48 @@ public:
   {};
 
   void GetTimerTypes(std::vector<PVR_TIMER_TYPE> &types);
+  Error RefreshAllTimers(bool &changes);
 
   Timer *GetTimer(std::function<bool (const Timer&)> func);
+  AutoTimer *GetAutoTimer(std::function<bool (const AutoTimer&)> func);
+
   unsigned int GetTimerCount();
+  unsigned int GetAutoTimerCount();
+
   void GetTimers(std::vector<PVR_TIMER> &timers);
+  void GetAutoTimers(std::vector<PVR_TIMER> &timers);
 
   Error AddUpdateTimer(const PVR_TIMER &timer, bool update);
-  Error DeleteTimer(const PVR_TIMER &timer);
+  Error AddUpdateAutoTimer(const PVR_TIMER &timer, bool update);
 
-  Error RefreshTimers();
+  Error DeleteTimer(const PVR_TIMER &timer);
+  Error DeleteAutoTimer(const PVR_TIMER &timer);
 
 private:
-  Error ParseTimerFrom(const PVR_TIMER &tmr, Timer &timer);
-  Error ParseTimerFrom(const TiXmlElement *xml, Timer &timer);
+  template <typename T>
+  T *GetTimer(std::function<bool (const T&)> func,
+      std::map<unsigned int, T> &timerlist);
 
+  template <typename T>
+  Timers::Error RefreshTimers(const char *name, const char *endpoint,
+      const char *xmltag, std::map<unsigned int, T> &timerlist, bool &changes);
+  Error RefreshTimers(bool &changes);
+  Error RefreshAutoTimers(bool &changes);
+  bool IsAutoTimer(const PVR_TIMER &timer);
+
+  Error ParseTimerFrom(const PVR_TIMER &tmr, Timer &timer);
+  Error ParseTimerFrom(const TiXmlElement *xml, std::size_t pos, Timer &timer);
+  Error ParseTimerFrom(const PVR_TIMER &tmr, AutoTimer &timer);
+  Error ParseTimerFrom(const TiXmlElement *xml, std::size_t pos, AutoTimer &timer);
+
+  void ParseDate(const std::string &date, std::tm &timeinfo);
+  void ParseTime(const std::string &time, std::tm &timeinfo);
+
+private:
   Dvb &m_cli;
   /*!< @brief map of [timer.id, timer] pairs */
   std::map<unsigned int, Timer> m_timers;
+  std::map<unsigned int, AutoTimer> m_autotimers;
   unsigned int m_nextTimerId = 1;
 };
 

@@ -5,8 +5,6 @@
 
 #include "IStreamReader.h"
 
-#include <ctime>
-
 class StreamReader
   : public IStreamReader
 {
@@ -18,14 +16,14 @@ public:
   int64_t Seek(long long position, int whence) override;
   int64_t Position() override;
   int64_t Length() override;
-  time_t TimeStart() override;
-  time_t TimeEnd() override;
+  std::time_t TimeStart() override;
+  std::time_t TimeEnd() override;
   bool IsRealTime() override;
   bool IsTimeshifting() override;
 
 private:
   void *m_streamHandle;
-  time_t m_start = time(nullptr);
+  std::time_t m_start = time(nullptr);
 };
 
 #endif

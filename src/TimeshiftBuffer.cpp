@@ -112,14 +112,14 @@ ssize_t TimeshiftBuffer::ReadData(unsigned char *buffer, unsigned int size)
   return XBMC->ReadFile(m_filebufferReadHandle, buffer, size);
 }
 
-time_t TimeshiftBuffer::TimeStart()
+std::time_t TimeshiftBuffer::TimeStart()
 {
   return m_start;
 }
 
-time_t TimeshiftBuffer::TimeEnd()
+std::time_t TimeshiftBuffer::TimeEnd()
 {
-  return time(nullptr);
+  return std::time(nullptr);
 }
 
 bool TimeshiftBuffer::IsRealTime()

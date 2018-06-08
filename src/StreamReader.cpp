@@ -45,14 +45,14 @@ int64_t StreamReader::Length()
   return XBMC->GetFileLength(m_streamHandle);
 }
 
-time_t StreamReader::TimeStart()
+std::time_t StreamReader::TimeStart()
 {
   return m_start;
 }
 
-time_t StreamReader::TimeEnd()
+std::time_t StreamReader::TimeEnd()
 {
-  return time(nullptr);
+  return std::time(nullptr);
 }
 
 bool StreamReader::IsRealTime()

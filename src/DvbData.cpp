@@ -3,7 +3,6 @@
 #include "LocalizedString.h"
 
 #include "util/XMLUtils.h"
-#include "p8-platform/util/util.h"
 #include "p8-platform/util/StringUtils.h"
 
 #include <tinyxml.h>
@@ -43,24 +42,35 @@ std::string dvbviewer::URLEncode(const std::string& data)
   return result;
 }
 
-time_t dvbviewer::ParseDateTime(const std::string& date, bool iso8601 = true)
+std::time_t dvbviewer::ParseDateTime(const std::string& date, bool iso8601 = true)
 {
-  struct tm timeinfo;
+  std::tm timeinfo;
 
   memset(&timeinfo, 0, sizeof(tm));
   if (iso8601)
-    sscanf(date.c_str(), "%04d%02d%02d%02d%02d%02d", &timeinfo.tm_year,
+    std::sscanf(date.c_str(), "%04d%02d%02d%02d%02d%02d", &timeinfo.tm_year,
         &timeinfo.tm_mon, &timeinfo.tm_mday, &timeinfo.tm_hour,
         &timeinfo.tm_min, &timeinfo.tm_sec);
   else
-    sscanf(date.c_str(), "%02d.%02d.%04d%02d:%02d:%02d", &timeinfo.tm_mday,
+    std::sscanf(date.c_str(), "%02d.%02d.%04d%02d:%02d:%02d", &timeinfo.tm_mday,
         &timeinfo.tm_mon, &timeinfo.tm_year, &timeinfo.tm_hour,
         &timeinfo.tm_min, &timeinfo.tm_sec);
   timeinfo.tm_mon  -= 1;
   timeinfo.tm_year -= 1900;
   timeinfo.tm_isdst = -1;
 
-  return mktime(&timeinfo);
+  return std::mktime(&timeinfo);
+}
+
+std::tm dvbviewer::localtime(std::time_t tt)
+{
+  std::tm timeinfo;
+#ifdef TARGET_POSIX
+  localtime_r(&tt, &timeinfo);
+#else
+  localtime_s(&timeinfo, &tt);
+#endif
+  return timeinfo;
 }
 
 // XXX: not thread safe
@@ -70,9 +80,9 @@ long dvbviewer::UTCOffset()
   static bool initialized = false;
   if (!initialized) {
 #ifdef TARGET_POSIX
-    struct tm t;
+    std::tm t;
     tzset();
-    time_t tt = time(nullptr);
+    std::time_t tt = std::time(nullptr);
     if (localtime_r(&tt, &t))
       offset = t.tm_gmtoff;
 #else
@@ -182,7 +192,7 @@ bool Dvb::GetChannels(ADDON_HANDLE handle, bool radio)
 }
 
 bool Dvb::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channelinfo,
-    time_t start, time_t end)
+    std::time_t start, std::time_t end)
 {
   DvbChannel *channel = GetChannel(channelinfo.iUniqueId);
 
@@ -220,16 +230,14 @@ bool Dvb::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channelinfo,
       continue;
 
     // since RS 1.26.0 the correct language is already merged into the elements
-    TiXmlNode *xTitles = xEntry->FirstChild("titles");
+    TiXmlElement *xTitles = xEntry->FirstChildElement("titles");
     if (!xTitles || !XMLUtils::GetString(xTitles, "title", entry.title))
       continue;
 
-    TiXmlNode *xDescriptions = xEntry->FirstChild("descriptions");
-    if (xDescriptions)
+    if (TiXmlElement *xDescriptions = xEntry->FirstChildElement("descriptions"))
       XMLUtils::GetString(xDescriptions, "description", entry.plot);
 
-    TiXmlNode *xEvents = xEntry->FirstChild("events");
-    if (xEvents)
+    if (TiXmlElement *xEvents = xEntry->FirstChildElement("events"))
     {
       XMLUtils::GetString(xEvents, "event", entry.plotOutline);
       if (entry.plot.empty())
@@ -356,6 +364,7 @@ bool Dvb::GetTimers(ADDON_HANDLE handle)
   std::vector<PVR_TIMER> timers;
   {
     CLockObject lock(m_mutex);
+    m_timers.GetAutoTimers(timers);
     m_timers.GetTimers(timers);
   }
 
@@ -366,8 +375,8 @@ bool Dvb::GetTimers(ADDON_HANDLE handle)
 
 bool Dvb::AddTimer(const PVR_TIMER &timer, bool update)
 {
-  XBMC->Log(LOG_DEBUG, "%s: channel=%u, title='%s'",
-      __FUNCTION__, timer.iClientChannelUid, timer.strTitle);
+  XBMC->Log(LOG_DEBUG, "%sTimer: channel=%u, title='%s'",
+      (update) ? "Edit" : "Add", timer.iClientChannelUid, timer.strTitle);
   CLockObject lock(m_mutex);
 
   Timers::Error err = m_timers.AddUpdateTimer(timer, update);
@@ -375,6 +384,8 @@ bool Dvb::AddTimer(const PVR_TIMER &timer, bool update)
   {
     if (err == Timers::TIMESPAN_OVERFLOW)
       XBMC->QueueNotification(QUEUE_ERROR, LocalizedString(30510).c_str());
+    else if (err == Timers::EMPTY_SEARCH_PHRASE)
+      XBMC->QueueNotification(QUEUE_ERROR, LocalizedString(30513).c_str());
     else if (err == Timers::TIMER_UNKNOWN)
       XBMC->Log(LOG_ERROR, "Timer %u is unknown", timer.iClientIndex);
     else if (err == Timers::CHANNEL_UNKNOWN)
@@ -468,7 +479,7 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
 
     /* fetch and search channel */
     XMLUtils::GetString(xRecording, "channel", recording.channelName);
-    recording.channel = GetChannel([&] (const DvbChannel *channel)
+    recording.channel = GetChannel([&](const DvbChannel *channel)
         {
           return (channel->backendName == recording.channelName);
         });
@@ -484,7 +495,7 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
     recording.start = ParseDateTime(startTime);
 
     int hours, mins, secs;
-    sscanf(xRecording->Attribute("duration"), "%02d%02d%02d", &hours, &mins, &secs);
+    std::sscanf(xRecording->Attribute("duration"), "%02d%02d%02d", &hours, &mins, &secs);
     recording.duration = hours*60*60 + mins*60 + secs;
 
     std::string group("Unknown");
@@ -598,9 +609,9 @@ unsigned int Dvb::GetRecordingsAmount()
 RecordingReader *Dvb::OpenRecordedStream(const PVR_RECORDING &recinfo)
 {
   CLockObject lock(m_mutex);
-  time_t now = time(nullptr), end = 0;
+  std::time_t now = std::time(nullptr), end = 0;
   std::string channelName = recinfo.strChannelName;
-  auto timer = m_timers.GetTimer([&] (const Timer &timer)
+  auto timer = m_timers.GetTimer([&](const Timer &timer)
       {
         return timer.isRunning(&now, &channelName);
       });
@@ -642,7 +653,7 @@ bool Dvb::GetRecordingEdl(const PVR_RECORDING &recinfo, PVR_EDL_ENTRY edl[],
     float start = 0.0f, stop = 0.0f;
     unsigned int type = PVR_EDL_TYPE_CUT;
     ++lineNumber;
-    if (sscanf(buffer, "%f %f %u", &start, &stop, &type) < 2
+    if (std::sscanf(buffer, "%f %f %u", &start, &stop, &type) < 2
       || type > PVR_EDL_TYPE_COMBREAK)
     {
       XBMC->Log(LOG_NOTICE, "Unable to parse EDL entry at line %zu. Skipping.",
@@ -1030,7 +1041,7 @@ bool Dvb::LoadChannels()
       {
         uint64_t backendId = 0;
         xChannel->QueryValueAttribute<uint64_t>("ID", &backendId);
-        DvbChannel *channel = GetChannel([&] (const DvbChannel *channel)
+        DvbChannel *channel = GetChannel([&](const DvbChannel *channel)
             {
               return (std::find(channel->backendIds.begin(),
                     channel->backendIds.end(), backendId)
@@ -1134,7 +1145,7 @@ bool Dvb::LoadChannels()
           channelName = ConvertToUtf8(channelName);
         }
 
-        DvbChannel *channel = GetChannel([&] (const DvbChannel *channel)
+        DvbChannel *channel = GetChannel([&](const DvbChannel *channel)
             {
               return (std::find(channel->backendIds.begin(),
                     channel->backendIds.end(), backendId)
@@ -1183,9 +1194,10 @@ bool Dvb::LoadChannels()
 
 void Dvb::TimerUpdates()
 {
+  bool changes;
   CLockObject lock(m_mutex);
-  Timers::Error err = m_timers.RefreshTimers();
-  if (err != Timers::SUCCESS)
+  Timers::Error err = m_timers.RefreshAllTimers(changes);
+  if (err != Timers::SUCCESS || !changes)
   {
     if (err == Timers::RESPONSE_ERROR)
       SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
@@ -1278,7 +1290,7 @@ bool Dvb::UpdateBackendStatus(bool updateSettings)
   TiXmlElement *root = doc.RootElement();
   std::set< std::pair<long long, long long> > folders;
   m_diskspace.total = m_diskspace.used = 0;
-  for (TiXmlElement *xFolder = root->FirstChild("recfolders")->FirstChildElement("folder");
+  for (TiXmlElement *xFolder = root->FirstChildElement("recfolders")->FirstChildElement("folder");
       xFolder; xFolder = xFolder->NextSiblingElement("folder"))
   {
     long long size = 0, free = 0;

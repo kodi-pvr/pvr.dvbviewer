@@ -8,6 +8,7 @@
 
 #include "libXBMC_pvr.h"
 #include "p8-platform/threads/threads.h"
+
 #include <list>
 #include <map>
 #include <functional>
@@ -35,7 +36,8 @@
 namespace dvbviewer
 {
   std::string URLEncode(const std::string& data);
-  time_t ParseDateTime(const std::string& date, bool iso8601);
+  std::time_t ParseDateTime(const std::string& date, bool iso8601);
+  std::tm localtime(std::time_t tt = std::time(nullptr));
   long UTCOffset();
   void RemoveNullChars(std::string& str);
   std::string ConvertToUtf8(const std::string& src);
@@ -91,7 +93,7 @@ public:
   unsigned int id;
   DvbChannel *channel;
   std::string title;
-  time_t start, end;
+  std::time_t start, end;
   unsigned int genre = 0;
   std::string plot, plotOutline;
 };
@@ -116,7 +118,7 @@ public:
 
 public:
   std::string id;
-  time_t start;
+  std::time_t start;
   int duration;
   unsigned int genre = 0;
   std::string title;
@@ -151,7 +153,7 @@ public:
   unsigned int GetCurrentClientChannel(void);
   bool GetChannels(ADDON_HANDLE handle, bool radio);
   bool GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channelinfo,
-      time_t start, time_t end);
+      std::time_t start, std::time_t end);
   unsigned int GetChannelsAmount(void);
 
   bool GetChannelGroups(ADDON_HANDLE handle, bool radio);

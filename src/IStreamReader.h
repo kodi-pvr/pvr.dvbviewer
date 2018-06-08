@@ -5,6 +5,8 @@
 
 #include "libXBMC_addon.h"
 
+#include <ctime>
+
 class IStreamReader
 {
 public:
@@ -14,8 +16,8 @@ public:
   virtual int64_t Seek(long long position, int whence) = 0;
   virtual int64_t Position() = 0;
   virtual int64_t Length() = 0;
-  virtual time_t TimeStart() = 0;
-  virtual time_t TimeEnd() = 0;
+  virtual std::time_t TimeStart() = 0;
+  virtual std::time_t TimeEnd() = 0;
   virtual bool IsRealTime() = 0;
   virtual bool IsTimeshifting() = 0;
 };
