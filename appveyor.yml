@@ -8,9 +8,11 @@ environment:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
       PLATFORM: win32
       MSVC_PLATFORM: x86
+      CONFIG: RelWithDebInfo
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
       PLATFORM: win64
       MSVC_PLATFORM: amd64
+      CONFIG: RelWithDebInfo
     - APPVEYOR_BUILD_WORKER_IMAGE: ubuntu
       PLATFORM: linux-x86_64
     - APPVEYOR_BUILD_WORKER_IMAGE: ubuntu
