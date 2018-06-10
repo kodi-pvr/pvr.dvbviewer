@@ -633,9 +633,12 @@ Timers::Error Timers::AddUpdateAutoTimer(const PVR_TIMER &tmr, bool update)
          +  "&Name="            + URLEncode(timer.title)
          +  "&RecordingFolder=" + URLEncode(recfolder);
 
+  // TODO: hardcode default priority for now
+  // we can fetch the default value using:
+  // * api/getconfigfile.html?file=config%5Cservice.xml
+  // * api/setting.html?sec=Recording&id=DefPrio
   params += "&Priority=";
-  if (timer.priority)
-    params += std::to_string(timer.priority);
+  params += (timer.priority >= 0) ? std::to_string(timer.priority) : "50";
 
   params += "&Channels=";
   if (timer.channel)
