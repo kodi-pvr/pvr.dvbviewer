@@ -153,7 +153,7 @@ void Timers::GetTimerTypes(std::vector<PVR_TIMER_TYPE> &types)
       "", /* Let Kodi generate the description */
       priorityValues));
 
-  if (true /*m_cli.GetBackendVersion() >= DMS_VERSION_NUM(2, 1, 0, 0)*/) //TODO
+  if (m_cli.GetBackendVersion() >= DMS_VERSION_NUM(2, 1, 0, 0))
   {
      /* epg auto search */
     types.emplace_back(TimerType(
