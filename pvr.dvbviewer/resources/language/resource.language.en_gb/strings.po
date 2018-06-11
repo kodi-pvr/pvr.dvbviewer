@@ -269,7 +269,25 @@ msgctxt "#30420"
 msgid "One time (Scheduled by guide-based timer rule)"
 msgstr ""
 
-#empty strings from id 30421 to 30499
+#empty strings from id 30421 to 30429
+
+msgctxt "#30430"
+msgid "Disabled"
+msgstr ""
+
+msgctxt "#30431"
+msgid "Record if EPG title differs"
+msgstr ""
+
+msgctxt "#30432"
+msgid "Record if EPG subtitle differs"
+msgstr ""
+
+msgctxt "#30433"
+msgid "Record if EPG title and subtitle differs"
+msgstr ""
+
+#empty strings from id 30434 to 30499
 #notifications
 
 msgctxt "#30500"

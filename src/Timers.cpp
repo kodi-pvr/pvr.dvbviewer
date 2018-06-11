@@ -62,6 +62,8 @@ void Timers::GetTimerTypes(std::vector<PVR_TIMER_TYPE> &types)
       const std::vector< std::pair<int, std::string> > &priorityValues
         = std::vector< std::pair<int, std::string> >(),
       const std::vector< std::pair<int, std::string> > &groupValues
+        = std::vector< std::pair<int, std::string> >(),
+      const std::vector< std::pair<int, std::string> > &deDupValues
         = std::vector< std::pair<int, std::string> >())
     {
       int i;
@@ -88,6 +90,17 @@ void Timers::GetTimerTypes(std::vector<PVR_TIMER_TYPE> &types)
       {
         recordingGroup[i].iValue = group.first;
         PVR_STRCPY(recordingGroup[i].strDescription, group.second.c_str());
+        ++i;
+      }
+
+      if ((iPreventDuplicateEpisodesSize = deDupValues.size()))
+        iPreventDuplicateEpisodesDefault = deDupValues[0].first;
+      i = 0;
+      for (auto &deDup : deDupValues)
+      {
+        preventDuplicateEpisodes[i].iValue = deDup.first;
+        PVR_STRCPY(preventDuplicateEpisodes[i].strDescription,
+            deDup.second.c_str());
         ++i;
       }
     }
@@ -155,6 +168,15 @@ void Timers::GetTimerTypes(std::vector<PVR_TIMER_TYPE> &types)
 
   if (m_cli.GetBackendVersion() >= DMS_VERSION_NUM(2, 1, 0, 0))
   {
+    /* PVR_Timer.iPreventDuplicateEpisodes values and presentation.*/
+    static std::vector< std::pair<int, std::string> > deDupValues =
+    {
+      { AutoTimer::DeDup::DISABLED,             LocalizedString(30430) },
+      { AutoTimer::DeDup::CHECK_TITLE,          LocalizedString(30431) },
+      { AutoTimer::DeDup::CHECK_SUBTITLE,       LocalizedString(30432) },
+      { AutoTimer::DeDup::CHECK_TITLE_SUBTITLE, LocalizedString(30433) },
+    };
+
      /* epg auto search */
     types.emplace_back(TimerType(
         Timer::Type::EPG_AUTO_SEARCH,
@@ -172,9 +194,10 @@ void Timers::GetTimerTypes(std::vector<PVR_TIMER_TYPE> &types)
         PVR_TIMER_TYPE_SUPPORTS_PRIORITY           |
         PVR_TIMER_TYPE_SUPPORTS_TITLE_EPG_MATCH    |
         PVR_TIMER_TYPE_SUPPORTS_FULLTEXT_EPG_MATCH |
-        PVR_TIMER_TYPE_SUPPORTS_RECORDING_GROUP,
+        PVR_TIMER_TYPE_SUPPORTS_RECORDING_GROUP    |
+        PVR_TIMER_TYPE_SUPPORTS_RECORD_ONLY_NEW_EPISODES,
         "", /* Let Kodi generate the description */
-        priorityValues, groupValues));
+        priorityValues, groupValues, deDupValues));
 
     /* One-shot created by epg auto search */
     types.emplace_back(TimerType(
@@ -544,6 +567,7 @@ bool AutoTimer::updateFrom(const AutoTimer &other)
   bool updated = Timer::updateFrom(other);
   TIMER_UPDATE_MEMBER(searchPhrase);
   TIMER_UPDATE_MEMBER(searchFulltext);
+  TIMER_UPDATE_MEMBER(deDup);
   // all three values are based on other values we already checked. so just copy
   startAnyTime = other.startAnyTime;
   endAnyTime   = other.endAnyTime;
@@ -597,6 +621,7 @@ void Timers::GetAutoTimers(std::vector<PVR_TIMER> &timers)
 
     PVR_STRCPY(tmr.strEpgSearchString, timer.searchPhrase.c_str());
     tmr.bFullTextEpgSearch = timer.searchFulltext;
+    tmr.iPreventDuplicateEpisodes = timer.deDup;
 
     timers.emplace_back(tmr);
   }
@@ -626,12 +651,18 @@ Timers::Error Timers::AddUpdateAutoTimer(const PVR_TIMER &tmr, bool update)
       : m_cli.GetRecordingFolders().at(timer.recfolder);
 
   std::string params = StringUtils::Format(
-      "EPGBefore=%u&EPGAfter=%u&Days=%u&SearchFields=%d&AutoRecording=%d",
+      "EPGBefore=%u&EPGAfter=%u&Days=%u&SearchFields=%d&AutoRecording=%d"
+      "&CheckRecTitle=%d&CheckRecSubtitle=%d",
       timer.marginStart, timer.marginEnd, timer.weekdays,
-      timer.searchFulltext ? 7 : 3, (timer.state != PVR_TIMER_STATE_DISABLED));
+      timer.searchFulltext ? 7 : 3, (timer.state != PVR_TIMER_STATE_DISABLED),
+      timer.deDup & AutoTimer::DeDup::CHECK_TITLE,
+      timer.deDup & AutoTimer::DeDup::CHECK_SUBTITLE);
   params += "&SearchPhrase="    + URLEncode(timer.searchPhrase)
          +  "&Name="            + URLEncode(timer.title)
          +  "&RecordingFolder=" + URLEncode(recfolder);
+
+  if (!update)
+    params += "&CheckTimer=1"; // we always enable "check against existing timers"
 
   // TODO: hardcode default priority for now
   // we can fetch the default value using:
@@ -705,6 +736,7 @@ Timers::Error Timers::ParseTimerFrom(const PVR_TIMER &tmr, AutoTimer &timer)
   timer.searchFulltext = tmr.bFullTextEpgSearch;
   timer.startAnyTime   = tmr.bStartAnyTime;
   timer.endAnyTime     = tmr.bEndAnyTime;
+  timer.deDup          = static_cast<AutoTimer::DeDup>(tmr.iPreventDuplicateEpisodes);
 
   if (timer.searchPhrase.empty())
     return EMPTY_SEARCH_PHRASE;
@@ -762,6 +794,11 @@ Timers::Error Timers::ParseTimerFrom(const TiXmlElement *xml, std::size_t pos,
   XMLUtils::GetString(xml, "SearchPhrase", timer.searchPhrase);
   if (XMLUtils::GetInt(xml, "SearchFields", tmp) && (tmp & 0x04))
     timer.searchFulltext = true;
+
+  if (xml->QueryIntAttribute("CheckRecTitle", &tmp) == TIXML_SUCCESS && tmp != 0)
+    timer.deDup |= AutoTimer::DeDup::CHECK_TITLE;
+  if (xml->QueryIntAttribute("CheckRecSubTitle", &tmp) == TIXML_SUCCESS && tmp != 0)
+    timer.deDup |= AutoTimer::DeDup::CHECK_SUBTITLE;
 
   // DMS supports specifying multiple channels whereas Kodi only a single
   // channel. So if multiple channels are defined we show ANY_CHANNEL in Kodi.

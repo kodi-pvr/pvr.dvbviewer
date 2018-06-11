@@ -8,6 +8,7 @@
 #include <memory>
 #include <functional>
 #include <ctime>
+#include <type_traits>
 
 class Dvb;
 class DvbChannel;
@@ -34,7 +35,7 @@ public:
     NONE,
     NEW,
     FOUND,
-    UPDATED
+    UPDATED,
   };
 
   Timer() = default;
@@ -82,6 +83,16 @@ class AutoTimer
   : public Timer
 {
 public:
+  enum DeDup
+    : unsigned int  // same type as PVR_TIMER_TYPE.iPreventDuplicateEpisodes
+  {
+    DISABLED             = 0,
+    CHECK_TITLE          = 1,
+    CHECK_SUBTITLE       = 2,
+    CHECK_TITLE_SUBTITLE = CHECK_TITLE | CHECK_SUBTITLE,
+  };
+
+public:
   AutoTimer() = default;
   bool updateFrom(const AutoTimer &other);
   void CalcGUID();
@@ -92,6 +103,7 @@ public:
   bool searchFulltext = false;
   bool startAnyTime = false;
   bool endAnyTime   = false;
+  std::underlying_type<DeDup>::type deDup = DeDup::DISABLED;
 };
 
 class Timers
