@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef PVR_DVBVIEWER_TIMESHIFTBUFFER_H
-#define PVR_DVBVIEWER_TIMESHIFTBUFFER_H
-
 #include "IStreamReader.h"
 
 #include <atomic>
@@ -42,5 +39,3 @@ private:
   std::condition_variable m_condition;
   std::mutex m_mutex;
 };
-
-#endif

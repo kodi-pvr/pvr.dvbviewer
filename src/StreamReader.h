@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef PVR_DVBVIEWER_STREAMREADER_H
-#define PVR_DVBVIEWER_STREAMREADER_H
-
 #include "IStreamReader.h"
 
 class StreamReader
@@ -25,5 +22,3 @@ private:
   void *m_streamHandle;
   std::time_t m_start = time(nullptr);
 };
-
-#endif

@@ -19,9 +19,6 @@
  *
  */
 
-#ifndef PVR_DVBVIEWER_CLIENT_H
-#define PVR_DVBVIEWER_CLIENT_H
-
 #include "DvbData.h"
 #include "libXBMC_addon.h"
 #include "libXBMC_pvr.h"
@@ -99,5 +96,3 @@ extern std::string    g_transcodingParams;
 
 extern ADDON::CHelper_libXBMC_addon *XBMC;
 extern CHelper_libXBMC_pvr *PVR;
-
-#endif

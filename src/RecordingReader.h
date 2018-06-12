@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef PVR_DVBVIEWER_RECORDINGREADER_H
-#define PVR_DVBVIEWER_RECORDINGREADER_H
-
 #include "libXBMC_addon.h"
 
 #include <ctime>
@@ -28,5 +25,3 @@ private:
   uint64_t m_pos = { 0 };
   uint64_t m_len;
 };
-
-#endif

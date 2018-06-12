@@ -1,8 +1,5 @@
 #pragma once
 
-#ifndef PVR_DVBVIEWER_DVBDATA_H
-#define PVR_DVBVIEWER_DVBDATA_H
-
 #include "RecordingReader.h"
 #include "Timers.h"
 
@@ -237,5 +234,3 @@ private:
 
   P8PLATFORM::CMutex m_mutex;
 };
-
-#endif
