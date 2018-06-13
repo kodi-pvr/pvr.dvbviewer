@@ -1,6 +1,7 @@
 #pragma once
 
 #include "RecordingReader.h"
+#include "Settings.h"
 #include "Timers.h"
 
 #include "libXBMC_pvr.h"
@@ -136,7 +137,7 @@ class Dvb
   : public P8PLATFORM::CThread
 {
 public:
-  Dvb();
+  Dvb(const dvbviewer::Settings &settings);
   ~Dvb();
 
   bool IsConnected();
@@ -146,6 +147,8 @@ public:
   bool GetDriveSpace(long long *total, long long *used);
   bool IsGuest()
   { return m_isguest; }
+  const dvbviewer::Settings &GetSettings() const
+  { return m_settings; };
 
   unsigned int GetCurrentClientChannel(void);
   bool GetChannels(ADDON_HANDLE handle, bool radio);
@@ -231,6 +234,7 @@ private:
   unsigned int m_recordingAmount = 0;
 
   dvbviewer::Timers m_timers = dvbviewer::Timers(*this);
+  dvbviewer::Settings m_settings;
 
   P8PLATFORM::CMutex m_mutex;
 };

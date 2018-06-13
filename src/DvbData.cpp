@@ -118,7 +118,8 @@ std::string dvbviewer::ConvertToUtf8(const std::string& src)
   return dest;
 }
 
-Dvb::Dvb()
+Dvb::Dvb(const Settings &settings)
+  : m_settings(settings)
 {
   TiXmlBase::SetCondenseWhiteSpace(false);
 
@@ -1223,11 +1224,10 @@ DvbChannel *Dvb::GetChannel(std::function<bool (const DvbChannel*)> func)
 bool Dvb::CheckBackendVersion()
 {
   const httpResponse &res = GetFromAPI("api/version.html");
-  if (res.code == 401)
-    SetConnectionState(PVR_CONNECTION_STATE_ACCESS_DENIED);
   if (res.error)
   {
-    SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
+    SetConnectionState((res.code == 401) ? PVR_CONNECTION_STATE_ACCESS_DENIED
+      : PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
     return false;
   }
 
@@ -1316,6 +1316,9 @@ bool Dvb::UpdateBackendStatus(bool updateSettings)
     XMLUtils::GetString(root, "rights", rights);
     if ((m_isguest = (rights != "full")))
       XBMC->Log(LOG_NOTICE, "Only guest permissions available!");
+
+    /* read some settings from backend */
+    m_settings.ReadFromBackend(*this);
   }
 
   return true;

@@ -21,6 +21,7 @@
 #include "client.h"
 #include "DvbData.h"
 #include "LocalizedString.h"
+#include "Settings.h"
 #include "StreamReader.h"
 #include "TimeshiftBuffer.h"
 #include "RecordingReader.h"
@@ -186,9 +187,11 @@ ADDON_STATUS ADDON_Create(void *hdl, void *props)
   XBMC->Log(LOG_DEBUG, "%s: Creating DVBViewer PVR-Client", __FUNCTION__);
   m_curStatus = ADDON_STATUS_UNKNOWN;
 
-  ADDON_ReadSettings();
+  Settings settings;
+  settings.ReadFromKodi();
+  ADDON_ReadSettings(); //TODO
 
-  DvbData = new Dvb();
+  DvbData = new Dvb(settings);
   m_curStatus = ADDON_STATUS_OK;
   return m_curStatus;
 }

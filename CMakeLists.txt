@@ -21,6 +21,7 @@ add_definitions(-D__STDC_FORMAT_MACROS)
 set(DVBVIEWER_SOURCES src/client.cpp
                       src/DvbData.cpp
                       src/RecordingReader.cpp
+                      src/Settings.cpp
                       src/StreamReader.cpp
                       src/Timers.cpp
                       src/TimeshiftBuffer.cpp)
@@ -30,6 +31,7 @@ set(DVBVIEWER_HEADERS src/client.h
                       src/IStreamReader.h
                       src/LocalizedString.h
                       src/RecordingReader.h
+                      src/Settings.h
                       src/StreamReader.h
                       src/Timers.h
                       src/TimeshiftBuffer.h)
