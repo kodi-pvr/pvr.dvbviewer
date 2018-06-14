@@ -1,14 +1,16 @@
 #include "StreamReader.h"
 #include "client.h"
+#include "Settings.h"
 
 using namespace ADDON;
 
-StreamReader::StreamReader(const std::string &streamURL)
+StreamReader::StreamReader(const std::string &streamURL,
+  const dvbviewer::Settings &settings)
 {
   m_streamHandle = XBMC->CURLCreate(streamURL.c_str());
-  if (g_readTimeout)
+  if (settings.m_readTimeout > 0)
     XBMC->CURLAddOption(m_streamHandle, XFILE::CURL_OPTION_PROTOCOL,
-      "connection-timeout", std::to_string(g_readTimeout).c_str());
+      "connection-timeout", std::to_string(settings.m_readTimeout).c_str());
 
   XBMC->Log(LOG_DEBUG, "StreamReader: Started; url=%s", streamURL.c_str());
 }

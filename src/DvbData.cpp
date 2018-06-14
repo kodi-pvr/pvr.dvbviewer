@@ -246,8 +246,8 @@ bool Dvb::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channelinfo,
         entry.plot = entry.plotOutline;
         entry.plotOutline.clear();
       }
-      else if (g_prependOutline == PrependOutline::IN_EPG
-          || g_prependOutline == PrependOutline::ALWAYS)
+      else if (m_settings.m_prependOutline == PrependOutline::IN_EPG
+          || m_settings.m_prependOutline == PrependOutline::ALWAYS)
       {
         entry.plot.insert(0, entry.plotOutline + "\n");
         entry.plotOutline.clear();
@@ -471,8 +471,8 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
       recording.plot = recording.plotOutline;
       recording.plotOutline.clear();
     }
-    else if (g_prependOutline == PrependOutline::IN_RECORDINGS
-        || g_prependOutline == PrependOutline::ALWAYS)
+    else if (m_settings.m_prependOutline == PrependOutline::IN_RECORDINGS
+        || m_settings.m_prependOutline == PrependOutline::ALWAYS)
     {
       recording.plot.insert(0, recording.plotOutline + "\n");
       recording.plotOutline.clear();
@@ -488,7 +488,8 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
       recording.channelName = recording.channel->name;
 
     std::string thumbnail;
-    if (!g_lowPerformance && XMLUtils::GetString(xRecording, "image", thumbnail))
+    if (!m_settings.m_lowPerformance
+        && XMLUtils::GetString(xRecording, "image", thumbnail))
       recording.thumbnail = BuildURL("upnp/thumbnails/video/%s",
           thumbnail.c_str());
 
@@ -500,9 +501,9 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
     recording.duration = hours*60*60 + mins*60 + secs;
 
     std::string group("Unknown");
-    switch(g_groupRecordings)
+    switch(m_settings.m_groupRecordings)
     {
-      case DvbRecording::Grouping::BY_DIRECTORY:
+      case RecordGrouping::BY_DIRECTORY:
         {
           std::string file;
           if (!XMLUtils::GetString(xRecording, "file", file))
@@ -518,20 +519,20 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
           }
         }
         break;
-      case DvbRecording::Grouping::BY_DATE:
+      case RecordGrouping::BY_DATE:
         group = StringUtils::Format("%s/%s", startTime.substr(0, 4).c_str(),
             startTime.substr(4, 2).c_str());
         break;
-      case DvbRecording::Grouping::BY_FIRST_LETTER:
+      case RecordGrouping::BY_FIRST_LETTER:
         group = ::toupper(recording.title[0]);
         break;
-      case DvbRecording::Grouping::BY_TV_CHANNEL:
+      case RecordGrouping::BY_TV_CHANNEL:
         group = recording.channelName;
         break;
-      case DvbRecording::Grouping::BY_SERIES:
+      case RecordGrouping::BY_SERIES:
         XMLUtils::GetString(xRecording, "series", group);
         break;
-      case DvbRecording::Grouping::BY_TITLE:
+      case RecordGrouping::BY_TITLE:
         group = recording.title;
         break;
       default:
@@ -569,7 +570,7 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
     }
 
     // no grouping for single entry groups if by_title
-    if (g_groupRecordings != DvbRecording::Grouping::BY_TITLE
+    if (m_settings.m_groupRecordings != RecordGrouping::BY_TITLE
         || recording.group->second > 1)
       PVR_STRCPY(recinfo.strDirectory, recording.group->first.c_str());
 
@@ -634,7 +635,7 @@ bool Dvb::GetRecordingEdl(const PVR_RECORDING &recinfo, PVR_EDL_ENTRY edl[],
     XBMC->Log(LOG_ERROR, "Backend server is too old. Disabling EDL support.");
     XBMC->QueueNotification(QUEUE_ERROR, LocalizedString(30511).c_str(),
       DMS_VERSION_STR(2, 1, 0, 0));
-    g_edl.enabled = false;
+    m_settings.m_edl.enabled = false;
     return false;
   }
 
@@ -662,8 +663,8 @@ bool Dvb::GetRecordingEdl(const PVR_RECORDING &recinfo, PVR_EDL_ENTRY edl[],
       continue;
     }
 
-    start += g_edl.padding_start / 1000.0f;
-    stop  += g_edl.padding_stop  / 1000.0f;
+    start += m_settings.m_edl.padding_start / 1000.0f;
+    stop  += m_settings.m_edl.padding_stop  / 1000.0f;
 
     start = std::max(start, 0.0f);
     stop  = std::max(stop,  0.0f);
@@ -695,7 +696,7 @@ bool Dvb::OpenLiveStream(const PVR_CHANNEL &channelinfo)
   if (channelinfo.iUniqueId != m_currentChannel)
   {
     m_currentChannel = channelinfo.iUniqueId;
-    if (!g_lowPerformance)
+    if (!m_settings.m_lowPerformance)
       m_updateEPG = true;
   }
   return true;
@@ -711,19 +712,19 @@ const std::string Dvb::GetLiveStreamURL(const PVR_CHANNEL &channelinfo)
 {
   DvbChannel *channel = GetChannel(channelinfo.iUniqueId);
   uint64_t backendId = channel->backendIds.front();
-  switch(g_transcoding)
+  switch(m_settings.m_transcoding)
   {
     case Transcoding::TS:
       return BuildURL("flashstream/stream.ts?chid=%" PRIu64 "&%s",
-        backendId, g_transcodingParams.c_str());
+        backendId, m_settings.m_transcodingParams.c_str());
       break;
     case Transcoding::WEBM:
       return BuildURL("flashstream/stream.webm?chid=%" PRIu64 "&%s",
-        backendId, g_transcodingParams.c_str());
+        backendId, m_settings.m_transcodingParams.c_str());
       break;
     case Transcoding::FLV:
       return BuildURL("flashstream/stream.flv?chid=%" PRIu64 "&%s",
-        backendId, g_transcodingParams.c_str());
+        backendId, m_settings.m_transcodingParams.c_str());
       break;
     default:
       break;
@@ -738,7 +739,7 @@ void *Dvb::Process()
 {
   XBMC->Log(LOG_DEBUG, "%s: Running...", __FUNCTION__);
   int update = 0;
-  int interval = (!g_lowPerformance) ? 60 : 300;
+  int interval = (!m_settings.m_lowPerformance) ? 60 : 300;
 
   // set PVR_CONNECTION_STATE_CONNECTING only once!
   SetConnectionState(PVR_CONNECTION_STATE_CONNECTING);
@@ -747,10 +748,11 @@ void *Dvb::Process()
   {
     if (!IsConnected())
     {
-      if (g_useWoL)
+      if (m_settings.m_useWoL)
       {
-        if (!XBMC->WakeOnLan(g_mac.c_str()))
-          XBMC->Log(LOG_ERROR, "Error sending WoL packet to %s", g_mac.c_str());
+        if (!XBMC->WakeOnLan(m_settings.m_mac.c_str()))
+          XBMC->Log(LOG_ERROR, "Error sending WoL packet to %s",
+              m_settings.m_mac.c_str());
       }
 
       XBMC->Log(LOG_INFO, "Trying to connect to the backend server...");
@@ -813,8 +815,7 @@ void *Dvb::Process()
 
 Dvb::httpResponse Dvb::OpenFromAPI(const char* format, va_list args)
 {
-  static const std::string baseUrl = StringUtils::Format("http://%s:%u/",
-      g_hostname.c_str(), g_webPort);
+  static const std::string baseUrl = m_settings.BaseURL(false);
   std::string url = baseUrl + StringUtils::FormatV(format, args);
 
   httpResponse res = { nullptr, true, 0, "" };
@@ -828,9 +829,9 @@ Dvb::httpResponse Dvb::OpenFromAPI(const char* format, va_list args)
 
   XBMC->CURLAddOption(file, XFILE::CURL_OPTION_PROTOCOL, "user-agent", "Kodi PVR");
   XBMC->CURLAddOption(file, XFILE::CURL_OPTION_HEADER, "Accept", "text/xml");
-  if (!g_username.empty() && !g_password.empty())
+  if (!m_settings.m_username.empty() && !m_settings.m_password.empty())
     XBMC->CURLAddOption(file, XFILE::CURL_OPTION_CREDENTIALS,
-        g_username.c_str(), g_password.c_str());
+        m_settings.m_username.c_str(), m_settings.m_password.c_str());
 
   /*
    * FIXME
@@ -954,7 +955,7 @@ bool Dvb::LoadChannels()
   }
 
   // user wants to use remote favourites but doesn't have any defined
-  if (g_useFavourites && !g_useFavouritesFile && !hasFavourites)
+  if (m_settings.m_useFavourites && !m_settings.m_useFavouritesFile && !hasFavourites)
   {
     XBMC->Log(LOG_NOTICE, "Favourites enabled but non defined");
     XBMC->QueueNotification(QUEUE_ERROR, LocalizedString(30509).c_str());
@@ -972,7 +973,7 @@ bool Dvb::LoadChannels()
       m_groups.push_back(DvbGroup());
       DvbGroup *group = &m_groups.back();
       group->name     = group->backendName = xGroup->Attribute("name");
-      group->hidden   = g_useFavourites;
+      group->hidden   = m_settings.m_useFavourites;
       group->radio    = true;
       if (!group->hidden)
         ++m_groupAmount;
@@ -986,7 +987,7 @@ bool Dvb::LoadChannels()
         channel->radio      = !(flags & VIDEO_FLAG);
         channel->encrypted  = (flags & ENCRYPTED_FLAG);
         channel->name       = channel->backendName = xChannel->Attribute("name");
-        channel->hidden     = g_useFavourites;
+        channel->hidden     = m_settings.m_useFavourites;
         channel->frontendNr = (!channel->hidden) ? m_channels.size() + 1 : 0;
         xChannel->QueryValueAttribute<uint64_t>("EPGID", &channel->epgId);
 
@@ -995,7 +996,8 @@ bool Dvb::LoadChannels()
         channel->backendIds.push_back(backendId);
 
         std::string logo;
-        if (!g_lowPerformance && XMLUtils::GetString(xChannel, "logo", logo))
+        if (!m_settings.m_lowPerformance
+            && XMLUtils::GetString(xChannel, "logo", logo))
           channel->logo = BuildURL("%s", logo.c_str());
 
         for (TiXmlElement* xSubChannel = xChannel->FirstChildElement("subchannel");
@@ -1020,7 +1022,7 @@ bool Dvb::LoadChannels()
     }
   }
 
-  if (g_useFavourites && !g_useFavouritesFile)
+  if (m_settings.m_useFavourites && !m_settings.m_useFavouritesFile)
   {
     m_groups.clear();
     m_groupAmount = 0;
@@ -1066,9 +1068,9 @@ bool Dvb::LoadChannels()
       }
     }
   }
-  else if (g_useFavourites && g_useFavouritesFile)
+  else if (m_settings.m_useFavourites && m_settings.m_useFavouritesFile)
   {
-    void *fileHandle = XBMC->OpenFile(g_favouritesFile.c_str(), 0);
+    void *fileHandle = XBMC->OpenFile(m_settings.m_favouritesFile.c_str(), 0);
     if (!fileHandle)
     {
       XBMC->Log(LOG_ERROR, "Unable to open local favourites.xml");
@@ -1341,18 +1343,13 @@ void Dvb::SetConnectionState(PVR_CONNECTION_STATE state,
       message = tmp.c_str();
       va_end(argList);
     }
-    PVR->ConnectionStateChange(g_hostname.c_str(), m_state, message);
+    PVR->ConnectionStateChange(m_settings.m_hostname.c_str(), m_state, message);
   }
 }
 
 std::string Dvb::BuildURL(const char* path, ...)
 {
-  static const std::string auth = (g_username.empty() || g_password.empty()) ? ""
-      : StringUtils::Format("%s:%s@", URLEncode(g_username).c_str(),
-          URLEncode(g_password).c_str());
-  static const std::string baseUrl = StringUtils::Format("http://%s%s:%u/",
-      auth.c_str(), g_hostname.c_str(), g_webPort);
-
+  static const std::string baseUrl = m_settings.BaseURL();
   std::string url(baseUrl);
   va_list argList;
   va_start(argList, path);

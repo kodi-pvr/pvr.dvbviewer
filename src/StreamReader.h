@@ -2,11 +2,18 @@
 
 #include "IStreamReader.h"
 
+namespace dvbviewer
+{
+/* forward declaration */
+class Settings;
+};
+
 class StreamReader
   : public IStreamReader
 {
 public:
-  StreamReader(const std::string &streamURL);
+  StreamReader(const std::string &streamURL,
+      const dvbviewer::Settings &settings);
   ~StreamReader(void);
   bool Start() override;
   ssize_t ReadData(unsigned char *buffer, unsigned int size) override;

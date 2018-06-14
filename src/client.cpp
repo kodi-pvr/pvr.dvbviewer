@@ -35,29 +35,6 @@
 using namespace dvbviewer;
 using namespace ADDON;
 
-/* User adjustable settings are saved here.
- * Default values are defined inside client.h
- * and exported to the other source files.
- */
-std::string    g_hostname             = DEFAULT_HOST;
-int            g_webPort              = DEFAULT_WEB_PORT;
-std::string    g_username             = "";
-std::string    g_password             = "";
-bool           g_useWoL               = false;
-std::string    g_mac                  = "";
-bool           g_useFavourites        = false;
-bool           g_useFavouritesFile    = false;
-std::string    g_favouritesFile       = "";
-Timeshift      g_timeshift            = Timeshift::OFF;
-std::string    g_timeshiftBufferPath  = DEFAULT_TSBUFFERPATH;
-DvbRecording::Grouping g_groupRecordings = DvbRecording::Grouping::DISABLED;
-EdlSettings    g_edl                  = { false, 0, 0 };
-int            g_readTimeout          = 0;
-PrependOutline g_prependOutline       = PrependOutline::IN_EPG;
-bool           g_lowPerformance       = false;
-Transcoding    g_transcoding          = Transcoding::OFF;
-std::string    g_transcodingParams    = "";
-
 ADDON_STATUS m_curStatus    = ADDON_STATUS_UNKNOWN;
 CHelper_libXBMC_addon *XBMC = nullptr;
 CHelper_libXBMC_pvr   *PVR  = nullptr;
@@ -67,109 +44,6 @@ RecordingReader *recReader  = nullptr;
 
 extern "C"
 {
-void ADDON_ReadSettings(void)
-{
-  char buffer[1024];
-
-  if (XBMC->GetSetting("host", buffer))
-    g_hostname = buffer;
-
-  if (!XBMC->GetSetting("webport", &g_webPort))
-    g_webPort = DEFAULT_WEB_PORT;
-
-  if (XBMC->GetSetting("user", buffer))
-    g_username = buffer;
-
-  if (XBMC->GetSetting("pass", buffer))
-    g_password = buffer;
-
-  if (!XBMC->GetSetting("usewol", &g_useWoL))
-    g_useWoL = false;
-
-  if (g_useWoL && XBMC->GetSetting("mac", buffer))
-    g_mac = buffer;
-
-  if (!XBMC->GetSetting("usefavourites", &g_useFavourites))
-    g_useFavourites = false;
-
-  if (!XBMC->GetSetting("usefavouritesfile", &g_useFavouritesFile))
-    g_useFavouritesFile = false;
-
-  if (XBMC->GetSetting("favouritesfile", buffer))
-    g_favouritesFile = buffer;
-
-  if (!XBMC->GetSetting("grouprecordings", &g_groupRecordings))
-    g_groupRecordings = DvbRecording::Grouping::DISABLED;
-
-  if (!XBMC->GetSetting("timeshift", &g_timeshift))
-    g_timeshift = Timeshift::OFF;
-
-  if (XBMC->GetSetting("timeshiftpath", buffer) && !std::string(buffer).empty())
-    g_timeshiftBufferPath = buffer;
-
-  if (!XBMC->GetSetting("readtimeout", &g_readTimeout))
-    g_readTimeout = 0;
-
-  if (!XBMC->GetSetting("prependoutline", &g_prependOutline))
-    g_prependOutline = PrependOutline::IN_EPG;
-
-  if (!XBMC->GetSetting("edl", &g_edl.enabled))
-    g_edl.enabled = false;
-
-  if (!XBMC->GetSetting("edl_padding_start", &g_edl.padding_start))
-    g_edl.padding_start = 0;
-
-  if (!XBMC->GetSetting("edl_padding_stop", &g_edl.padding_stop))
-    g_edl.padding_stop = 0;
-
-  if (!XBMC->GetSetting("lowperformance", &g_lowPerformance))
-    g_lowPerformance = false;
-
-  if (!XBMC->GetSetting("transcoding", &g_transcoding))
-    g_transcoding = Transcoding::OFF;
-
-  if (XBMC->GetSetting("transcodingparams", buffer))
-  {
-    g_transcodingParams = buffer;
-    StringUtils::Replace(g_transcodingParams, " ", "+");
-  }
-
-  /* Log the current settings for debugging purposes */
-  /* general tab */
-  XBMC->Log(LOG_DEBUG, "DVBViewer Addon Configuration options");
-  XBMC->Log(LOG_DEBUG, "Backend: http://%s:%d/", g_hostname.c_str(), g_webPort);
-  if (!g_username.empty() && !g_password.empty())
-    XBMC->Log(LOG_DEBUG, "Login credentials: %s/%s", g_username.c_str(),
-        g_password.c_str());
-  if (g_useWoL)
-    XBMC->Log(LOG_DEBUG, "WoL MAC: %s", g_mac.c_str());
-
-  /* livetv tab */
-  XBMC->Log(LOG_DEBUG, "Use favourites: %s", (g_useFavourites) ? "yes" : "no");
-  if (g_useFavouritesFile)
-    XBMC->Log(LOG_DEBUG, "Favourites file: %s", g_favouritesFile.c_str());
-  XBMC->Log(LOG_DEBUG, "Timeshift mode: %d", g_timeshift);
-  if (g_timeshift != Timeshift::OFF)
-    XBMC->Log(LOG_DEBUG, "Timeshift buffer path: %s", g_timeshiftBufferPath.c_str());
-
-  /* recordings tab */
-  if (g_groupRecordings != DvbRecording::Grouping::DISABLED)
-    XBMC->Log(LOG_DEBUG, "Group recordings: %d", g_groupRecordings);
-  if (g_edl.enabled)
-    XBMC->Log(LOG_DEBUG, "EDL enabled. Padding: start=%d stop=%d",
-      g_edl.padding_start, g_edl.padding_stop);
-
-  /* advanced tab */
-  if (g_readTimeout)
-    XBMC->Log(LOG_DEBUG, "Custom connection/read timeout: %d", g_readTimeout);
-  if (g_prependOutline != PrependOutline::NEVER)
-    XBMC->Log(LOG_DEBUG, "Prepend outline: %d", g_prependOutline);
-  XBMC->Log(LOG_DEBUG, "Low performance mode: %s", (g_lowPerformance) ? "yes" : "no");
-  XBMC->Log(LOG_DEBUG, "Transcoding: %d", g_transcoding);
-  if (g_transcoding != Transcoding::OFF)
-    XBMC->Log(LOG_DEBUG, "Transcoding params: %s", g_transcodingParams.c_str());
-}
-
 ADDON_STATUS ADDON_Create(void *hdl, void *props)
 {
   if (!hdl || !props)
@@ -189,7 +63,6 @@ ADDON_STATUS ADDON_Create(void *hdl, void *props)
 
   Settings settings;
   settings.ReadFromKodi();
-  ADDON_ReadSettings(); //TODO
 
   DvbData = new Dvb(settings);
   m_curStatus = ADDON_STATUS_OK;
@@ -220,143 +93,15 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
   // SetSetting can occur when the addon is enabled, but TV support still
   // disabled. In that case the addon is not loaded, so we should not try
   // to change its settings.
-  if (!XBMC)
+  if (!XBMC || !DvbData)
     return ADDON_STATUS_OK;
 
-  std::string sname(settingName);
-  if (sname == "host")
-  {
-    if (g_hostname.compare((const char *)settingValue) != 0)
-      return ADDON_STATUS_NEED_RESTART;
-  }
-  else if (sname == "webport")
-  {
-    if (g_webPort != *(int *)settingValue)
-      return ADDON_STATUS_NEED_RESTART;
-  }
-  else if (sname == "user")
-  {
-    if (g_username.compare((const char *)settingValue) != 0)
-      return ADDON_STATUS_NEED_RESTART;
-  }
-  else if (sname == "pass")
-  {
-    if (g_password.compare((const char *)settingValue) != 0)
-      return ADDON_STATUS_NEED_RESTART;
-  }
-  else if (sname == "usewol")
-  {
-    g_useWoL = *(bool *)settingValue;
-  }
-  else if (sname == "mac")
-  {
-    g_mac = (const char *)settingValue;
-  }
-  else if (sname == "usefavourites")
-  {
-    if (g_useFavourites != *(bool *)settingValue)
-      return ADDON_STATUS_NEED_RESTART;
-  }
-  else if (sname == "usefavouritesfile")
-  {
-    if (g_useFavouritesFile != *(bool *)settingValue)
-      return ADDON_STATUS_NEED_RESTART;
-  }
-  else if (sname == "favouritesfile")
-  {
-    if (g_favouritesFile.compare((const char *)settingValue) != 0)
-      return ADDON_STATUS_NEED_RESTART;
-  }
-  else if (sname == "timeshift")
-  {
-    Timeshift newValue = *(const Timeshift *)settingValue;
-    if (g_timeshift != newValue)
-    {
-      XBMC->Log(LOG_DEBUG, "%s: Changed setting '%s' from '%d' to '%d'",
-          __FUNCTION__, settingName, g_timeshift, newValue);
-      g_timeshift = newValue;
-    }
-  }
-  else if (sname == "timeshiftpath")
-  {
-    std::string newValue = (const char *)settingValue;
-    if (g_timeshiftBufferPath != newValue && !newValue.empty())
-    {
-      XBMC->Log(LOG_DEBUG, "%s: Changed setting '%s' from '%s' to '%s'",
-          __FUNCTION__, settingName, g_timeshiftBufferPath.c_str(),
-          newValue.c_str());
-      g_timeshiftBufferPath = newValue;
-    }
-  }
-  else if (sname == "edl")
-  {
-    g_edl.enabled = *(bool *)settingValue;
-  }
-  else if (sname == "edl_padding_start")
-  {
-    g_edl.padding_start = *(int *)settingValue;
-  }
-  else if (sname == "edl_padding_stop")
-  {
-    g_edl.padding_stop = *(int *)settingValue;
-  }
-  else if (sname == "usefavouritesfile")
-  {
-    if (g_useFavouritesFile != *(bool *)settingValue)
-      return ADDON_STATUS_NEED_RESTART;
-  }
-  else if (sname == "readtimeout")
-  {
-    g_readTimeout = *(int *)settingValue;
-  }
-  else if (sname == "prependoutline")
-  {
-    PrependOutline newValue = *(const PrependOutline *)settingValue;
-    if (g_prependOutline != newValue)
-    {
-      g_prependOutline = newValue;
-      // EPG view seems cached, so TriggerEpgUpdate isn't reliable
-      // also if PVR is currently disabled we don't get notified at all
-      XBMC->QueueNotification(QUEUE_WARNING, LocalizedString(30507).c_str());
-    }
-  }
-  else if (sname == "lowperformance")
-  {
-    if (g_lowPerformance != *(bool *)settingValue)
-      return ADDON_STATUS_NEED_RESTART;
-  }
-  else if (sname == "transcoding")
-  {
-    g_transcoding = *(const Transcoding *)settingValue;
-  }
-  else if (sname == "transcodingparams")
-  {
-    g_transcodingParams = (const char *)settingValue;
-    StringUtils::Replace(g_transcodingParams, " ", "+");
-  }
-  return ADDON_STATUS_OK;
+  return DvbData->GetSettings().SetValue(settingName, settingValue);
 }
 
 /***********************************************************
  * PVR Client AddOn specific public library functions
  ***********************************************************/
-
-void OnSystemSleep()
-{
-}
-
-void OnSystemWake()
-{
-}
-
-void OnPowerSavingActivated()
-{
-}
-
-void OnPowerSavingDeactivated()
-{
-}
-
 PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
 {
   pCapabilities->bSupportsEPG                = true;
@@ -409,21 +154,24 @@ const char *GetBackendVersion(void)
 
 const char *GetConnectionString(void)
 {
-  static std::string conn;
-  static const std::string backend = StringUtils::Format("%s:%u",
-      g_hostname.c_str(), g_webPort);
-
-  conn = backend;
   if (!DvbData)
-    conn = backend + " (Addon error!)";
-  else if (!DvbData->IsConnected())
-    conn = backend + " (Not connected!)";
+    return "Not initialized!";
+
+  static std::string conn;
+  const Settings &settings = DvbData->GetSettings();
+  conn = StringUtils::Format("%s:%u", settings.m_hostname.c_str(),
+      settings.m_webPort);
+
+  if (!DvbData->IsConnected())
+    conn += " (Not connected!)";
   return conn.c_str();
 }
 
 const char *GetBackendHostname(void)
 {
-  return g_hostname.c_str();
+  if (!DvbData)
+    return "Unknown";
+  return DvbData->GetSettings().m_hostname.c_str();
 }
 
 PVR_ERROR SignalStatus(PVR_SIGNAL_STATUS &signalStatus)
@@ -541,10 +289,11 @@ bool OpenLiveStream(const PVR_CHANNEL &channel)
     return false;
 
   std::string streamURL = DvbData->GetLiveStreamURL(channel);
-  strReader = new StreamReader(streamURL);
-  if (g_timeshift == Timeshift::ON_PLAYBACK
-      && XBMC->DirectoryExists(g_timeshiftBufferPath.c_str()))
-    strReader = new TimeshiftBuffer(strReader, g_timeshiftBufferPath);
+  const Settings &settings = DvbData->GetSettings();
+  strReader = new StreamReader(streamURL, settings);
+  if (settings.m_timeshift == Timeshift::ON_PLAYBACK
+      && settings.IsTimeshiftBufferPathValid())
+    strReader = new TimeshiftBuffer(strReader, settings);
   return strReader->Start();
 }
 
@@ -561,17 +310,23 @@ bool IsRealTimeStream()
 
 bool CanPauseStream(void)
 {
-  if (g_timeshift != Timeshift::OFF && strReader)
-    return (strReader->IsTimeshifting()
-      || XBMC->DirectoryExists(g_timeshiftBufferPath.c_str()));
+  if (!DvbData)
+    return false;
+
+  const Settings &settings = DvbData->GetSettings();
+  if (settings.m_timeshift != Timeshift::OFF && strReader)
+    return (strReader->IsTimeshifting() || settings.IsTimeshiftBufferPathValid());
   return false;
 }
 
 bool CanSeekStream(void)
 {
+  if (!DvbData)
+    return false;
+
   // pause button seems to check CanSeekStream() too
   //return (strReader && strReader->IsTimeshifting());
-  return (g_timeshift != Timeshift::OFF);
+  return (DvbData->GetSettings().m_timeshift != Timeshift::OFF);
 }
 
 int ReadLiveStream(unsigned char *buffer, unsigned int size)
@@ -612,12 +367,16 @@ PVR_ERROR GetStreamTimes(PVR_STREAM_TIMES *times)
 
 void PauseStream(bool paused)
 {
+  if (!DvbData)
+    return;
+
   /* start timeshift on pause */
-  if (paused && g_timeshift == Timeshift::ON_PAUSE
+  const Settings &settings = DvbData->GetSettings();
+  if (paused && settings.m_timeshift == Timeshift::ON_PAUSE
       && strReader && !strReader->IsTimeshifting()
-      && XBMC->DirectoryExists(g_timeshiftBufferPath.c_str()))
+      && settings.IsTimeshiftBufferPathValid())
   {
-    strReader = new TimeshiftBuffer(strReader, g_timeshiftBufferPath);
+    strReader = new TimeshiftBuffer(strReader, settings);
     (void)strReader->Start();
   }
 }
@@ -686,7 +445,10 @@ long long LengthRecordedStream(void)
 PVR_ERROR GetRecordingEdl(const PVR_RECORDING &recording, PVR_EDL_ENTRY edl[],
     int *size)
 {
-  if (!g_edl.enabled)
+  if (!DvbData)
+    return PVR_ERROR_SERVER_ERROR;
+
+  if (!DvbData->GetSettings().m_edl.enabled)
   {
     *size = 0;
     return PVR_ERROR_NO_ERROR;
@@ -698,6 +460,10 @@ PVR_ERROR GetRecordingEdl(const PVR_RECORDING &recording, PVR_EDL_ENTRY edl[],
 }
 
 /** UNUSED API FUNCTIONS */
+void OnSystemSleep(void) {}
+void OnSystemWake(void) {}
+void OnPowerSavingActivated(void) {}
+void OnPowerSavingDeactivated(void) {}
 PVR_ERROR GetStreamProperties(PVR_STREAM_PROPERTIES*) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR GetChannelStreamProperties(const PVR_CHANNEL*, PVR_NAMED_VALUE*, unsigned int*) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR CallMenuHook(const PVR_MENUHOOK&, const PVR_MENUHOOK_DATA&) { return PVR_ERROR_NOT_IMPLEMENTED; }

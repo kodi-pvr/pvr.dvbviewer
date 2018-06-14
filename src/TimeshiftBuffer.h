@@ -7,11 +7,18 @@
 #include <thread>
 #include <mutex>
 
+namespace dvbviewer
+{
+/* forward declaration */
+class Settings;
+};
+
 class TimeshiftBuffer
   : public IStreamReader
 {
 public:
-  TimeshiftBuffer(IStreamReader *strReader, const std::string &bufferPath);
+  TimeshiftBuffer(IStreamReader *strReader,
+      const dvbviewer::Settings &settings);
   ~TimeshiftBuffer(void);
   bool Start() override;
   ssize_t ReadData(unsigned char *buffer, unsigned int size) override;

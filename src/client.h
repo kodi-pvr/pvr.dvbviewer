@@ -19,8 +19,6 @@
  *
  */
 
-#include "DvbData.h"
-#include "libXBMC_addon.h"
 #include "libXBMC_pvr.h"
 
 #ifndef _UNUSED
@@ -38,61 +36,6 @@
  */
 #define PVR_STRCPY(dest, source) do { strncpy(dest, source, sizeof(dest)-1); dest[sizeof(dest)-1] = '\0'; } while(0)
 #define PVR_STRCLR(dest) memset(dest, 0, sizeof(dest))
-
-#define DEFAULT_HOST             "127.0.0.1"
-#define DEFAULT_WEB_PORT         8089
-#define DEFAULT_TSBUFFERPATH     "special://userdata/addon_data/pvr.dvbviewer"
-
-enum class Timeshift
-  : int // same type as addon settings
-{
-  OFF = 0,
-  ON_PLAYBACK,
-  ON_PAUSE
-};
-
-enum class PrependOutline
-  : int // same type as addon settings
-{
-  NEVER = 0,
-  IN_EPG,
-  IN_RECORDINGS,
-  ALWAYS
-};
-
-enum class Transcoding
-  : int // same type as addon settings
-{
-  OFF = 0,
-  TS,
-  WEBM,
-  FLV,
-};
-
-struct EdlSettings
-{
-  bool enabled;
-  int padding_start, padding_stop;
-};
-
-extern std::string    g_hostname;
-extern int            g_webPort;
-extern std::string    g_username;
-extern std::string    g_password;
-extern bool           g_useWoL;
-extern std::string    g_mac;
-extern bool           g_useFavourites;
-extern bool           g_useFavouritesFile;
-extern std::string    g_favouritesFile;
-extern Timeshift      g_timeshift;
-extern std::string    g_timeshiftBufferPath;
-extern DvbRecording::Grouping g_groupRecordings;
-extern EdlSettings    g_edl;
-extern int            g_readTimeout;
-extern PrependOutline g_prependOutline;
-extern bool           g_lowPerformance;
-extern Transcoding    g_transcoding;
-extern std::string    g_transcodingParams;
 
 extern ADDON::CHelper_libXBMC_addon *XBMC;
 extern CHelper_libXBMC_pvr *PVR;

@@ -10,6 +10,7 @@
 #include <ctime>
 #include <type_traits>
 
+/* forward declaration */
 class Dvb;
 class DvbChannel;
 

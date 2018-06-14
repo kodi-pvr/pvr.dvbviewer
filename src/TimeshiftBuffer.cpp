@@ -1,6 +1,8 @@
 #include "TimeshiftBuffer.h"
+#include "Settings.h"
 #include "StreamReader.h"
 #include "client.h"
+
 #include "p8-platform/util/util.h"
 
 #define BUFFER_SIZE 32 * 1024
@@ -10,10 +12,12 @@
 using namespace ADDON;
 
 TimeshiftBuffer::TimeshiftBuffer(IStreamReader *strReader,
-    const std::string &bufferPath)
-  : m_bufferPath(bufferPath + "/tsbuffer.ts"), m_strReader(strReader)
+    const dvbviewer::Settings &settings)
+  : m_strReader(strReader)
 {
-  m_readTimeout = (g_readTimeout) ? g_readTimeout : DEFAULT_READ_TIMEOUT;
+  m_bufferPath = settings.m_timeshiftBufferPath + "/tsbuffer.ts";
+  m_readTimeout = (settings.m_readTimeout) ? settings.m_readTimeout
+      : DEFAULT_READ_TIMEOUT;
 
   m_filebufferWriteHandle = XBMC->OpenFileForWrite(m_bufferPath.c_str(), true);
   std::this_thread::sleep_for(std::chrono::milliseconds(100));

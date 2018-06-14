@@ -99,19 +99,6 @@ public:
 class DvbRecording
 {
 public:
-  enum class Grouping
-    : int // same type as addon settings
-  {
-    DISABLED = 0,
-    BY_DIRECTORY,
-    BY_DATE,
-    BY_FIRST_LETTER,
-    BY_TV_CHANNEL,
-    BY_SERIES,
-    BY_TITLE
-  };
-
-public:
   DvbRecording() = default;
 
 public:
@@ -147,7 +134,7 @@ public:
   bool GetDriveSpace(long long *total, long long *used);
   bool IsGuest()
   { return m_isguest; }
-  const dvbviewer::Settings &GetSettings() const
+  dvbviewer::Settings &GetSettings()
   { return m_settings; };
 
   unsigned int GetCurrentClientChannel(void);
