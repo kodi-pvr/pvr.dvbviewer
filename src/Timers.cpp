@@ -198,6 +198,8 @@ void Timers::GetTimerTypes(std::vector<PVR_TIMER_TYPE> &types)
         PVR_TIMER_TYPE_SUPPORTS_RECORD_ONLY_NEW_EPISODES,
         "", /* Let Kodi generate the description */
         priorityValues, groupValues, deDupValues));
+    types.back().iPreventDuplicateEpisodesDefault =
+        AutoTimer::DeDup::CHECK_TITLE_SUBTITLE;
 
     /* One-shot created by epg auto search */
     types.emplace_back(TimerType(
