@@ -1,3 +1,9 @@
+3.6.0
+[added] Support for autotimers
+[updated] Rewrite threaded part of timeshift buffer
+[updated] General code cleanup
+[fixed] Memory leak in translated strings
+
 3.5.0
 [updated] to PVR API v5.10.0
 
