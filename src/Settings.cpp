@@ -277,16 +277,21 @@ bool Settings::ReadFromBackend(Dvb &cli)
     return false;
   }
 
-  if (auto xRecording = doc.RootElement()->FirstChildElement("Recording"))
+  for (auto xSection = doc.RootElement()->FirstChildElement("section");
+    xSection; xSection = xSection->NextSiblingElement("section"))
   {
-    for (auto xEntry = xRecording->FirstChildElement("entry");
-      xEntry; xEntry = xEntry->NextSiblingElement("entry"))
+    const char *name = xSection->Attribute("name");
+    if (!strcmp(name, "Recording"))
     {
-      const char *name = xEntry->Attribute("name");
-      if (!strcmp(name, "DefPrio"))
-        m_priority = atoi(xEntry->GetText());
-      else if (!strcmp(name, "DefTask"))
-        m_recordingTask = xEntry->GetText();
+      for (auto xEntry = xSection->FirstChildElement("entry");
+        xEntry; xEntry = xEntry->NextSiblingElement("entry"))
+      {
+        name = xEntry->Attribute("name");
+        if (!strcmp(name, "DefPrio"))
+          m_priority = atoi(xEntry->GetText());
+        else if (!strcmp(name, "DefTask"))
+          m_recordingTask = xEntry->GetText();
+      }
     }
   }
 
