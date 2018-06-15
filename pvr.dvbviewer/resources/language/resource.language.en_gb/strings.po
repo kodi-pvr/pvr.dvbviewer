@@ -345,3 +345,7 @@ msgstr ""
 msgctxt "#30513"
 msgid "Search phrase cannot be empty"
 msgstr ""
+
+msgctxt "#30514"
+msgid "Timeshift buffer path does not exist"
+msgstr ""

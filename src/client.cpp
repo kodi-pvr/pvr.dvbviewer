@@ -288,8 +288,14 @@ bool OpenLiveStream(const PVR_CHANNEL &channel)
   if (!DvbData->OpenLiveStream(channel))
     return false;
 
-  std::string streamURL = DvbData->GetLiveStreamURL(channel);
   const Settings &settings = DvbData->GetSettings();
+
+  /* queue a warning if the timeshift buffer path does not exist */
+  if (settings.m_timeshift != Timeshift::OFF
+      && !settings.IsTimeshiftBufferPathValid())
+    XBMC->QueueNotification(QUEUE_ERROR, LocalizedString(30514).c_str());
+
+  std::string streamURL = DvbData->GetLiveStreamURL(channel);
   strReader = new StreamReader(streamURL, settings);
   if (settings.m_timeshift == Timeshift::ON_PLAYBACK
       && settings.IsTimeshiftBufferPathValid())
