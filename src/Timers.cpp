@@ -422,14 +422,20 @@ Timers::Error Timers::AddUpdateTimer(const PVR_TIMER &tmr, bool update)
   uint64_t channel = timer.channel->backendIds.front();
   const std::string &recfolder = (timer.recfolder == -1) ? "Auto"
       : m_cli.GetRecordingFolders().at(timer.recfolder);
-  int priority = (timer.priority >= 0) ? timer.priority
-      : m_cli.GetSettings().m_priority;
-  std::string params = StringUtils::Format("encoding=255&ch=%" PRIu64 "&dor=%u"
-      "&start=%u&stop=%u&pre=%u&post=%u&prio=%d&days=%s&enable=%d",
+  std::string params = StringUtils::Format("encoding=255&ch=%" PRIu64
+      "&dor=%u&start=%u&stop=%u&pre=%u&post=%u&days=%s&enable=%d",
       channel, date, start, stop, timer.marginStart, timer.marginEnd,
-      priority, repeat, (timer.state != PVR_TIMER_STATE_DISABLED));
+      repeat, (timer.state != PVR_TIMER_STATE_DISABLED));
   params += "&title="  + URLEncode(timer.title)
          +  "&folder=" + URLEncode(recfolder);
+
+  if (timer.priority >= 0 || update)
+  {
+    int priority = (timer.priority >= 0) ? timer.priority
+        : m_cli.GetSettings().m_priority;
+    params += "&prio=" + std::to_string(priority);
+  }
+
   if (update)
     params += "&id=" + std::to_string(timer.backendId);
 
@@ -656,15 +662,22 @@ Timers::Error Timers::AddUpdateAutoTimer(const PVR_TIMER &tmr, bool update)
   int priority = (timer.priority >= 0) ? timer.priority
       : m_cli.GetSettings().m_priority;
   std::string params = StringUtils::Format(
-      "EPGBefore=%u&EPGAfter=%u&Days=%u&Priority=%d"
+      "EPGBefore=%u&EPGAfter=%u&Days=%u"
       "&SearchFields=%d&AutoRecording=%d&CheckRecTitle=%d&CheckRecSubtitle=%d",
-      timer.marginStart, timer.marginEnd, timer.weekdays, priority,
+      timer.marginStart, timer.marginEnd, timer.weekdays,
       timer.searchFulltext ? 7 : 3, (timer.state != PVR_TIMER_STATE_DISABLED),
       timer.deDup & AutoTimer::DeDup::CHECK_TITLE,
       timer.deDup & AutoTimer::DeDup::CHECK_SUBTITLE);
   params += "&SearchPhrase="    + URLEncode(timer.searchPhrase)
          +  "&Name="            + URLEncode(timer.title)
          +  "&RecordingFolder=" + URLEncode(recfolder);
+
+  if (timer.priority >= 0 || update)
+  {
+    int priority = (timer.priority >= 0) ? timer.priority
+        : m_cli.GetSettings().m_priority;
+    params += "&Priority=" + std::to_string(priority);
+  }
 
   if (!update)
   {
