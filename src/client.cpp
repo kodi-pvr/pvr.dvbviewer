@@ -297,8 +297,7 @@ bool OpenLiveStream(const PVR_CHANNEL &channel)
 
   std::string streamURL = DvbData->GetLiveStreamURL(channel);
   strReader = new StreamReader(streamURL, settings);
-  if (settings.m_timeshift == Timeshift::ON_PLAYBACK
-      && settings.IsTimeshiftBufferPathValid())
+  if (settings.m_timeshift == Timeshift::ON_PLAYBACK)
     strReader = new TimeshiftBuffer(strReader, settings);
   return strReader->Start();
 }
