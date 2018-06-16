@@ -422,10 +422,12 @@ Timers::Error Timers::AddUpdateTimer(const PVR_TIMER &tmr, bool update)
   uint64_t channel = timer.channel->backendIds.front();
   const std::string &recfolder = (timer.recfolder == -1) ? "Auto"
       : m_cli.GetRecordingFolders().at(timer.recfolder);
+  int priority = (timer.priority >= 0) ? timer.priority
+      : m_cli.GetSettings().m_priority;
   std::string params = StringUtils::Format("encoding=255&ch=%" PRIu64 "&dor=%u"
       "&start=%u&stop=%u&pre=%u&post=%u&prio=%d&days=%s&enable=%d",
       channel, date, start, stop, timer.marginStart, timer.marginEnd,
-      timer.priority, repeat, (timer.state != PVR_TIMER_STATE_DISABLED));
+      priority, repeat, (timer.state != PVR_TIMER_STATE_DISABLED));
   params += "&title="  + URLEncode(timer.title)
          +  "&folder=" + URLEncode(recfolder);
   if (update)
@@ -651,11 +653,12 @@ Timers::Error Timers::AddUpdateAutoTimer(const PVR_TIMER &tmr, bool update)
 
   const std::string &recfolder = (timer.recfolder == -1) ? "Auto"
       : m_cli.GetRecordingFolders().at(timer.recfolder);
-
+  int priority = (timer.priority >= 0) ? timer.priority
+      : m_cli.GetSettings().m_priority;
   std::string params = StringUtils::Format(
-      "EPGBefore=%u&EPGAfter=%u&Days=%u&SearchFields=%d&AutoRecording=%d"
-      "&CheckRecTitle=%d&CheckRecSubtitle=%d",
-      timer.marginStart, timer.marginEnd, timer.weekdays,
+      "EPGBefore=%u&EPGAfter=%u&Days=%u&Priority=%d"
+      "&SearchFields=%d&AutoRecording=%d&CheckRecTitle=%d&CheckRecSubtitle=%d",
+      timer.marginStart, timer.marginEnd, timer.weekdays, priority,
       timer.searchFulltext ? 7 : 3, (timer.state != PVR_TIMER_STATE_DISABLED),
       timer.deDup & AutoTimer::DeDup::CHECK_TITLE,
       timer.deDup & AutoTimer::DeDup::CHECK_SUBTITLE);
@@ -668,10 +671,6 @@ Timers::Error Timers::AddUpdateAutoTimer(const PVR_TIMER &tmr, bool update)
     params += "&CheckTimer=1"; // we always enable "check against existing timers"
     params += "&AfterProcessAction=" + URLEncode(m_cli.GetSettings().m_recordingTask);
   }
-
-  params += "&Priority=";
-  params += std::to_string((timer.priority >= 0) ? timer.priority
-      : m_cli.GetSettings().m_priority);
 
   params += "&Channels=";
   if (timer.channel)
