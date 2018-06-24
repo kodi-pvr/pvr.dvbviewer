@@ -1252,7 +1252,9 @@ bool Dvb::CheckBackendVersion()
     SetConnectionState(PVR_CONNECTION_STATE_SERVER_MISMATCH);
     return false;
   }
-  XBMC->Log(LOG_NOTICE, "Version: %u", m_backendVersion);
+  XBMC->Log(LOG_NOTICE, "Version: %u / %u.%u.%u.%u", m_backendVersion,
+    (m_backendVersion >> 24) & 0xFF, (m_backendVersion >> 16) & 0xFF,
+    (m_backendVersion >> 8)  & 0xFF, (m_backendVersion & 0xFF));
 
   if (m_backendVersion < DMS_MIN_VERSION_NUM)
   {
