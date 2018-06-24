@@ -1,3 +1,7 @@
+3.6.2
+[fixed] Some general timer fixes
+[fixed] AutoTimers backend check
+
 3.6.1
 [updated] Autotimers: Changed default value for deduplication to EPG title + subtitle
 
