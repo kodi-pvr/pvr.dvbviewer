@@ -166,7 +166,7 @@ void Timers::GetTimerTypes(std::vector<PVR_TIMER_TYPE> &types)
       "", /* Let Kodi generate the description */
       priorityValues));
 
-  if (m_cli.GetBackendVersion() >= DMS_VERSION_NUM(2, 1, 0, 0))
+  if (CanAutoTimers())
   {
     /* PVR_Timer.iPreventDuplicateEpisodes values and presentation.*/
     static std::vector< std::pair<int, std::string> > deDupValues =
@@ -222,7 +222,9 @@ Timers::Error Timers::RefreshAllTimers(bool &changes)
 {
   bool changesAutotimers, changesTimers;
   /* refresh epg auto search first */
-  Timers::Error err = RefreshAutoTimers(changesAutotimers);
+  Timers::Error err = Timers::SUCCESS;
+  if (err == Timers::SUCCESS && CanAutoTimers())
+    err = RefreshAutoTimers(changesAutotimers);
   if (err == Timers::SUCCESS)
     err = RefreshTimers(changesTimers);
   if (err == Timers::SUCCESS)
@@ -591,6 +593,11 @@ void AutoTimer::CalcGUID()
   guid = title + "/" + searchPhrase;
 }
 
+bool Timers::CanAutoTimers() const
+{
+  return m_cli.GetBackendVersion() >= DMS_VERSION_NUM(2, 1, 0, 0);
+}
+
 bool Timers::IsAutoTimer(const PVR_TIMER &timer)
 {
   return timer.iTimerType == Timer::Type::EPG_AUTO_SEARCH;
@@ -659,8 +666,6 @@ Timers::Error Timers::AddUpdateAutoTimer(const PVR_TIMER &tmr, bool update)
 
   const std::string &recfolder = (timer.recfolder == -1) ? "Auto"
       : m_cli.GetRecordingFolders().at(timer.recfolder);
-  int priority = (timer.priority >= 0) ? timer.priority
-      : m_cli.GetSettings().m_priority;
   std::string params = StringUtils::Format(
       "EPGBefore=%u&EPGAfter=%u&Days=%u"
       "&SearchFields=%d&AutoRecording=%d&CheckRecTitle=%d&CheckRecSubtitle=%d",

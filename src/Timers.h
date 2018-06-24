@@ -154,6 +154,7 @@ private:
       const char *xmltag, std::map<unsigned int, T> &timerlist, bool &changes);
   Error RefreshTimers(bool &changes);
   Error RefreshAutoTimers(bool &changes);
+  bool CanAutoTimers() const;
   bool IsAutoTimer(const PVR_TIMER &timer);
 
   Error ParseTimerFrom(const PVR_TIMER &tmr, Timer &timer);
