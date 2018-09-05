@@ -90,7 +90,11 @@ msgctxt "#30041"
 msgid "Custom Live TV timeout (0 to use default)"
 msgstr ""
 
-#empty strings from id 30042 to 30049
+msgctxt "#30042"
+msgid "Stream read chunk size"
+msgstr ""
+
+#empty strings from id 30043 to 30049
 
 msgctxt "#30050"
 msgid "Group recordings"

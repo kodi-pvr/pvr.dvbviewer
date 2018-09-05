@@ -279,6 +279,14 @@ PVR_ERROR DeleteTimer(const PVR_TIMER &timer, bool _UNUSED(bForceDelete))
     ? PVR_ERROR_NO_ERROR : PVR_ERROR_SERVER_ERROR;
 }
 
+PVR_ERROR GetStreamReadChunkSize(int* chunksize)
+{
+  if (!chunksize)
+    return PVR_ERROR_INVALID_PARAMETERS;
+  *chunksize = DvbData->GetSettings().m_streamReadChunkSize;
+  return PVR_ERROR_NO_ERROR;
+}
+
 /* live stream functions */
 bool OpenLiveStream(const PVR_CHANNEL &channel)
 {
@@ -497,6 +505,5 @@ PVR_ERROR GetEPGTagEdl(const EPG_TAG* epgTag, PVR_EDL_ENTRY edl[], int *size) { 
 bool SeekTime(double, bool, double*) { return false; }
 void SetSpeed(int) {};
 PVR_ERROR GetDescrambleInfo(PVR_DESCRAMBLE_INFO*) { return PVR_ERROR_NOT_IMPLEMENTED; }
-PVR_ERROR GetStreamReadChunkSize(int* chunksize) { return PVR_ERROR_NOT_IMPLEMENTED; }
 
 }

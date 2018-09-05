@@ -56,12 +56,6 @@ void Settings::ReadFromKodi()
   if (XBMC->GetSetting("timeshiftpath", buffer) && !std::string(buffer).empty())
     m_timeshiftBufferPath = buffer;
 
-  if (!XBMC->GetSetting("readtimeout", &m_readTimeout))
-    m_readTimeout = 0;
-
-  if (!XBMC->GetSetting("prependoutline", &m_prependOutline))
-    m_prependOutline = PrependOutline::IN_EPG;
-
   if (!XBMC->GetSetting("edl", &m_edl.enabled))
     m_edl.enabled = false;
 
@@ -71,8 +65,17 @@ void Settings::ReadFromKodi()
   if (!XBMC->GetSetting("edl_padding_stop", &m_edl.padding_stop))
     m_edl.padding_stop = 0;
 
+  if (!XBMC->GetSetting("prependoutline", &m_prependOutline))
+    m_prependOutline = PrependOutline::IN_EPG;
+
   if (!XBMC->GetSetting("lowperformance", &m_lowPerformance))
     m_lowPerformance = false;
+
+  if (!XBMC->GetSetting("readtimeout", &m_readTimeout))
+    m_readTimeout = 0;
+
+  if (!XBMC->GetSetting("stream_readchunksize", &m_streamReadChunkSize))
+    m_streamReadChunkSize = 64;
 
   if (!XBMC->GetSetting("transcoding", &m_transcoding))
     m_transcoding = Transcoding::OFF;
@@ -109,11 +112,12 @@ void Settings::ReadFromKodi()
       m_edl.padding_start, m_edl.padding_stop);
 
   /* advanced tab */
-  if (m_readTimeout)
-    XBMC->Log(LOG_DEBUG, "Custom connection/read timeout: %d", m_readTimeout);
   if (m_prependOutline != PrependOutline::NEVER)
     XBMC->Log(LOG_DEBUG, "Prepend outline: %d", m_prependOutline);
   XBMC->Log(LOG_DEBUG, "Low performance mode: %s", (m_lowPerformance) ? "yes" : "no");
+  if (m_readTimeout)
+    XBMC->Log(LOG_DEBUG, "Custom connection/read timeout: %d", m_readTimeout);
+  XBMC->Log(LOG_DEBUG, "Stream read chunk size: %d kb", m_streamReadChunkSize);
   XBMC->Log(LOG_DEBUG, "Transcoding: %d", m_transcoding);
   if (m_transcoding != Transcoding::OFF)
     XBMC->Log(LOG_DEBUG, "Transcoding params: %s", m_transcodingParams.c_str());
@@ -203,10 +207,6 @@ ADDON_STATUS Settings::SetValue(const std::string name, const void *value)
     if (m_useFavouritesFile != *(bool *)value)
       return ADDON_STATUS_NEED_RESTART;
   }
-  else if (name == "readtimeout")
-  {
-    m_readTimeout = *(int *)value;
-  }
   else if (name == "prependoutline")
   {
     PrependOutline newValue = *(const PrependOutline *)value;
@@ -221,6 +221,15 @@ ADDON_STATUS Settings::SetValue(const std::string name, const void *value)
   else if (name == "lowperformance")
   {
     if (m_lowPerformance != *(bool *)value)
+      return ADDON_STATUS_NEED_RESTART;
+  }
+  else if (name == "readtimeout")
+  {
+    m_readTimeout = *(int *)value;
+  }
+  else if (name == "stream_readchunksize")
+  {
+    if (m_streamReadChunkSize != *(int *)value)
       return ADDON_STATUS_NEED_RESTART;
   }
   else if (name == "transcoding")

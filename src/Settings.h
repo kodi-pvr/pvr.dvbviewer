@@ -88,9 +88,10 @@ public:
   std::string    m_timeshiftBufferPath = DEFAULT_TSBUFFERPATH;
   RecordGrouping m_groupRecordings     = RecordGrouping::DISABLED;
   EdlSettings    m_edl                 = { false, 0, 0 };
-  int            m_readTimeout         = 0;
   PrependOutline m_prependOutline      = PrependOutline::IN_EPG;
   bool           m_lowPerformance      = false;
+  int            m_readTimeout         = 0;
+  int            m_streamReadChunkSize = 64;
   Transcoding    m_transcoding         = Transcoding::OFF;
   std::string    m_transcodingParams;
 

@@ -188,19 +188,6 @@
     <!-- advanced -->
     <category id="advanced" label="30101">
       <group id="1" label="30100">
-        <setting id="readtimeout" type="integer" label="30041">
-          <level>0</level>
-          <default>0</default>
-          <constraints>
-            <minimum>0</minimum>
-            <step>1</step>
-            <maximum>60</maximum>
-          </constraints>
-          <control type="slider" format="integer">
-            <popup>true</popup>
-            <formatlabel>14045</formatlabel>
-          </control>
-        </setting>
         <setting id="prependoutline" type="integer" label="30060">
           <level>0</level>
           <default>1</default>
@@ -218,6 +205,32 @@
           <level>0</level>
           <default>false</default>
           <control type="toggle" />
+        </setting>
+        <setting id="readtimeout" type="integer" label="30041">
+          <level>0</level>
+          <default>0</default>
+          <constraints>
+            <minimum>0</minimum>
+            <step>1</step>
+            <maximum>60</maximum>
+          </constraints>
+          <control type="slider" format="integer">
+            <popup>true</popup>
+            <formatlabel>14045</formatlabel>
+          </control>
+        </setting>
+        <setting id="stream_readchunksize" type="integer" label="30042">
+          <level>0</level>
+          <default>64</default>
+          <constraints>
+            <minimum>4</minimum>
+            <step>4</step>
+            <maximum>128</maximum>
+          </constraints>
+          <control type="slider" format="integer">
+            <popup>true</popup>
+            <formatlabel>14049</formatlabel>
+          </control>
         </setting>
       </group>
 
