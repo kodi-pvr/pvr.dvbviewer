@@ -685,6 +685,59 @@ bool Dvb::GetRecordingEdl(const PVR_RECORDING &recinfo, PVR_EDL_ENTRY edl[],
   return true;
 }
 
+
+bool Dvb::SetRecordingLastPlayedPosition(const PVR_RECORDING &recording, int lastplayedposition)
+{
+  //check backend version if kvstore is supported
+  if (m_backendVersion < DMS_VERSION_NUM(2, 1, 2, 0))
+  {
+    XBMC->Log(LOG_ERROR, "Backend server is too old. Cant store recording last played position");
+    return true;
+  }
+
+  XBMC->Log(LOG_DEBUG, "%s: set recording last played position for: %s (id=%s) to %d", __FUNCTION__,
+    recording.strTitle, recording.strRecordingId, lastplayedposition);
+
+  //store the kvstore entry
+  const httpResponse &res = GetFromAPI("api/store.html?action=write&sec=%s&key=lastplaypos_%s&value=%i",
+    DMS_GUID_KVSTORE, recording.strRecordingId, lastplayedposition);
+  if (res.error)
+    return false;
+
+  //update kvstore file on the backend (Writes the current state of the store
+  //to the file \config\AddOnStore.xml in the configuration folder, if there are changes.)
+  const httpResponse &res1 = GetFromAPI("api/store.html?action=updatefile");
+  if (res1.error)
+    return false;
+
+  return true;
+}
+
+int Dvb::GetRecordingLastPlayedPosition(const PVR_RECORDING &recording)
+{
+  //check backend version if kvstore is supported
+  if (m_backendVersion < DMS_VERSION_NUM(2, 1, 2, 0))
+  {
+    XBMC->Log(LOG_ERROR, "Backend server is too old. Cant get recording last played position");
+    return 0;
+  }
+
+  //read the kvstore entry
+  const httpResponse &res = GetFromAPI("api/store.html?action=read&sec=%s&key=lastplaypos_%s",
+    DMS_GUID_KVSTORE, recording.strRecordingId);
+  if (res.error)
+    return false;
+
+  //convert the result
+  int lastplayedposition = 0;
+  std::sscanf(res.content.c_str(), "%i", &lastplayedposition);
+
+  XBMC->Log(LOG_DEBUG, "%s: get recording last played position for: %s (id=%s) is %d", __FUNCTION__,
+    recording.strTitle, recording.strRecordingId, lastplayedposition);
+
+  return lastplayedposition;
+}
+
 /***************************************************************************
  * Livestream
  **************************************************************************/

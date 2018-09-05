@@ -31,6 +31,8 @@
 #define DAY_SECS                     (24 * 60 * 60)
 #define DELPHI_DATE                  (25569)
 
+#define DMS_GUID_KVSTORE            "b3c542c3-34fa-482f-919e-251a3f4cb23b"
+
 namespace dvbviewer
 {
   std::string URLEncode(const std::string& data);
@@ -160,6 +162,8 @@ public:
   RecordingReader *OpenRecordedStream(const PVR_RECORDING &recinfo);
   bool GetRecordingEdl(const PVR_RECORDING &recinfo, PVR_EDL_ENTRY edl[],
       int *size);
+  bool SetRecordingLastPlayedPosition(const PVR_RECORDING &recording, int lastplayedposition);
+  int GetRecordingLastPlayedPosition(const PVR_RECORDING &recording);
 
   bool OpenLiveStream(const PVR_CHANNEL &channelinfo);
   void CloseLiveStream();
