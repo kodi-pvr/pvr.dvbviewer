@@ -1,3 +1,7 @@
+3.6.7
+[added] AutoTimers: Populate the series-field with the timers name
+[added] PVR API 5.10.0: Add stream read chunk size as addon setting
+
 3.6.2
 [fixed] Some general timer fixes
 [fixed] AutoTimers backend check
