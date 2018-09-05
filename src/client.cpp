@@ -283,7 +283,7 @@ PVR_ERROR GetStreamReadChunkSize(int* chunksize)
 {
   if (!chunksize)
     return PVR_ERROR_INVALID_PARAMETERS;
-  *chunksize = DvbData->GetSettings().m_streamReadChunkSize;
+  *chunksize = DvbData->GetSettings().m_streamReadChunkSize * 1024;
   return PVR_ERROR_NO_ERROR;
 }
 
