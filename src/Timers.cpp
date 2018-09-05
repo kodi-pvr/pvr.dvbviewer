@@ -675,6 +675,7 @@ Timers::Error Timers::AddUpdateAutoTimer(const PVR_TIMER &tmr, bool update)
       timer.deDup & AutoTimer::DeDup::CHECK_SUBTITLE);
   params += "&SearchPhrase="    + URLEncode(timer.searchPhrase)
          +  "&Name="            + URLEncode(timer.title)
+         +  "&Series="          + URLEncode(timer.title)
          +  "&RecordingFolder=" + URLEncode(recfolder);
 
   if (timer.priority >= 0 || update)
