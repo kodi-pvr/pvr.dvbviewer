@@ -104,6 +104,8 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
  ***********************************************************/
 PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
 {
+  unsigned int iver = 0;
+  if (DvbData && DvbData->IsConnected()) iver = DvbData->GetBackendVersion();
   pCapabilities->bSupportsEPG                = true;
   pCapabilities->bSupportsTV                 = true;
   pCapabilities->bSupportsRadio              = true;
@@ -116,7 +118,7 @@ PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
   pCapabilities->bHandlesInputStream         = true;
   pCapabilities->bHandlesDemuxing            = false;
   pCapabilities->bSupportsRecordingPlayCount = false;
-  pCapabilities->bSupportsLastPlayedPosition = false;
+  pCapabilities->bSupportsLastPlayedPosition = (iver >= DMS_VERSION_NUM(2, 1, 2, 0) ? true : false);
   pCapabilities->bSupportsRecordingEdl       = true;
   pCapabilities->bSupportsRecordingsRename   = false;
   pCapabilities->bSupportsRecordingsLifetimeChange = false;
@@ -472,6 +474,24 @@ PVR_ERROR GetRecordingEdl(const PVR_RECORDING &recording, PVR_EDL_ENTRY edl[],
     ? PVR_ERROR_NO_ERROR : PVR_ERROR_SERVER_ERROR;
 }
 
+PVR_ERROR SetRecordingLastPlayedPosition(const PVR_RECORDING &recording, int lastplayedposition)
+{
+  return (DvbData && DvbData->IsConnected()
+    && DvbData->SetRecordingLastPlayedPosition(recording, lastplayedposition))
+    ? PVR_ERROR_NO_ERROR : PVR_ERROR_SERVER_ERROR;
+}
+
+int GetRecordingLastPlayedPosition(const PVR_RECORDING &recording)
+{
+  if (!DvbData)
+    return PVR_ERROR_SERVER_ERROR;
+
+  if (DvbData->IsConnected() == false)
+    return PVR_ERROR_SERVER_ERROR;
+
+  return DvbData->GetRecordingLastPlayedPosition(recording);
+}
+
 /** UNUSED API FUNCTIONS */
 void OnSystemSleep(void) {}
 void OnSystemWake(void) {}
@@ -491,9 +511,7 @@ void DemuxReset(void) {}
 void DemuxFlush(void) {}
 PVR_ERROR GetRecordingStreamProperties(const PVR_RECORDING*, PVR_NAMED_VALUE*, unsigned int*) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR SetRecordingPlayCount(const PVR_RECORDING&, int) { return PVR_ERROR_NOT_IMPLEMENTED; }
-PVR_ERROR SetRecordingLastPlayedPosition(const PVR_RECORDING&, int) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR SetRecordingLifetime(const PVR_RECORDING*) { return PVR_ERROR_NOT_IMPLEMENTED; }
-int GetRecordingLastPlayedPosition(const PVR_RECORDING&) { return -1; }
 PVR_ERROR RenameRecording(const PVR_RECORDING&) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR UndeleteRecording(const PVR_RECORDING&) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR DeleteAllRecordingsFromTrash() { return PVR_ERROR_NOT_IMPLEMENTED; }
