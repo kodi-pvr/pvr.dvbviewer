@@ -357,3 +357,11 @@ msgstr ""
 msgctxt "#30514"
 msgid "Timeshift buffer path does not exist"
 msgstr ""
+
+msgctxt "#30515"
+msgid "Unable to retrieve user data from the backend"
+msgstr ""
+
+msgctxt "#30516"
+msgid "Unable to parse user data from the backend"
+msgstr ""

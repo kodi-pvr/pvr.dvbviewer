@@ -125,11 +125,11 @@ Dvb::Dvb(const Settings &settings)
 
   m_kvstore.OnError([this](const KVStore::Error err)
     {
+      /* kvstore isn't mandatory so a queue error should be enough for now */
       if (err == KVStore::Error::RESPONSE_ERROR)
-        SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
+        XBMC->QueueNotification(QUEUE_ERROR, LocalizedString(30515).c_str());
       else if (err == KVStore::Error::GENERIC_PARSE_ERROR)
-        SetConnectionState(PVR_CONNECTION_STATE_SERVER_MISMATCH,
-            LocalizedString(30506).c_str());
+        XBMC->QueueNotification(QUEUE_ERROR, LocalizedString(30516).c_str());
     });
 
   CreateThread();
