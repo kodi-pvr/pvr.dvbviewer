@@ -2,6 +2,7 @@
 
 #include "libXBMC_addon.h"
 
+#include <chrono>
 #include <ctime>
 
 class RecordingReader
@@ -21,7 +22,7 @@ private:
 
   /*!< @brief end time of the recording in case this an ongoing recording */
   std::time_t m_end;
-  std::time_t m_nextReopen;
+  std::chrono::steady_clock::time_point m_nextReopen;
   uint64_t m_pos = { 0 };
   uint64_t m_len;
 };

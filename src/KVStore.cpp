@@ -44,14 +44,17 @@ void KVStore::SetErrorState(const KVStore::Error err)
     func(err);
 }
 
-bool KVStore::IsExpired(std::pair<std::time_t, std::string> &value) const
+bool KVStore::IsExpired(std::pair<std::chrono::steady_clock::time_point,
+    std::string> &value) const
 {
-  return value.first + CACHE_TTL < std::time(nullptr);
+  std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+  return ((now - value.first) > std::chrono::seconds(CACHE_TTL));
 }
 
 bool KVStore::InCoolDown() const
 {
-  return m_lastRefresh + CACHE_TTL >= std::time(nullptr);
+  std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+  return ((now - m_lastRefresh) <= std::chrono::seconds(CACHE_TTL));
 }
 
 KVStore::Error KVStore::FetchAll()
@@ -64,7 +67,7 @@ KVStore::Error KVStore::FetchAll()
   if (res.error)
     return RESPONSE_ERROR;
 
-  std::time_t now = std::time(nullptr);
+  std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
   std::string::size_type key_beg = 0, key_end;
   const std::string &s = res.content;
   while((key_end = s.find('=', key_beg)) != std::string::npos)
@@ -83,7 +86,7 @@ KVStore::Error KVStore::FetchAll()
     key_beg = val_end + 2;
   }
 
-  m_lastRefresh = std::time(nullptr);
+  m_lastRefresh = std::chrono::steady_clock::now();
   return SUCCESS;
 }
 
@@ -97,7 +100,7 @@ KVStore::Error KVStore::FetchSingle(const std::string &key)
   if (res.error)
     return RESPONSE_ERROR;
 
-  m_cache[key] = std::make_pair(std::time(nullptr), res.content);
+  m_cache[key] = std::make_pair(std::chrono::steady_clock::now(), res.content);
   return (res.content.empty()) ? NOT_FOUND : SUCCESS;
 }
 
@@ -149,7 +152,7 @@ bool KVStore::Set(const std::string &key, const std::string &value)
   }
 
   std::unique_lock<std::mutex> lock(m_mutex);
-  m_cache[key] = std::make_pair(std::time(nullptr), value);
+  m_cache[key] = std::make_pair(std::chrono::steady_clock::now(), value);
   return true;
 }
 

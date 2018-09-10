@@ -17,7 +17,8 @@ RecordingReader::RecordingReader(const std::string &streamURL, std::time_t end)
   m_readHandle = XBMC->CURLCreate(m_streamURL.c_str());
   (void)XBMC->CURLOpen(m_readHandle, XFILE::READ_NO_CACHE);
   m_len = XBMC->GetFileLength(m_readHandle);
-  m_nextReopen = time(nullptr) + REOPEN_INTERVAL;
+  m_nextReopen = std::chrono::steady_clock::now()
+      + std::chrono::seconds(REOPEN_INTERVAL);
   XBMC->Log(LOG_DEBUG, "RecordingReader: Started; url=%s, end=%u",
       m_streamURL.c_str(), m_end);
 }
@@ -39,7 +40,7 @@ ssize_t RecordingReader::ReadData(unsigned char *buffer, unsigned int size)
   /* check for playback of ongoing recording */
   if (m_end)
   {
-    std::time_t now = std::time(nullptr);
+    std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
     if (m_pos == m_len || now > m_nextReopen)
     {
       /* reopen stream */
@@ -50,10 +51,11 @@ ssize_t RecordingReader::ReadData(unsigned char *buffer, unsigned int size)
 
       // random value (10 MiB) we choose to switch to fast reopen interval
       bool nearEnd = m_len - m_pos <= 10 * 1024 * 1024;
-      m_nextReopen = now + (nearEnd ? REOPEN_INTERVAL_FAST : REOPEN_INTERVAL);
+      m_nextReopen = now  + std::chrono::seconds(
+          nearEnd ? REOPEN_INTERVAL_FAST : REOPEN_INTERVAL);
 
       /* recording has finished */
-      if (now > m_end)
+      if (std::time(nullptr) > m_end)
         m_end = 0;
     }
   }

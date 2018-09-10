@@ -3,7 +3,7 @@
 #include "libXBMC_pvr.h"
 
 #include <atomic>
-#include <ctime>
+#include <chrono>
 #include <functional>
 #include <map>
 #include <mutex>
@@ -76,7 +76,8 @@ public:
 
 private:
   void SetErrorState(const KVStore::Error err);
-  bool IsExpired(std::pair<std::time_t, std::string> &value) const;
+  bool IsExpired(std::pair<std::chrono::steady_clock::time_point, std::string>
+      &value) const;
   bool InCoolDown() const;
   Error FetchAll();
   Error FetchSingle(const std::string &key);
@@ -85,8 +86,9 @@ private:
   std::atomic<bool> m_error = { false };
   std::vector<errorfunc_t> m_errorfuncs;
   std::string m_section;
-  std::map<std::string, std::pair<std::time_t, std::string> > m_cache;
-  std::time_t m_lastRefresh = 0;
+  std::map<std::string,
+      std::pair<std::chrono::steady_clock::time_point, std::string> > m_cache;
+  std::chrono::steady_clock::time_point m_lastRefresh;
   std::mutex m_mutex;
 };
 
