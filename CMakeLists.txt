@@ -20,6 +20,7 @@ add_definitions(-D__STDC_FORMAT_MACROS)
 
 set(DVBVIEWER_SOURCES src/client.cpp
                       src/DvbData.cpp
+                      src/KVStore.cpp
                       src/RecordingReader.cpp
                       src/Settings.cpp
                       src/StreamReader.cpp
@@ -29,6 +30,7 @@ set(DVBVIEWER_SOURCES src/client.cpp
 set(DVBVIEWER_HEADERS src/client.h
                       src/DvbData.h
                       src/IStreamReader.h
+                      src/KVStore.h
                       src/LocalizedString.h
                       src/RecordingReader.h
                       src/Settings.h

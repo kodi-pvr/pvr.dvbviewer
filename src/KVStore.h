@@ -1,0 +1,92 @@
+#pragma once
+
+#include "libXBMC_pvr.h"
+
+#include <atomic>
+#include <ctime>
+#include <functional>
+#include <map>
+#include <mutex>
+#include <sstream>
+#include <string>
+#include <vector>
+
+/* forward declaration */
+class Dvb;
+
+namespace dvbviewer
+{
+
+class KVStore
+{
+public:
+  enum Error
+  {
+    SUCCESS,
+    NOT_FOUND,
+    GENERIC_PARSE_ERROR,
+    RESPONSE_ERROR,
+  };
+
+  enum Hint
+  {
+    NONE = 0,
+    FETCH_ALL,
+    CACHE_ONLY,
+  };
+
+  KVStore(Dvb &cli)
+    : m_cli(cli)
+  {};
+  KVStore(const KVStore &kvstore) = delete;
+
+  bool IsSupported() const;
+  bool IsErrorState() const;
+  void Reset();
+
+  typedef std::function<void (const KVStore::Error err)> errorfunc_t;
+  void OnError(errorfunc_t func);
+
+  bool Get(const std::string &key, std::string &value, Hint hint = Hint::NONE);
+  bool Set(const std::string &key, const std::string &value);
+  bool Has(const std::string &key, Hint hint = Hint::NONE);
+
+  template <typename T>
+  bool Get(const std::string &key, T &value, Hint hint = Hint::NONE)
+  {
+    std::string tmp;
+    if (!Get(key, tmp, hint))
+      return false;
+
+    std::istringstream ss(tmp);
+    ss >> value;
+    if (!ss.eof() || ss.fail())
+    {
+      SetErrorState(GENERIC_PARSE_ERROR);
+      return false;
+    }
+    return true;
+  }
+
+  template <typename T>
+  bool Set(const std::string &key, const T &value)
+  {
+    return Set(key, std::to_string(value));
+  }
+
+private:
+  void SetErrorState(const KVStore::Error err);
+  bool IsExpired(std::pair<std::time_t, std::string> &value) const;
+  Error FetchAll();
+  Error FetchSingle(const std::string &key);
+
+  Dvb &m_cli;
+  std::atomic<bool> m_error = { false };
+  std::vector<errorfunc_t> m_errorfuncs;
+  std::string m_section;
+  std::map<std::string, std::pair<std::time_t, std::string> > m_cache;
+  std::time_t m_lastRefresh = 0;
+  std::mutex m_mutex;
+};
+
+} //namespace dvbviewer
