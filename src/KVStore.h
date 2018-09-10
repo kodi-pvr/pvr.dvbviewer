@@ -77,6 +77,7 @@ public:
 private:
   void SetErrorState(const KVStore::Error err);
   bool IsExpired(std::pair<std::time_t, std::string> &value) const;
+  bool InCoolDown() const;
   Error FetchAll();
   Error FetchSingle(const std::string &key);
 

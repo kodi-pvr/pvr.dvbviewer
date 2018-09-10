@@ -32,6 +32,9 @@ void Settings::ReadFromKodi()
   if (XBMC->GetSetting("pass", buffer))
     m_password = buffer;
 
+  if (!XBMC->GetSetting("profileid", &m_profileId))
+    m_profileId = 0;
+
   if (!XBMC->GetSetting("usewol", &m_useWoL))
     m_useWoL = false;
 
@@ -93,6 +96,7 @@ void Settings::ReadFromKodi()
   if (!m_username.empty() && !m_password.empty())
     XBMC->Log(LOG_DEBUG, "Login credentials: %s/%s", m_username.c_str(),
         m_password.c_str());
+  XBMC->Log(LOG_DEBUG, "Profile ID: %d", m_profileId);
   if (m_useWoL)
     XBMC->Log(LOG_DEBUG, "WoL MAC: %s", m_mac.c_str());
 
@@ -144,6 +148,11 @@ ADDON_STATUS Settings::SetValue(const std::string name, const void *value)
   else if (name == "pass")
   {
     if (m_password.compare((const char *)value) != 0)
+      return ADDON_STATUS_NEED_RESTART;
+  }
+  else if (name == "profileid")
+  {
+    if (m_profileId != *(int *)value)
       return ADDON_STATUS_NEED_RESTART;
   }
   else if (name == "usewol")

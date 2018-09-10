@@ -26,9 +26,10 @@ void KVStore::Reset()
   m_cache.clear();
 
   /* UUID like section name for our keys. Prefixed for better readability.
-   * Can be suffixed by PVR instance/profile at a later time.
+   * Suffixed by our PVR instance/profile.
    */
-  m_section = StringUtils::Format("kodi-bfa5-4ac6-8bc2-profile%02x", 0);
+  m_section = StringUtils::Format("kodi-bfa5-4ac6-8bc2-profile%02x",
+    m_cli.GetSettings().m_profileId);
 }
 
 void KVStore::OnError(errorfunc_t func)
@@ -48,9 +49,14 @@ bool KVStore::IsExpired(std::pair<std::time_t, std::string> &value) const
   return value.first + CACHE_TTL < std::time(nullptr);
 }
 
+bool KVStore::InCoolDown() const
+{
+  return m_lastRefresh + CACHE_TTL >= std::time(nullptr);
+}
+
 KVStore::Error KVStore::FetchAll()
 {
-  if (m_lastRefresh + CACHE_TTL >= std::time(nullptr))
+  if (InCoolDown())
     return NOT_FOUND;
 
   const Dvb::httpResponse &res = m_cli.GetFromAPI("api/store.html"
@@ -83,7 +89,7 @@ KVStore::Error KVStore::FetchAll()
 
 KVStore::Error KVStore::FetchSingle(const std::string &key)
 {
-  if (m_lastRefresh + CACHE_TTL >= std::time(nullptr))
+  if (InCoolDown())
     return NOT_FOUND;
 
   const Dvb::httpResponse &res = m_cli.GetFromAPI("api/store.html"

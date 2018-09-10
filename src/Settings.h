@@ -79,6 +79,7 @@ public:
   int            m_webPort  = DEFAULT_WEB_PORT;
   std::string    m_username;
   std::string    m_password;
+  int            m_profileId = 0;
   bool           m_useWoL = false;
   std::string    m_mac;
   bool           m_useFavourites     = false;

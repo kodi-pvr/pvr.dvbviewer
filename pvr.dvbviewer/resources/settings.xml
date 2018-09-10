@@ -37,6 +37,20 @@
             <hidden>true</hidden>
           </control>
         </setting>
+        <!-- hide for now
+        <setting id="profileid" type="integer" label="30006">
+          <level>0</level>
+          <default>0</default>
+          <constraints>
+            <minimum>0</minimum>
+            <step>1</step>
+            <maximum>10</maximum>
+          </constraints>
+          <control type="slider" format="integer">
+            <popup>true</popup>
+          </control>
+        </setting>
+      -->
       </group>
 
       <group id="2" label="30110">

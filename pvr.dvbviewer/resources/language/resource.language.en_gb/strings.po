@@ -42,7 +42,11 @@ msgctxt "#30005"
 msgid "MAC address"
 msgstr ""
 
-#empty strings from id 30006 to 30009
+msgctxt "#30006"
+msgid "Profile ID"
+msgstr ""
+
+#empty strings from id 30007 to 30009
 
 msgctxt "#30010"
 msgid "Use favourites instead of channel list"
