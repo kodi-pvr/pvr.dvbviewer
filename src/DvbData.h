@@ -1,5 +1,6 @@
 #pragma once
 
+#include "KVStore.h"
 #include "RecordingReader.h"
 #include "Settings.h"
 #include "Timers.h"
@@ -115,6 +116,8 @@ public:
   DvbChannel *channel;
   /*!< @brief group name and its size/amount of recordings */
   std::map<std::string, unsigned int>::iterator group;
+  int playCount = 0;
+  int lastPlayPosition = 0;
 };
 
 typedef std::vector<DvbChannel *> DvbChannels_t;
@@ -134,6 +137,8 @@ public:
   bool GetDriveSpace(long long *total, long long *used);
   bool IsGuest()
   { return m_isguest; }
+  bool HasKVStore()
+  { return m_kvstore.IsSupported(); };
   dvbviewer::Settings &GetSettings()
   { return m_settings; };
 
@@ -160,6 +165,9 @@ public:
   RecordingReader *OpenRecordedStream(const PVR_RECORDING &recinfo);
   bool GetRecordingEdl(const PVR_RECORDING &recinfo, PVR_EDL_ENTRY edl[],
       int *size);
+  bool SetRecordingPlayCount(const PVR_RECORDING &recinfo, int count);
+  int GetRecordingLastPlayedPosition(const PVR_RECORDING &recinfo);
+  bool SetRecordingLastPlayedPosition(const PVR_RECORDING &recinfo, int pos);
 
   bool OpenLiveStream(const PVR_CHANNEL &channelinfo);
   void CloseLiveStream();
@@ -221,6 +229,7 @@ private:
   unsigned int m_recordingAmount = 0;
 
   dvbviewer::Timers m_timers = dvbviewer::Timers(*this);
+  dvbviewer::KVStore m_kvstore;
   dvbviewer::Settings m_settings;
 
   P8PLATFORM::CMutex m_mutex;

@@ -124,8 +124,17 @@ PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
 
   pCapabilities->iRecordingsLifetimesSize = 0;
 
-  if (DvbData && DvbData->IsConnected() && DvbData->IsGuest())
-    pCapabilities->bSupportsTimers = false;
+  if (DvbData && DvbData->IsConnected())
+  {
+    if (DvbData->IsGuest())
+      pCapabilities->bSupportsTimers = false;
+
+    if (DvbData->HasKVStore())
+    {
+      pCapabilities->bSupportsRecordingPlayCount = true;
+      pCapabilities->bSupportsLastPlayedPosition = true;
+    }
+  }
 
   return PVR_ERROR_NO_ERROR;
 }
@@ -256,7 +265,6 @@ int GetTimersAmount(void)
 
 PVR_ERROR GetTimers(ADDON_HANDLE handle)
 {
-  /* TODO: Change implementation to get support for the timer features introduced with PVR API 1.9.7 */
   return (DvbData && DvbData->IsConnected() && DvbData->GetTimers(handle))
     ? PVR_ERROR_NO_ERROR : PVR_ERROR_SERVER_ERROR;
 }
@@ -472,6 +480,34 @@ PVR_ERROR GetRecordingEdl(const PVR_RECORDING &recording, PVR_EDL_ENTRY edl[],
     ? PVR_ERROR_NO_ERROR : PVR_ERROR_SERVER_ERROR;
 }
 
+PVR_ERROR SetRecordingPlayCount(const PVR_RECORDING &recording, int count)
+{
+  if (!DvbData || !DvbData->IsConnected())
+    return PVR_ERROR_SERVER_ERROR;
+  if (!DvbData->HasKVStore())
+    return PVR_ERROR_NOT_IMPLEMENTED;
+  return DvbData->SetRecordingPlayCount(recording, count)
+    ? PVR_ERROR_NO_ERROR : PVR_ERROR_SERVER_ERROR;
+}
+
+int GetRecordingLastPlayedPosition(const PVR_RECORDING &recording)
+{
+  if (!DvbData || !DvbData->IsConnected() || !DvbData->HasKVStore())
+    return -1;
+  return DvbData->GetRecordingLastPlayedPosition(recording);
+}
+
+PVR_ERROR SetRecordingLastPlayedPosition(const PVR_RECORDING &recording,
+  int position)
+{
+  if (!DvbData || !DvbData->IsConnected())
+    return PVR_ERROR_SERVER_ERROR;
+  if (!DvbData->HasKVStore())
+    return PVR_ERROR_NOT_IMPLEMENTED;
+  return DvbData->SetRecordingLastPlayedPosition(recording, position)
+    ? PVR_ERROR_NO_ERROR : PVR_ERROR_SERVER_ERROR;
+}
+
 /** UNUSED API FUNCTIONS */
 void OnSystemSleep(void) {}
 void OnSystemWake(void) {}
@@ -490,10 +526,7 @@ void DemuxAbort(void) {}
 void DemuxReset(void) {}
 void DemuxFlush(void) {}
 PVR_ERROR GetRecordingStreamProperties(const PVR_RECORDING*, PVR_NAMED_VALUE*, unsigned int*) { return PVR_ERROR_NOT_IMPLEMENTED; }
-PVR_ERROR SetRecordingPlayCount(const PVR_RECORDING&, int) { return PVR_ERROR_NOT_IMPLEMENTED; }
-PVR_ERROR SetRecordingLastPlayedPosition(const PVR_RECORDING&, int) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR SetRecordingLifetime(const PVR_RECORDING*) { return PVR_ERROR_NOT_IMPLEMENTED; }
-int GetRecordingLastPlayedPosition(const PVR_RECORDING&) { return -1; }
 PVR_ERROR RenameRecording(const PVR_RECORDING&) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR UndeleteRecording(const PVR_RECORDING&) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR DeleteAllRecordingsFromTrash() { return PVR_ERROR_NOT_IMPLEMENTED; }

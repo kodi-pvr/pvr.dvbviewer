@@ -119,9 +119,18 @@ std::string dvbviewer::ConvertToUtf8(const std::string& src)
 }
 
 Dvb::Dvb(const Settings &settings)
-  : m_settings(settings)
+  : m_kvstore(*this), m_settings(settings)
 {
   TiXmlBase::SetCondenseWhiteSpace(false);
+
+  m_kvstore.OnError([this](const KVStore::Error err)
+    {
+      if (err == KVStore::Error::RESPONSE_ERROR)
+        SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
+      else if (err == KVStore::Error::GENERIC_PARSE_ERROR)
+        SetConnectionState(PVR_CONNECTION_STATE_SERVER_MISMATCH,
+            LocalizedString(30506).c_str());
+    });
 
   CreateThread();
 }
@@ -268,6 +277,7 @@ bool Dvb::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channelinfo,
     broadcast.iGenreType          = entry.genre & 0xF0;
     broadcast.iGenreSubType       = entry.genre & 0x0F;
     broadcast.iFlags              = EPG_TAG_FLAG_UNDEFINED;
+
 
     PVR->TransferEpgEntry(handle, &broadcast);
     ++numEPG;
@@ -444,7 +454,7 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
 
   TiXmlElement *root = doc.RootElement();
 
-  // there's no need to merge new recordings in older ones as XBMC does this
+  // there's no need to merge new recordings in older ones as Kodi does this
   // already for us (using strRecordingId). so just parse all recordings again
   std::vector<DvbRecording> recordings;
   m_recordingAmount = 0;
@@ -542,6 +552,14 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
     recording.group = groups.emplace(group, 0).first;
     ++recording.group->second;
 
+    if (m_kvstore.IsSupported())
+    {
+      m_kvstore.Get<int>("recplaycount_" + recording.id,
+        recording.playCount, KVStore::Hint::FETCH_ALL);
+      m_kvstore.Get<int>("recplaypos_" + recording.id,
+        recording.lastPlayPosition, KVStore::Hint::FETCH_ALL);
+    }
+
     recordings.push_back(recording);
   }
 
@@ -555,12 +573,14 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
     PVR_STRCPY(recinfo.strPlot,          recording.plot.c_str());
     PVR_STRCPY(recinfo.strChannelName,   recording.channelName.c_str());
     PVR_STRCPY(recinfo.strThumbnailPath, recording.thumbnail.c_str());
-    recinfo.recordingTime = recording.start;
-    recinfo.iDuration     = recording.duration;
-    recinfo.iGenreType    = recording.genre & 0xF0;
-    recinfo.iGenreSubType = recording.genre & 0x0F;
-    recinfo.iChannelUid   = PVR_CHANNEL_INVALID_UID;
-    recinfo.channelType   = PVR_RECORDING_CHANNEL_TYPE_UNKNOWN;
+    recinfo.recordingTime       = recording.start;
+    recinfo.iDuration           = recording.duration;
+    recinfo.iGenreType          = recording.genre & 0xF0;
+    recinfo.iGenreSubType       = recording.genre & 0x0F;
+    recinfo.iPlayCount          = recording.playCount;
+    recinfo.iLastPlayedPosition = recording.lastPlayPosition;
+    recinfo.iChannelUid         = PVR_CHANNEL_INVALID_UID;
+    recinfo.channelType         = PVR_RECORDING_CHANNEL_TYPE_UNKNOWN;
 
     if (recording.channel)
     {
@@ -685,6 +705,25 @@ bool Dvb::GetRecordingEdl(const PVR_RECORDING &recinfo, PVR_EDL_ENTRY edl[],
   return true;
 }
 
+bool Dvb::SetRecordingPlayCount(const PVR_RECORDING &recinfo, int count)
+{
+  const std::string value = std::string("recplaycount_") + recinfo.strRecordingId;
+  return m_kvstore.Set(value, count);
+}
+
+int Dvb::GetRecordingLastPlayedPosition(const PVR_RECORDING &recinfo)
+{
+  const std::string value = std::string("recplaypos_") + recinfo.strRecordingId;
+  int pos;
+  return m_kvstore.Get<int>(value, pos) ? pos : -1;
+}
+
+bool Dvb::SetRecordingLastPlayedPosition(const PVR_RECORDING &recinfo, int pos)
+{
+  const std::string value = std::string("recplaypos_") + recinfo.strRecordingId;
+  return m_kvstore.Set<int>(value, pos);
+}
+
 /***************************************************************************
  * Livestream
  **************************************************************************/
@@ -759,6 +798,8 @@ void *Dvb::Process()
 
       if (CheckBackendVersion() && UpdateBackendStatus(true) && LoadChannels())
       {
+        m_kvstore.Reset();
+
         XBMC->Log(LOG_INFO, "Connection to the backend server successful.");
         SetConnectionState(PVR_CONNECTION_STATE_CONNECTED);
 

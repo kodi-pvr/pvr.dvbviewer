@@ -4,8 +4,8 @@
 
 #include <atomic>
 #include <condition_variable>
-#include <thread>
 #include <mutex>
+#include <thread>
 
 namespace dvbviewer
 {
