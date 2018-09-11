@@ -50,6 +50,7 @@ public:
   bool Get(const std::string &key, std::string &value, Hint hint = Hint::NONE);
   bool Set(const std::string &key, const std::string &value);
   bool Has(const std::string &key, Hint hint = Hint::NONE);
+  void Save();
 
   template <typename T>
   bool Get(const std::string &key, T &value, Hint hint = Hint::NONE)
@@ -89,6 +90,7 @@ private:
   std::map<std::string,
       std::pair<std::chrono::steady_clock::time_point, std::string> > m_cache;
   std::chrono::steady_clock::time_point m_lastRefresh;
+  std::atomic<bool> m_dirty = { false };
   std::mutex m_mutex;
 };
 

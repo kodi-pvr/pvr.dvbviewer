@@ -846,6 +846,10 @@ void *Dvb::Process()
         XBMC->Log(LOG_INFO, "Performing timer/recording updates!");
         TimerUpdates();
         PVR->TriggerRecordingUpdate();
+
+        /* actually the DMS should do this itself... */
+        if (m_kvstore.IsSupported())
+          m_kvstore.Save();
       }
     }
   }

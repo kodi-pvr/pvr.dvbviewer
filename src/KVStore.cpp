@@ -153,6 +153,7 @@ bool KVStore::Set(const std::string &key, const std::string &value)
 
   std::unique_lock<std::mutex> lock(m_mutex);
   m_cache[key] = std::make_pair(std::chrono::steady_clock::now(), value);
+  m_dirty = true;
   return true;
 }
 
@@ -160,4 +161,14 @@ bool KVStore::Has(const std::string &key, Hint hint)
 {
   std::string value;
   return Get(key, value, hint);
+}
+
+void KVStore::Save()
+{
+  if (IsErrorState() || !m_dirty)
+    return;
+
+  /* we don't care about the result */
+  m_cli.GetFromAPI("api/store.html?action=updatefile");
+  m_dirty = false;
 }
