@@ -67,6 +67,7 @@ KVStore::Error KVStore::FetchAll()
   if (res.error)
     return RESPONSE_ERROR;
 
+  m_cache.clear();
   std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
   std::string::size_type key_beg = 0, key_end;
   const std::string &s = res.content;
