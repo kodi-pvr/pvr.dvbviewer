@@ -1,3 +1,7 @@
+3.7.0
+[added] Support for new key/value store API. Requires DMS 2.1.2.0 or higher
+[added] Store recordings play position and play count on the backend. Thanks to popy2k14 for testing
+
 3.6.8
 [fixed] Fix stream read chunk size unit
 
