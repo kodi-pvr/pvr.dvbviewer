@@ -92,7 +92,7 @@ public:
   PrependOutline m_prependOutline      = PrependOutline::IN_EPG;
   bool           m_lowPerformance      = false;
   int            m_readTimeout         = 0;
-  int            m_streamReadChunkSize = 64;
+  int            m_streamReadChunkSize = 0;
   Transcoding    m_transcoding         = Transcoding::OFF;
   std::string    m_transcodingParams;
 

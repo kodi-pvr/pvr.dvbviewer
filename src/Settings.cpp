@@ -78,7 +78,7 @@ void Settings::ReadFromKodi()
     m_readTimeout = 0;
 
   if (!XBMC->GetSetting("stream_readchunksize", &m_streamReadChunkSize))
-    m_streamReadChunkSize = 64;
+    m_streamReadChunkSize = 0;
 
   if (!XBMC->GetSetting("transcoding", &m_transcoding))
     m_transcoding = Transcoding::OFF;
@@ -121,7 +121,8 @@ void Settings::ReadFromKodi()
   XBMC->Log(LOG_DEBUG, "Low performance mode: %s", (m_lowPerformance) ? "yes" : "no");
   if (m_readTimeout)
     XBMC->Log(LOG_DEBUG, "Custom connection/read timeout: %d", m_readTimeout);
-  XBMC->Log(LOG_DEBUG, "Stream read chunk size: %d kb", m_streamReadChunkSize);
+  if (m_streamReadChunkSize)
+    XBMC->Log(LOG_DEBUG, "Stream read chunk size: %d kb", m_streamReadChunkSize);
   XBMC->Log(LOG_DEBUG, "Transcoding: %d", m_transcoding);
   if (m_transcoding != Transcoding::OFF)
     XBMC->Log(LOG_DEBUG, "Transcoding params: %s", m_transcodingParams.c_str());
@@ -238,8 +239,7 @@ ADDON_STATUS Settings::SetValue(const std::string name, const void *value)
   }
   else if (name == "stream_readchunksize")
   {
-    if (m_streamReadChunkSize != *(int *)value)
-      return ADDON_STATUS_NEED_RESTART;
+    m_streamReadChunkSize != *(int *)value;
   }
   else if (name == "transcoding")
   {

@@ -235,9 +235,9 @@
         </setting>
         <setting id="stream_readchunksize" type="integer" label="30042">
           <level>0</level>
-          <default>64</default>
+          <default>0</default>
           <constraints>
-            <minimum>4</minimum>
+            <minimum>0</minimum>
             <step>4</step>
             <maximum>128</maximum>
           </constraints>
