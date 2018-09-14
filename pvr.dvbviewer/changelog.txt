@@ -1,3 +1,7 @@
+3.7.2
+[fixed] Hidden profile id setting
+[fixed] Assignment error
+
 3.7.1
 [updated] Modify stream read chunk size setting so that 0 is Kodi's default
 
