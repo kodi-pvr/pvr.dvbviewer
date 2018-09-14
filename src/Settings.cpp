@@ -128,7 +128,6 @@ void Settings::ReadFromKodi()
     XBMC->Log(LOG_DEBUG, "Transcoding params: %s", m_transcodingParams.c_str());
 }
 
-
 ADDON_STATUS Settings::SetValue(const std::string name, const void *value)
 {
   if (name == "host")
@@ -239,7 +238,7 @@ ADDON_STATUS Settings::SetValue(const std::string name, const void *value)
   }
   else if (name == "stream_readchunksize")
   {
-    m_streamReadChunkSize != *(int *)value;
+    m_streamReadChunkSize = *(int *)value;
   }
   else if (name == "transcoding")
   {
