@@ -627,7 +627,7 @@ unsigned int Dvb::GetRecordingsAmount()
   return m_recordingAmount;
 }
 
-RecordingReader *Dvb::OpenRecordedStream(const PVR_RECORDING &recinfo)
+dvbviewer::RecordingReader *Dvb::OpenRecordedStream(const PVR_RECORDING &recinfo)
 {
   CLockObject lock(m_mutex);
   std::time_t now = std::time(nullptr), end = 0;

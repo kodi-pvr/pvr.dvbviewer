@@ -9,16 +9,16 @@
 
 namespace dvbviewer
 {
+
 /* forward declaration */
 class Settings;
-};
 
 class TimeshiftBuffer
   : public IStreamReader
 {
 public:
   TimeshiftBuffer(IStreamReader *strReader,
-      const dvbviewer::Settings &settings);
+      const Settings &settings);
   ~TimeshiftBuffer(void);
   bool Start() override;
   ssize_t ReadData(unsigned char *buffer, unsigned int size) override;
@@ -46,3 +46,5 @@ private:
   std::condition_variable m_condition;
   std::mutex m_mutex;
 };
+
+} //namespace dvbviewer

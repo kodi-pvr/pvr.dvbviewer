@@ -9,10 +9,11 @@
 #define DEFAULT_READ_TIMEOUT 10
 #define READ_WAITTIME 50
 
+using namespace dvbviewer;
 using namespace ADDON;
 
 TimeshiftBuffer::TimeshiftBuffer(IStreamReader *strReader,
-    const dvbviewer::Settings &settings)
+    const Settings &settings)
   : m_strReader(strReader)
 {
   m_bufferPath = settings.m_timeshiftBufferPath + "/tsbuffer.ts";

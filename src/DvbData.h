@@ -162,7 +162,7 @@ public:
   bool GetRecordings(ADDON_HANDLE handle);
   bool DeleteRecording(const PVR_RECORDING &recinfo);
   unsigned int GetRecordingsAmount();
-  RecordingReader *OpenRecordedStream(const PVR_RECORDING &recinfo);
+  dvbviewer::RecordingReader *OpenRecordedStream(const PVR_RECORDING &recinfo);
   bool GetRecordingEdl(const PVR_RECORDING &recinfo, PVR_EDL_ENTRY edl[],
       int *size);
   bool SetRecordingPlayCount(const PVR_RECORDING &recinfo, int count);

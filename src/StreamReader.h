@@ -4,16 +4,16 @@
 
 namespace dvbviewer
 {
+
 /* forward declaration */
 class Settings;
-};
 
 class StreamReader
   : public IStreamReader
 {
 public:
   StreamReader(const std::string &streamURL,
-      const dvbviewer::Settings &settings);
+      const Settings &settings);
   ~StreamReader(void);
   bool Start() override;
   ssize_t ReadData(unsigned char *buffer, unsigned int size) override;
@@ -29,3 +29,5 @@ private:
   void *m_streamHandle;
   std::time_t m_start = time(nullptr);
 };
+
+} //namespace dvbviewer

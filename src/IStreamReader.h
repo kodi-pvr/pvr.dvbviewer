@@ -1,11 +1,11 @@
 #pragma once
 
-#ifndef PVR_DVBVIEWER_ISTREAMREADER_H
-#define PVR_DVBVIEWER_ISTREAMREADER_H
-
 #include "libXBMC_addon.h"
 
 #include <ctime>
+
+namespace dvbviewer
+{
 
 class IStreamReader
 {
@@ -22,4 +22,4 @@ public:
   virtual bool IsTimeshifting() = 0;
 };
 
-#endif
+} //namespace dvbviewer

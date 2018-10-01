@@ -9,6 +9,7 @@
 #define REOPEN_INTERVAL      30
 #define REOPEN_INTERVAL_FAST 10
 
+using namespace dvbviewer;
 using namespace ADDON;
 
 RecordingReader::RecordingReader(const std::string &streamURL, std::time_t end)

@@ -2,10 +2,11 @@
 #include "client.h"
 #include "Settings.h"
 
+using namespace dvbviewer;
 using namespace ADDON;
 
 StreamReader::StreamReader(const std::string &streamURL,
-  const dvbviewer::Settings &settings)
+  const Settings &settings)
 {
   m_streamHandle = XBMC->CURLCreate(streamURL.c_str());
   if (settings.m_readTimeout > 0)

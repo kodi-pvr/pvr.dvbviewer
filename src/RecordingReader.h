@@ -5,6 +5,9 @@
 #include <chrono>
 #include <ctime>
 
+namespace dvbviewer
+{
+
 class RecordingReader
 {
 public:
@@ -26,3 +29,5 @@ private:
   uint64_t m_pos = { 0 };
   uint64_t m_len;
 };
+
+} //namespace dvbviewer
