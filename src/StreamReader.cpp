@@ -24,7 +24,8 @@ StreamReader::~StreamReader(void)
 
 bool StreamReader::Start()
 {
-  return XBMC->CURLOpen(m_streamHandle, XFILE::READ_NO_CACHE);
+  return XBMC->CURLOpen(m_streamHandle, XFILE::READ_TRUNCATED
+      | XFILE::READ_CHUNKED | XFILE::READ_NO_CACHE);
 }
 
 ssize_t StreamReader::ReadData(unsigned char *buffer, unsigned int size)
