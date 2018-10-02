@@ -630,17 +630,41 @@ unsigned int Dvb::GetRecordingsAmount()
 dvbviewer::RecordingReader *Dvb::OpenRecordedStream(const PVR_RECORDING &recinfo)
 {
   CLockObject lock(m_mutex);
-  std::time_t now = std::time(nullptr), end = 0;
-  std::string channelName = recinfo.strChannelName;
-  auto timer = m_timers.GetTimer([&](const Timer &timer)
-      {
-        return timer.isRunning(&now, &channelName);
-      });
-  if (timer)
-    end = timer->end;
 
-  return new RecordingReader(BuildURL("upnp/recordings/%s.ts",
-    recinfo.strRecordingId), end);
+  std::string url;
+  switch(m_settings.m_recordingTranscoding)
+  {
+    case Transcoding::TS:
+      url = BuildURL("flashstream/stream.ts?recid=%s&%s",
+        recinfo.strRecordingId, m_settings.m_recordingTranscodingParams.c_str());
+      break;
+    case Transcoding::WEBM:
+      url = BuildURL("flashstream/stream.webm?recid=%s&%s",
+        recinfo.strRecordingId, m_settings.m_recordingTranscodingParams.c_str());
+      break;
+    case Transcoding::FLV:
+      url = BuildURL("flashstream/stream.flv?recid=%s&%s",
+        recinfo.strRecordingId, m_settings.m_recordingTranscodingParams.c_str());
+      break;
+    default:
+      url = BuildURL("upnp/recordings/%s.ts", recinfo.strRecordingId);
+      break;
+  }
+
+  /* recording reopen only works in non-transcoding case */
+  std::time_t now = std::time(nullptr), end = 0;
+  if (m_settings.m_recordingTranscoding == Transcoding::OFF)
+  {
+    const std::string channelName = recinfo.strChannelName;
+    auto timer = m_timers.GetTimer([&](const Timer &timer)
+        {
+          return timer.isRunning(&now, &channelName);
+        });
+    if (timer)
+      end = timer->end;
+  }
+
+  return new RecordingReader(url, end);
 }
 
 bool Dvb::GetRecordingEdl(const PVR_RECORDING &recinfo, PVR_EDL_ENTRY edl[],

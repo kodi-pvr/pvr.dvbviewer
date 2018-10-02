@@ -83,10 +83,19 @@ void Settings::ReadFromKodi()
   if (!XBMC->GetSetting("transcoding", &m_transcoding))
     m_transcoding = Transcoding::OFF;
 
+  if (!XBMC->GetSetting("recording_transcoding", &m_recordingTranscoding))
+    m_recordingTranscoding = Transcoding::OFF;
+
   if (XBMC->GetSetting("transcodingparams", buffer))
   {
     m_transcodingParams = buffer;
     StringUtils::Replace(m_transcodingParams, " ", "+");
+  }
+
+  if (XBMC->GetSetting("recording_transcodingparams", buffer))
+  {
+    m_recordingTranscodingParams = buffer;
+    StringUtils::Replace(m_recordingTranscodingParams, " ", "+");
   }
 
   /* Log the current settings for debugging purposes */
@@ -107,6 +116,9 @@ void Settings::ReadFromKodi()
   XBMC->Log(LOG_DEBUG, "Timeshift mode: %d", m_timeshift);
   if (m_timeshift != Timeshift::OFF)
     XBMC->Log(LOG_DEBUG, "Timeshift buffer path: %s", m_timeshiftBufferPath.c_str());
+  if (m_transcoding != Transcoding::OFF)
+    XBMC->Log(LOG_DEBUG, "Transcoding: format=%d params=%s",
+        m_transcoding, m_transcodingParams.c_str());
 
   /* recordings tab */
   if (m_groupRecordings != RecordGrouping::DISABLED)
@@ -114,6 +126,9 @@ void Settings::ReadFromKodi()
   if (m_edl.enabled)
     XBMC->Log(LOG_DEBUG, "EDL enabled. Padding: start=%d stop=%d",
       m_edl.padding_start, m_edl.padding_stop);
+  if (m_recordingTranscoding != Transcoding::OFF)
+    XBMC->Log(LOG_DEBUG, "Recording transcoding: format=%d, params=%s",
+      m_recordingTranscoding, m_recordingTranscodingParams.c_str());
 
   /* advanced tab */
   if (m_prependOutline != PrependOutline::NEVER)
@@ -123,9 +138,6 @@ void Settings::ReadFromKodi()
     XBMC->Log(LOG_DEBUG, "Custom connection/read timeout: %d", m_readTimeout);
   if (m_streamReadChunkSize)
     XBMC->Log(LOG_DEBUG, "Stream read chunk size: %d kb", m_streamReadChunkSize);
-  XBMC->Log(LOG_DEBUG, "Transcoding: %d", m_transcoding);
-  if (m_transcoding != Transcoding::OFF)
-    XBMC->Log(LOG_DEBUG, "Transcoding params: %s", m_transcodingParams.c_str());
 }
 
 ADDON_STATUS Settings::SetValue(const std::string name, const void *value)
@@ -244,10 +256,19 @@ ADDON_STATUS Settings::SetValue(const std::string name, const void *value)
   {
     m_transcoding = *(const Transcoding *)value;
   }
+  else if (name == "recording_transcoding")
+  {
+    m_recordingTranscoding = *(const Transcoding *)value;
+  }
   else if (name == "transcodingparams")
   {
     m_transcodingParams = (const char *)value;
     StringUtils::Replace(m_transcodingParams, " ", "+");
+  }
+  else if (name == "recording_transcodingparams")
+  {
+    m_recordingTranscodingParams = (const char *)value;
+    StringUtils::Replace(m_recordingTranscodingParams, " ", "+");
   }
   return ADDON_STATUS_OK;
 }

@@ -16,7 +16,7 @@ RecordingReader::RecordingReader(const std::string &streamURL, std::time_t end)
   : m_streamURL(streamURL), m_end(end)
 {
   m_readHandle = XBMC->CURLCreate(m_streamURL.c_str());
-  (void)XBMC->CURLOpen(m_readHandle, XFILE::READ_NO_CACHE);
+  (void)XBMC->CURLOpen(m_readHandle, XFILE::READ_NO_CACHE | XFILE::READ_AUDIO_VIDEO);
   m_len = XBMC->GetFileLength(m_readHandle);
   m_nextReopen = std::chrono::steady_clock::now()
       + std::chrono::seconds(REOPEN_INTERVAL);
@@ -46,7 +46,8 @@ ssize_t RecordingReader::ReadData(unsigned char *buffer, unsigned int size)
     {
       /* reopen stream */
       XBMC->Log(LOG_DEBUG, "RecordingReader: Reopening stream...");
-      (void)XBMC->CURLOpen(m_readHandle, XFILE::READ_REOPEN | XFILE::READ_NO_CACHE);
+      (void)XBMC->CURLOpen(m_readHandle, XFILE::READ_REOPEN | XFILE::READ_NO_CACHE
+          | XFILE::READ_AUDIO_VIDEO);
       m_len = XBMC->GetFileLength(m_readHandle);
       XBMC->SeekFile(m_readHandle, m_pos, SEEK_SET);
 

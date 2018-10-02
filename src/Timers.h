@@ -42,7 +42,7 @@ public:
   Timer() = default;
   bool updateFrom(const Timer &other);
   bool isScheduled() const;
-  bool isRunning(std::time_t *now, std::string *channelName = nullptr) const;
+  bool isRunning(const std::time_t *now, const std::string *channelName = nullptr) const;
 
   bool operator!=(const Timer &other) const
   {

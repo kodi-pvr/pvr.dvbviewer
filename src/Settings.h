@@ -85,16 +85,18 @@ public:
   bool           m_useFavourites     = false;
   bool           m_useFavouritesFile = false;
   std::string    m_favouritesFile;
-  Timeshift      m_timeshift           = Timeshift::OFF;
-  std::string    m_timeshiftBufferPath = DEFAULT_TSBUFFERPATH;
-  RecordGrouping m_groupRecordings     = RecordGrouping::DISABLED;
-  EdlSettings    m_edl                 = { false, 0, 0 };
-  PrependOutline m_prependOutline      = PrependOutline::IN_EPG;
-  bool           m_lowPerformance      = false;
-  int            m_readTimeout         = 0;
-  int            m_streamReadChunkSize = 0;
-  Transcoding    m_transcoding         = Transcoding::OFF;
+  Timeshift      m_timeshift            = Timeshift::OFF;
+  std::string    m_timeshiftBufferPath  = DEFAULT_TSBUFFERPATH;
+  RecordGrouping m_groupRecordings      = RecordGrouping::DISABLED;
+  EdlSettings    m_edl                  = { false, 0, 0 };
+  PrependOutline m_prependOutline       = PrependOutline::IN_EPG;
+  bool           m_lowPerformance       = false;
+  int            m_readTimeout          = 0;
+  int            m_streamReadChunkSize  = 0;
+  Transcoding    m_transcoding          = Transcoding::OFF;
+  Transcoding    m_recordingTranscoding = Transcoding::OFF;
   std::string    m_transcodingParams;
+  std::string    m_recordingTranscodingParams;
 
   /* settings fetched from backend */
   int m_priority;

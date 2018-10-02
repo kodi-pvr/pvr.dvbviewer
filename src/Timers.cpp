@@ -41,7 +41,7 @@ bool Timer::isScheduled() const
       || state == PVR_TIMER_STATE_RECORDING;
 }
 
-bool Timer::isRunning(std::time_t *now, std::string *channelName) const
+bool Timer::isRunning(const std::time_t *now, const std::string *channelName) const
 {
   if (!isScheduled())
     return false;
