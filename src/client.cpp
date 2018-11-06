@@ -383,7 +383,7 @@ PVR_ERROR GetStreamTimes(PVR_STREAM_TIMES *times)
     times->ptsStart  = 0;
     times->ptsBegin  = 0;
     times->ptsEnd    = (!strReader->IsTimeshifting()) ? 0
-      : (strReader->TimeEnd() - strReader->TimeStart()) * DVD_TIME_BASE;
+      : static_cast<int64_t>(strReader->TimeEnd() - strReader->TimeStart()) * DVD_TIME_BASE;
     return PVR_ERROR_NO_ERROR;
   }
   return PVR_ERROR_NOT_IMPLEMENTED;
