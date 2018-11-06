@@ -1,3 +1,6 @@
+3.7.5
+[added] Add support for (on-the-fly) transcoding of recordings
+
 3.7.2
 [fixed] Hidden profile id setting
 [fixed] Assignment error
