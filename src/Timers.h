@@ -73,8 +73,10 @@ public:
   unsigned int marginStart = 0;
   unsigned int marginEnd = 0;
   unsigned int weekdays;
+  std::time_t  realStart = 0; // real start time. only available if timer is running.
+                              // might differ from start if added in the middle of a show
 
-  std::string source;
+  std::string source; // holds autotimer.title if created by an autotimer
 
   PVR_TIMER_STATE state;
   SyncState syncState = SyncState::NEW;

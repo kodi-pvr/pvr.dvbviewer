@@ -662,7 +662,7 @@ dvbviewer::RecordingReader *Dvb::OpenRecordedStream(const PVR_RECORDING &recinfo
           return timer.isRunning(&now, &channelName);
         });
     if (timer)
-      startEndTimes = std::make_pair(timer->start, timer->end);
+      startEndTimes = std::make_pair(timer->realStart, timer->end);
   }
 
   return new RecordingReader(url, startEndTimes);

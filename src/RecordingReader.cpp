@@ -55,7 +55,7 @@ ssize_t RecordingReader::ReadData(unsigned char *buffer, unsigned int size)
       XBMC->SeekFile(m_readHandle, m_pos, SEEK_SET);
 
       // random value (10 MiB) we choose to switch to fast reopen interval
-      bool nearEnd = m_len - m_pos <= 10 * 1024 * 1024;
+      bool nearEnd = (m_len - m_pos <= 10 * 1024 * 1024);
       m_nextReopen = now  + std::chrono::seconds(
           nearEnd ? REOPEN_INTERVAL_FAST : REOPEN_INTERVAL);
 

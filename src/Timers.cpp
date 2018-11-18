@@ -528,6 +528,12 @@ Timers::Error Timers::ParseTimerFrom(const TiXmlElement *xml, unsigned int pos,
   timer.start = ParseDateTime(startDate, false);
   timer.end   = timer.start + atoi(xml->Attribute("Dur")) * 60;
 
+  if (const auto *stat = xml->FirstChildElement("Recordstat"))
+  {
+    startDate = stat->Attribute("StartTime");
+    timer.realStart = ParseDateTime(startDate, false);
+  }
+
   xml->QueryUnsignedAttribute("PreEPG",  &timer.marginStart);
   xml->QueryUnsignedAttribute("PostEPG", &timer.marginEnd);
   xml->QueryIntAttribute("Priority", &timer.priority);
