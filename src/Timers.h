@@ -132,8 +132,8 @@ public:
   Timer *GetTimer(std::function<bool (const Timer&)> func);
   AutoTimer *GetAutoTimer(std::function<bool (const AutoTimer&)> func);
 
-  unsigned int GetTimerCount();
-  unsigned int GetAutoTimerCount();
+  std::size_t GetTimerCount();
+  std::size_t GetAutoTimerCount();
 
   void GetTimers(std::vector<PVR_TIMER> &timers);
   void GetAutoTimers(std::vector<PVR_TIMER> &timers);
@@ -158,9 +158,9 @@ private:
   bool IsAutoTimer(const PVR_TIMER &timer);
 
   Error ParseTimerFrom(const PVR_TIMER &tmr, Timer &timer);
-  Error ParseTimerFrom(const TiXmlElement *xml, std::size_t pos, Timer &timer);
+  Error ParseTimerFrom(const TiXmlElement *xml, unsigned int pos, Timer &timer);
   Error ParseTimerFrom(const PVR_TIMER &tmr, AutoTimer &timer);
-  Error ParseTimerFrom(const TiXmlElement *xml, std::size_t pos, AutoTimer &timer);
+  Error ParseTimerFrom(const TiXmlElement *xml, unsigned int pos, AutoTimer &timer);
 
   void ParseDate(const std::string &date, std::tm &timeinfo);
   void ParseTime(const std::string &time, std::tm &timeinfo);

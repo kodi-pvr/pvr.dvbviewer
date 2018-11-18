@@ -40,7 +40,7 @@ namespace dvbviewer
   long UTCOffset();
   void RemoveNullChars(std::string& str);
   std::string ConvertToUtf8(const std::string& src);
-}; // namespace dvbviewer
+} // namespace dvbviewer
 
 /* forward declaration */
 class DvbGroup;

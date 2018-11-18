@@ -355,7 +355,7 @@ bool CanSeekStream(void)
 
 int ReadLiveStream(unsigned char *buffer, unsigned int size)
 {
-  return (strReader) ? strReader->ReadData(buffer, size) : 0;
+  return (strReader) ? static_cast<int>(strReader->ReadData(buffer, size)) : 0;
 }
 
 long long SeekLiveStream(long long position, int whence)
@@ -447,7 +447,7 @@ int ReadRecordedStream(unsigned char *buffer, unsigned int size)
   if (!recReader)
     return 0;
 
-  return recReader->ReadData(buffer, size);
+  return static_cast<int>(recReader->ReadData(buffer, size));
 }
 
 long long SeekRecordedStream(long long position, int whence)
@@ -539,7 +539,7 @@ PVR_ERROR IsEPGTagRecordable(const EPG_TAG*, bool*) { return PVR_ERROR_NOT_IMPLE
 PVR_ERROR GetEPGTagStreamProperties(const EPG_TAG*, PVR_NAMED_VALUE*, unsigned int*) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR GetEPGTagEdl(const EPG_TAG* epgTag, PVR_EDL_ENTRY edl[], int *size) { return PVR_ERROR_NOT_IMPLEMENTED; }
 bool SeekTime(double, bool, double*) { return false; }
-void SetSpeed(int) {};
+void SetSpeed(int) {}
 PVR_ERROR GetDescrambleInfo(PVR_DESCRAMBLE_INFO*) { return PVR_ERROR_NOT_IMPLEMENTED; }
 
 }

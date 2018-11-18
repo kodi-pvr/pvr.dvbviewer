@@ -365,7 +365,7 @@ void Dvb::GetTimerTypes(PVR_TIMER_TYPE types[], int *size)
   int i = 0;
   for (auto &timer : timerTypes)
     types[i++] = timer;
-  *size = timerTypes.size();
+  *size = static_cast<int>(timerTypes.size());
   XBMC->Log(LOG_DEBUG, "transfered %u timers", *size);
 }
 
@@ -425,7 +425,7 @@ bool Dvb::DeleteTimer(const PVR_TIMER &timer)
 unsigned int Dvb::GetTimersAmount()
 {
   CLockObject lock(m_mutex);
-  return m_timers.GetTimerCount();
+  return static_cast<int>(m_timers.GetTimerCount());
 }
 
 /***************************************************************************
@@ -849,7 +849,7 @@ void *Dvb::Process()
         m_mutex.Unlock();
         Sleep(8000); /* Sleep enough time to let the media server grab the EPG data */
         m_mutex.Lock();
-        XBMC->Log(LOG_INFO, "Performing forced EPG update!");
+        XBMC->Log(LOG_INFO, "Triggering EPG update on current channel!");
         PVR->TriggerEpgUpdate(m_currentChannel);
       }
 
@@ -859,7 +859,7 @@ void *Dvb::Process()
         m_mutex.Unlock();
         Sleep(1000);
         m_mutex.Lock();
-        XBMC->Log(LOG_INFO, "Performing forced timer updates!");
+        XBMC->Log(LOG_INFO, "Running forced timer updates!");
         TimerUpdates();
         update = 0;
       }
@@ -867,7 +867,7 @@ void *Dvb::Process()
       if (update >= interval)
       {
         update = 0;
-        XBMC->Log(LOG_INFO, "Performing timer/recording updates!");
+        XBMC->Log(LOG_INFO, "Running timer + recording updates!");
         TimerUpdates();
         PVR->TriggerRecordingUpdate();
 
@@ -969,7 +969,7 @@ Dvb::httpResponse Dvb::GetFromAPI(const char* format, ...)
   if (res.file)
   {
     char buffer[1024];
-    while (int bytesRead = XBMC->ReadFile(res.file, buffer, 1024))
+    while (ssize_t bytesRead = XBMC->ReadFile(res.file, buffer, 1024))
       res.content.append(buffer, bytesRead);
     XBMC->CloseFile(res.file);
     res.file = nullptr;
@@ -1149,7 +1149,7 @@ bool Dvb::LoadChannels()
 
     std::string content;
     char buffer[1024];
-    while (int bytesRead = XBMC->ReadFile(fileHandle, buffer, 1024))
+    while (ssize_t bytesRead = XBMC->ReadFile(fileHandle, buffer, 1024))
       content.append(buffer, bytesRead);
     XBMC->CloseFile(fileHandle);
 
@@ -1256,7 +1256,7 @@ bool Dvb::LoadChannels()
     }
   }
 
-  XBMC->Log(LOG_INFO, "Loaded (%u/%u) channels in (%u/%u) groups",
+  XBMC->Log(LOG_INFO, "Loaded (%u/%lu) channels in (%u/%lu) groups",
       m_channelAmount, m_channels.size(), m_groupAmount, m_groups.size());
   // force channel sync as stream urls may have changed (e.g. rstp on/off)
   PVR->TriggerChannelUpdate();

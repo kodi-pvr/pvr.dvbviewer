@@ -254,8 +254,8 @@ Timers::Error Timers::RefreshTimers(const char *name, const char *endpoint,
     timer.second.syncState = T::SyncState::NONE;
 
   std::vector<T> newTimers;
-  unsigned int updated = 0, unchanged = 0;
-  std::size_t pos = 0;
+  std::size_t updated = 0, unchanged = 0;
+  unsigned int pos = 0;
   for (const TiXmlElement *xTimer = doc.RootElement()->FirstChildElement(xmltag);
     xTimer; xTimer = xTimer->NextSiblingElement(xmltag), ++pos)
   {
@@ -287,7 +287,7 @@ Timers::Error Timers::RefreshTimers(const char *name, const char *endpoint,
       newTimers.push_back(newTimer);
   }
 
-  unsigned int removed = 0;
+  std::size_t removed = 0;
   for (auto it = timerlist.begin(); it != timerlist.end();)
   {
     const T &timer = it->second;
@@ -302,7 +302,7 @@ Timers::Error Timers::RefreshTimers(const char *name, const char *endpoint,
       ++it;
   }
 
-  unsigned int added = newTimers.size();
+  std::size_t added = newTimers.size();
   for (auto &newTimer : newTimers)
   {
     newTimer.id = m_nextTimerId++;
@@ -311,8 +311,8 @@ Timers::Error Timers::RefreshTimers(const char *name, const char *endpoint,
     timerlist[newTimer.id] = newTimer;
   }
 
-  XBMC->Log(LOG_DEBUG, "%s list update: removed=%u, unchanged=%u, updated=%u"
-      ", added=%u", name, removed, unchanged, updated, added);
+  XBMC->Log(LOG_DEBUG, "%s list update: removed=%lu, unchanged=%lu, updated=%lu"
+      ", added=%lu", name, removed, unchanged, updated, added);
   changes = (removed || updated || added);
   return SUCCESS;
 }
@@ -337,7 +337,7 @@ Timer *Timers::GetTimer(std::function<bool (const Timer&)> func)
   return GetTimer<Timer>(func, m_timers);
 }
 
-unsigned int Timers::GetTimerCount()
+std::size_t Timers::GetTimerCount()
 {
   return m_timers.size();
 }
@@ -494,7 +494,7 @@ Timers::Error Timers::RefreshTimers(bool &changes)
       m_timers, changes);
 }
 
-Timers::Error Timers::ParseTimerFrom(const TiXmlElement *xml, std::size_t pos,
+Timers::Error Timers::ParseTimerFrom(const TiXmlElement *xml, unsigned int pos,
     Timer &timer)
 {
   if (!XMLUtils::GetString(xml, "GUID", timer.guid))
@@ -608,7 +608,7 @@ AutoTimer *Timers::GetAutoTimer(std::function<bool (const AutoTimer&)> func)
   return GetTimer<AutoTimer>(func, m_autotimers);
 }
 
-unsigned int Timers::GetAutoTimerCount()
+std::size_t Timers::GetAutoTimerCount()
 {
   return m_autotimers.size();
 }
@@ -793,7 +793,7 @@ Timers::Error Timers::RefreshAutoTimers(bool &changes)
       "api/searchlist.html", "Search", m_autotimers, changes);
 }
 
-Timers::Error Timers::ParseTimerFrom(const TiXmlElement *xml, std::size_t pos,
+Timers::Error Timers::ParseTimerFrom(const TiXmlElement *xml, unsigned int pos,
     AutoTimer &timer)
 {
   if (xml->QueryStringAttribute("Name", &timer.title) != TIXML_SUCCESS)
