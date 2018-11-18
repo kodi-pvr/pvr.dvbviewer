@@ -12,16 +12,18 @@
 using namespace dvbviewer;
 using namespace ADDON;
 
-RecordingReader::RecordingReader(const std::string &streamURL, std::time_t end)
-  : m_streamURL(streamURL), m_end(end)
+RecordingReader::RecordingReader(const std::string &streamURL,
+    const std::pair<std::time_t, std::time_t> &startEnd)
+  : m_streamURL(streamURL), m_timeStart(startEnd.first), m_timeEnd(startEnd.second)
 {
   m_readHandle = XBMC->CURLCreate(m_streamURL.c_str());
   (void)XBMC->CURLOpen(m_readHandle, XFILE::READ_NO_CACHE | XFILE::READ_AUDIO_VIDEO);
   m_len = XBMC->GetFileLength(m_readHandle);
   m_nextReopen = std::chrono::steady_clock::now()
       + std::chrono::seconds(REOPEN_INTERVAL);
-  XBMC->Log(LOG_DEBUG, "RecordingReader: Started; url=%s, end=%u",
-      m_streamURL.c_str(), m_end);
+  m_timeRecorded = std::time(nullptr);
+  XBMC->Log(LOG_DEBUG, "RecordingReader: Started; url=%s, start=%u, end=%u",
+      m_streamURL.c_str(), m_timeStart, m_timeEnd);
 }
 
 RecordingReader::~RecordingReader(void)
@@ -39,7 +41,7 @@ bool RecordingReader::Start()
 ssize_t RecordingReader::ReadData(unsigned char *buffer, unsigned int size)
 {
   /* check for playback of ongoing recording */
-  if (m_end)
+  if (m_timeEnd)
   {
     std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
     if (m_pos == m_len || now > m_nextReopen)
@@ -49,6 +51,7 @@ ssize_t RecordingReader::ReadData(unsigned char *buffer, unsigned int size)
       (void)XBMC->CURLOpen(m_readHandle, XFILE::READ_REOPEN | XFILE::READ_NO_CACHE
           | XFILE::READ_AUDIO_VIDEO);
       m_len = XBMC->GetFileLength(m_readHandle);
+      m_timeRecorded = std::time(nullptr);
       XBMC->SeekFile(m_readHandle, m_pos, SEEK_SET);
 
       // random value (10 MiB) we choose to switch to fast reopen interval
@@ -57,8 +60,11 @@ ssize_t RecordingReader::ReadData(unsigned char *buffer, unsigned int size)
           nearEnd ? REOPEN_INTERVAL_FAST : REOPEN_INTERVAL);
 
       /* recording has finished */
-      if (std::time(nullptr) > m_end)
-        m_end = 0;
+      if (m_timeRecorded > m_timeEnd)
+      {
+        m_timeRecorded = m_timeEnd;
+        m_timeEnd = 0;
+      }
     }
   }
 
@@ -85,4 +91,14 @@ int64_t RecordingReader::Position()
 int64_t RecordingReader::Length()
 {
   return m_len;
+}
+
+std::time_t RecordingReader::TimeStart()
+{
+  return m_timeStart;
+}
+
+std::time_t RecordingReader::TimeRecorded()
+{
+  return m_timeRecorded;
 }

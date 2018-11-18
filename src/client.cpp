@@ -377,16 +377,30 @@ PVR_ERROR GetStreamTimes(PVR_STREAM_TIMES *times)
 {
   if (!times)
     return PVR_ERROR_INVALID_PARAMETERS;
+
+  int64_t timeStart, timeEnd;
   if (strReader)
   {
-    times->startTime = strReader->TimeStart();
-    times->ptsStart  = 0;
-    times->ptsBegin  = 0;
-    times->ptsEnd    = (!strReader->IsTimeshifting()) ? 0
-      : static_cast<int64_t>(strReader->TimeEnd() - strReader->TimeStart()) * DVD_TIME_BASE;
-    return PVR_ERROR_NO_ERROR;
+    timeStart = timeEnd = 0;
+    if (strReader->IsTimeshifting())
+    {
+      timeStart = strReader->TimeStart();
+      timeEnd   = strReader->TimeEnd();
+    }
   }
-  return PVR_ERROR_NOT_IMPLEMENTED;
+  else if (recReader && recReader->TimeStart() > 0)
+  {
+    timeStart = recReader->TimeStart();
+    timeEnd   = recReader->TimeRecorded();
+  }
+  else
+    return PVR_ERROR_NOT_IMPLEMENTED;
+
+  times->startTime = timeStart;
+  times->ptsStart  = 0;
+  times->ptsBegin  = 0;
+  times->ptsEnd    = (timeEnd - timeStart) * DVD_TIME_BASE;
+  return PVR_ERROR_NO_ERROR;
 }
 
 void PauseStream(bool paused)

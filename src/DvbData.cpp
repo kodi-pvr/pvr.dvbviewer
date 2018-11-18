@@ -651,20 +651,21 @@ dvbviewer::RecordingReader *Dvb::OpenRecordedStream(const PVR_RECORDING &recinfo
       break;
   }
 
+  std::pair<std::time_t, std::time_t> startEndTimes(0, 0);
   /* recording reopen only works in non-transcoding case */
-  std::time_t now = std::time(nullptr), end = 0;
   if (m_settings.m_recordingTranscoding == Transcoding::OFF)
   {
+    std::time_t now = std::time(nullptr);
     const std::string channelName = recinfo.strChannelName;
     auto timer = m_timers.GetTimer([&](const Timer &timer)
         {
           return timer.isRunning(&now, &channelName);
         });
     if (timer)
-      end = timer->end;
+      startEndTimes = std::make_pair(timer->start, timer->end);
   }
 
-  return new RecordingReader(url, end);
+  return new RecordingReader(url, startEndTimes);
 }
 
 bool Dvb::GetRecordingEdl(const PVR_RECORDING &recinfo, PVR_EDL_ENTRY edl[],
