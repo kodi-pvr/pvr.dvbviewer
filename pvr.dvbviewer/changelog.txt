@@ -1,3 +1,6 @@
+3.7.6
+[fixed] Seektimes for ongoing recordings
+
 3.7.5
 [added] Add support for (on-the-fly) transcoding of recordings
 
