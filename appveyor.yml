@@ -133,7 +133,7 @@ after_build:
   - ps: |
       # rename and upload package
       Set-Location "$env:ROOT/zips"
-      Move-Item "$env:APPVEYOR_PROJECT_NAME-*.zip" "$env:APPVEYOR_PROJECT_NAME-$env:PLATFORM.zip"
+      Move-Item "$env:APPVEYOR_PROJECT_NAME+*/$env:APPVEYOR_PROJECT_NAME-*.zip" "$env:APPVEYOR_PROJECT_NAME-$env:PLATFORM.zip"
       Get-ChildItem *.zip | % { Push-AppveyorArtifact $_.FullName -FileName $_.Name }
 
 test: off
