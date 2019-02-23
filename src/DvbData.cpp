@@ -356,7 +356,7 @@ unsigned int Dvb::GetChannelGroupsAmount()
  **************************************************************************/
 void Dvb::GetTimerTypes(PVR_TIMER_TYPE types[], int *size)
 {
-  std::vector<PVR_TIMER_TYPE> timerTypes;
+  std::vector< std::unique_ptr<PVR_TIMER_TYPE> > timerTypes;
   {
     CLockObject lock(m_mutex);
     m_timers.GetTimerTypes(timerTypes);
@@ -364,7 +364,7 @@ void Dvb::GetTimerTypes(PVR_TIMER_TYPE types[], int *size)
 
   int i = 0;
   for (auto &timer : timerTypes)
-    types[i++] = timer;
+    types[i++] = *timer;
   *size = static_cast<int>(timerTypes.size());
   XBMC->Log(LOG_DEBUG, "transfered %u timers", *size);
 }

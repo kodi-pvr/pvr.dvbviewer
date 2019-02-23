@@ -128,7 +128,7 @@ public:
     : m_cli(cli)
   {};
 
-  void GetTimerTypes(std::vector<PVR_TIMER_TYPE> &types);
+  void GetTimerTypes(std::vector< std::unique_ptr<PVR_TIMER_TYPE> > &types);
   Error RefreshAllTimers(bool &changes);
 
   Timer *GetTimer(std::function<bool (const Timer&)> func);

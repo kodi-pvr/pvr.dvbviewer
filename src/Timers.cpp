@@ -52,7 +52,7 @@ bool Timer::isRunning(const std::time_t *now, const std::string *channelName) co
   return true;
 }
 
-void Timers::GetTimerTypes(std::vector<PVR_TIMER_TYPE> &types)
+void Timers::GetTimerTypes(std::vector< std::unique_ptr<PVR_TIMER_TYPE> > &types)
 {
   struct TimerType
     : PVR_TIMER_TYPE
@@ -124,7 +124,7 @@ void Timers::GetTimerTypes(std::vector<PVR_TIMER_TYPE> &types)
     groupValues.emplace_back(groupValues.size(), recf);
 
   /* One-shot manual (time and channel based) */
-  types.emplace_back(TimerType(
+  types.emplace_back(std::unique_ptr<TimerType>(new TimerType(
       Timer::Type::MANUAL_ONCE,
       PVR_TIMER_TYPE_IS_MANUAL                 |
       PVR_TIMER_TYPE_SUPPORTS_ENABLE_DISABLE   |
@@ -135,10 +135,10 @@ void Timers::GetTimerTypes(std::vector<PVR_TIMER_TYPE> &types)
       PVR_TIMER_TYPE_SUPPORTS_PRIORITY         |
       PVR_TIMER_TYPE_SUPPORTS_RECORDING_GROUP,
       "", /* Let Kodi generate the description */
-      priorityValues, groupValues));
+      priorityValues, groupValues)));
 
    /* Repeating manual (time and channel based) */
-  types.emplace_back(TimerType(
+  types.emplace_back(std::unique_ptr<TimerType>(new TimerType(
       Timer::Type::MANUAL_REPEATING,
       PVR_TIMER_TYPE_IS_MANUAL                 |
       PVR_TIMER_TYPE_IS_REPEATING              |
@@ -151,10 +151,10 @@ void Timers::GetTimerTypes(std::vector<PVR_TIMER_TYPE> &types)
       PVR_TIMER_TYPE_SUPPORTS_PRIORITY         |
       PVR_TIMER_TYPE_SUPPORTS_RECORDING_GROUP,
       "", /* Let Kodi generate the description */
-      priorityValues, groupValues));
+      priorityValues, groupValues)));
 
    /* One-shot epg based */
-  types.emplace_back(TimerType(
+  types.emplace_back(std::unique_ptr<TimerType>(new TimerType(
       Timer::Type::EPG_ONCE,
       PVR_TIMER_TYPE_SUPPORTS_ENABLE_DISABLE   |
       PVR_TIMER_TYPE_SUPPORTS_CHANNELS         |
@@ -164,7 +164,7 @@ void Timers::GetTimerTypes(std::vector<PVR_TIMER_TYPE> &types)
       PVR_TIMER_TYPE_SUPPORTS_PRIORITY         |
       PVR_TIMER_TYPE_REQUIRES_EPG_TAG_ON_CREATE,
       "", /* Let Kodi generate the description */
-      priorityValues));
+      priorityValues)));
 
   if (CanAutoTimers())
   {
@@ -178,7 +178,7 @@ void Timers::GetTimerTypes(std::vector<PVR_TIMER_TYPE> &types)
     };
 
      /* epg auto search */
-    types.emplace_back(TimerType(
+    types.emplace_back(std::unique_ptr<TimerType>(new TimerType(
         Timer::Type::EPG_AUTO_SEARCH,
         PVR_TIMER_TYPE_IS_REPEATING                |
         PVR_TIMER_TYPE_SUPPORTS_ENABLE_DISABLE     |
@@ -197,12 +197,12 @@ void Timers::GetTimerTypes(std::vector<PVR_TIMER_TYPE> &types)
         PVR_TIMER_TYPE_SUPPORTS_RECORDING_GROUP    |
         PVR_TIMER_TYPE_SUPPORTS_RECORD_ONLY_NEW_EPISODES,
         "", /* Let Kodi generate the description */
-        priorityValues, groupValues, deDupValues));
-    types.back().iPreventDuplicateEpisodesDefault =
+        priorityValues, groupValues, deDupValues)));
+    types.back()->iPreventDuplicateEpisodesDefault =
         AutoTimer::DeDup::CHECK_TITLE_SUBTITLE;
 
     /* One-shot created by epg auto search */
-    types.emplace_back(TimerType(
+    types.emplace_back(std::unique_ptr<TimerType>(new TimerType(
         Timer::Type::EPG_AUTO_ONCE,
         PVR_TIMER_TYPE_IS_MANUAL                 |
         PVR_TIMER_TYPE_FORBIDS_NEW_INSTANCES     |
@@ -214,7 +214,7 @@ void Timers::GetTimerTypes(std::vector<PVR_TIMER_TYPE> &types)
         PVR_TIMER_TYPE_SUPPORTS_PRIORITY         |
         PVR_TIMER_TYPE_SUPPORTS_RECORDING_GROUP,
         LocalizedString(30420),
-        priorityValues, groupValues));
+        priorityValues, groupValues)));
   }
 }
 
