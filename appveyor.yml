@@ -3,7 +3,7 @@ matrix:
 
 environment:
   CONFIG: Debug
-  KODI_BRANCH: master # usually synced with APPVEYOR_REPO_BRANCH
+  KODI_BRANCH: Leia # usually synced with APPVEYOR_REPO_BRANCH
   matrix:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
       PLATFORM: win32
