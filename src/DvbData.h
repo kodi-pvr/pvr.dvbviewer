@@ -144,7 +144,7 @@ public:
 
   unsigned int GetCurrentClientChannel(void);
   bool GetChannels(ADDON_HANDLE handle, bool radio);
-  bool GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channelinfo,
+  bool GetEPGForChannel(ADDON_HANDLE handle, int iChannelUid,
       std::time_t start, std::time_t end);
   unsigned int GetChannelsAmount(void);
 
