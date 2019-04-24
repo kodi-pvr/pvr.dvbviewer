@@ -206,11 +206,11 @@ PVR_ERROR GetChannels(ADDON_HANDLE handle, bool radio)
     ? PVR_ERROR_NO_ERROR : PVR_ERROR_SERVER_ERROR;
 }
 
-PVR_ERROR GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channel,
+PVR_ERROR GetEPGForChannel(ADDON_HANDLE handle, int iChannelUid,
     time_t start, time_t end)
 {
   return (DvbData && DvbData->IsConnected()
-      && DvbData->GetEPGForChannel(handle, channel, start, end))
+      && DvbData->GetEPGForChannel(handle, iChannelUid, start, end))
     ? PVR_ERROR_NO_ERROR : PVR_ERROR_SERVER_ERROR;
 }
 
@@ -366,11 +366,6 @@ long long SeekLiveStream(long long position, int whence)
 long long LengthLiveStream(void)
 {
   return (strReader) ? strReader->Length() : -1;
-}
-
-bool IsTimeshifting(void)
-{
-  return (strReader && strReader->IsTimeshifting());
 }
 
 PVR_ERROR GetStreamTimes(PVR_STREAM_TIMES *times)
@@ -542,6 +537,7 @@ DemuxPacket *DemuxRead(void) { return NULL; }
 void DemuxAbort(void) {}
 void DemuxReset(void) {}
 void DemuxFlush(void) {}
+void FillBuffer(bool mode) {}
 PVR_ERROR GetRecordingStreamProperties(const PVR_RECORDING*, PVR_NAMED_VALUE*, unsigned int*) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR SetRecordingLifetime(const PVR_RECORDING*) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR RenameRecording(const PVR_RECORDING&) { return PVR_ERROR_NOT_IMPLEMENTED; }

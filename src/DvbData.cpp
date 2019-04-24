@@ -201,10 +201,10 @@ bool Dvb::GetChannels(ADDON_HANDLE handle, bool radio)
   return true;
 }
 
-bool Dvb::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channelinfo,
+bool Dvb::GetEPGForChannel(ADDON_HANDLE handle, int iChannelUid,
     std::time_t start, std::time_t end)
 {
-  DvbChannel *channel = GetChannel(channelinfo.iUniqueId);
+  DvbChannel *channel = GetChannel(iChannelUid);
 
   const httpResponse &res = GetFromAPI("api/epg.html?lvl=2&channel=%" PRIu64
       "&start=%f&end=%f", channel->epgId, start/86400.0 + DELPHI_DATE,
@@ -269,7 +269,7 @@ bool Dvb::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channelinfo,
     memset(&broadcast, 0, sizeof(EPG_TAG));
     broadcast.iUniqueBroadcastId  = entry.id;
     broadcast.strTitle            = entry.title.c_str();
-    broadcast.iUniqueChannelId    = channelinfo.iUniqueId;
+    broadcast.iUniqueChannelId    = iChannelUid;
     broadcast.startTime           = entry.start;
     broadcast.endTime             = entry.end;
     broadcast.strPlotOutline      = entry.plotOutline.c_str();

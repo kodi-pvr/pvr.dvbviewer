@@ -1,3 +1,6 @@
+4.0.0
+[updated] to PVR addon API v6.0.0
+
 3.7.12
 [fixed] thread stack overflow on OS X
 
