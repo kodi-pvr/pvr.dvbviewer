@@ -1,6 +1,6 @@
 #pragma once
 
-#include "libXBMC_addon.h"
+#include "kodi/libXBMC_addon.h"
 
 #include <ctime>
 

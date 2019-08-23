@@ -26,7 +26,7 @@
 #include "TimeshiftBuffer.h"
 #include "RecordingReader.h"
 
-#include "xbmc_pvr_dll.h"
+#include "kodi/xbmc_pvr_dll.h"
 #include "p8-platform/util/util.h"
 #include "p8-platform/util/StringUtils.h"
 
