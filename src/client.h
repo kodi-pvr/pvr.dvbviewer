@@ -19,7 +19,7 @@
  *
  */
 
-#include "libXBMC_pvr.h"
+#include "kodi/libXBMC_pvr.h"
 
 #ifndef _UNUSED
 #if defined(__GNUC__)

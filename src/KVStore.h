@@ -1,6 +1,6 @@
 #pragma once
 
-#include "libXBMC_pvr.h"
+#include "kodi/libXBMC_pvr.h"
 
 #include <atomic>
 #include <chrono>

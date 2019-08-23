@@ -5,7 +5,7 @@
 #include "Settings.h"
 #include "Timers.h"
 
-#include "libXBMC_pvr.h"
+#include "kodi/libXBMC_pvr.h"
 #include "p8-platform/threads/threads.h"
 
 #include <list>

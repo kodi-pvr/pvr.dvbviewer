@@ -1,6 +1,6 @@
 #pragma once
 
-#include "xbmc_addon_types.h"
+#include "kodi/xbmc_addon_types.h"
 
 #include <string>
 
