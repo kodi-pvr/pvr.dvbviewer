@@ -1,3 +1,8 @@
+4.0.1
+[fixed] package search for TinyXML
+[updated] build system version
+[updated] header include way
+
 4.0.0
 [updated] to PVR addon API v6.0.0
 
