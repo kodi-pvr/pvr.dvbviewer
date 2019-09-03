@@ -1,3 +1,6 @@
+4.1.0
+[updated] Recompile for 6.1.0 PVR Addon API compatibility
+
 4.0.1
 [fixed] package search for TinyXML
 [updated] build system version
