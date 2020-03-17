@@ -277,6 +277,9 @@ bool Dvb::GetEPGForChannel(ADDON_HANDLE handle, int iChannelUid,
     broadcast.iGenreType          = entry.genre & 0xF0;
     broadcast.iGenreSubType       = entry.genre & 0x0F;
     broadcast.iFlags              = EPG_TAG_FLAG_UNDEFINED;
+    broadcast.iSeriesNumber = EPG_TAG_INVALID_SERIES_EPISODE;
+    broadcast.iEpisodeNumber = EPG_TAG_INVALID_SERIES_EPISODE;
+    broadcast.iEpisodePartNumber = EPG_TAG_INVALID_SERIES_EPISODE;
 
     PVR->TransferEpgEntry(handle, &broadcast);
     ++numEPG;
@@ -580,6 +583,8 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
     recinfo.iLastPlayedPosition = recording.lastPlayPosition;
     recinfo.iChannelUid         = PVR_CHANNEL_INVALID_UID;
     recinfo.channelType         = PVR_RECORDING_CHANNEL_TYPE_UNKNOWN;
+    recinfo.iSeriesNumber = PVR_RECORDING_INVALID_SERIES_EPISODE;
+    recinfo.iEpisodeNumber = PVR_RECORDING_INVALID_SERIES_EPISODE;
 
     if (recording.channel)
     {
