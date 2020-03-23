@@ -1,3 +1,4 @@
+[![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](LICENSE.md)
 [![Build Status](https://travis-ci.org/kodi-pvr/pvr.dvbviewer.svg?branch=master)](https://travis-ci.org/kodi-pvr/pvr.dvbviewer)
 [![Build Status](https://ci.appveyor.com/api/projects/status/github/manuelm/pvr.dvbviewer?svg=true)](https://ci.appveyor.com/project/manuelm/pvr.dvbviewer)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/5120/badge.svg)](https://scan.coverity.com/projects/5120)
