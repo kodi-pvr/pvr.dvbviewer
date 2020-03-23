@@ -3,7 +3,7 @@ Priority: extra
 Maintainer: Manuel Mausz <manuel-kodi@mausz.at>
 Build-Depends: debhelper (>= 9.0.0), cmake, libkodiplatform-dev (>= 17.1.0),
                kodi-addon-dev
-Standards-Version: 3.9.4
+Standards-Version: 4.1.2
 Section: libs
 
 Package: kodi-pvr-dvbviewer
