@@ -4,14 +4,14 @@
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/5120/badge.svg)](https://scan.coverity.com/projects/5120)
 
 # DVBViewer PVR
-DVBViewer PVR client addon for [Kodi](http://kodi.tv)
+DVBViewer PVR client addon for [Kodi](https://kodi.tv)
 
 supporting streaming of Live TV & Recordings, EPG, Timers.
 
 ## Build instructions
 
 When building the addon you have to use the correct branch depending on which version of Kodi you're building against.
-For example, if you're building the `master` branch of Kodi you should checkout the `master` branch of this repository.
+If you want to build the addon to be compatible with the latest kodi `master` commit, you need to checkout the branch with the current kodi codename.
 Also make sure you follow this README from the branch in question.
 
 ### Linux
@@ -27,7 +27,7 @@ the addon will be available as a system addon.
 
 ##### Useful links
 
-* [DVBViewer PVR setup guide] (http://kodi.wiki/view/Add-on:DVBViewer_Client)
-* [DVBViewer PVR user support] (http://forum.kodi.tv/forumdisplay.php?fid=219)
-* [Kodi's PVR user support] (http://forum.kodi.tv/forumdisplay.php?fid=167)
-* [Kodi's PVR development support] (http://forum.kodi.tv/forumdisplay.php?fid=136)
+* [DVBViewer PVR setup guide] (https://kodi.wiki/view/Add-on:DVBViewer_Client)
+* [DVBViewer PVR user support] (https://forum.kodi.tv/forumdisplay.php?fid=219)
+* [Kodi's PVR user support] (https://forum.kodi.tv/forumdisplay.php?fid=167)
+* [Kodi's PVR development support] (https://forum.kodi.tv/forumdisplay.php?fid=136)
