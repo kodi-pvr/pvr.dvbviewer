@@ -1,3 +1,6 @@
+4.1.6:
+[updated] PVR API 6.3.0
+
 4.1.5:
 [added] GPL2 license file and show GPL2 on README.md
 [updated] Debian build code
