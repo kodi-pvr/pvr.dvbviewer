@@ -28,7 +28,7 @@ the addon will be available as a system addon.
 
 ##### Useful links
 
-* [DVBViewer PVR setup guide] (https://kodi.wiki/view/Add-on:DVBViewer_Client)
-* [DVBViewer PVR user support] (https://forum.kodi.tv/forumdisplay.php?fid=219)
-* [Kodi's PVR user support] (https://forum.kodi.tv/forumdisplay.php?fid=167)
-* [Kodi's PVR development support] (https://forum.kodi.tv/forumdisplay.php?fid=136)
+* [DVBViewer PVR setup guide](https://kodi.wiki/view/Add-on:DVBViewer_Client)
+* [DVBViewer PVR user support](https://forum.kodi.tv/forumdisplay.php?fid=219)
+* [Kodi's PVR user support](https://forum.kodi.tv/forumdisplay.php?fid=167)
+* [Kodi's PVR development support](https://forum.kodi.tv/forumdisplay.php?fid=136)
