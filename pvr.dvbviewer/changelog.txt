@@ -1,3 +1,9 @@
+4.1.7:
+[updated] PVR API 6.4.0
+[updated] Add license name, forum url and source url to addon.xml
+[updated] Change source license to use SPDX
+[updated] Minor cleanups
+
 4.1.6:
 [updated] PVR API 6.3.0
 
