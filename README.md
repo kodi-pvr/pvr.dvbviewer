@@ -1,4 +1,4 @@
-[![License: GPL v2+](https://img.shields.io/badge/License-GPL%20v2+-blue.svg)](LICENSE.md)
+[![License: GPL-2.0-or-later](https://img.shields.io/badge/License-GPL%20v2+-blue.svg)](LICENSE.md)
 [![Build Status](https://travis-ci.org/kodi-pvr/pvr.dvbviewer.svg?branch=Matrix)](https://travis-ci.org/kodi-pvr/pvr.dvbviewer/branches)
 [![Build Status](https://ci.appveyor.com/api/projects/status/github/manuelm/pvr.dvbviewer?svg=true)](https://ci.appveyor.com/project/manuelm/pvr.dvbviewer)
 [![Build Status](https://jenkins.kodi.tv/view/Addons/job/kodi-pvr/job/pvr.dvbviewer/job/Matrix/badge/icon)](https://jenkins.kodi.tv/blue/organizations/jenkins/kodi-pvr%2Fpvr.dvbviewer/branches/)
