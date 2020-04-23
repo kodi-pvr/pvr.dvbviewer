@@ -715,7 +715,7 @@ bool Dvb::GetRecordingEdl(const PVR_RECORDING &recinfo, PVR_EDL_ENTRY edl[],
     if (std::sscanf(buffer, "%f %f %u", &start, &stop, &type) < 2
       || type > PVR_EDL_TYPE_COMBREAK)
     {
-      XBMC->Log(LOG_NOTICE, "Unable to parse EDL entry at line %zu. Skipping.",
+      XBMC->Log(LOG_INFO, "Unable to parse EDL entry at line %zu. Skipping.",
           lineNumber);
       continue;
     }
@@ -953,7 +953,7 @@ Dvb::httpResponse Dvb::OpenFromAPI(const char* format, va_list args)
   // NOTE: this doesn't work for now. see above
   if (res.code >= 300)
   {
-    XBMC->Log(LOG_NOTICE, "Endpoint %s returned non-successful status code %hu",
+    XBMC->Log(LOG_INFO, "Endpoint %s returned non-successful status code %hu",
         url.c_str(), res.code);
     XBMC->CloseFile(file);
     return res;
@@ -1020,7 +1020,7 @@ bool Dvb::LoadChannels()
   TiXmlElement *root = doc.RootElement();
   if (!root->FirstChildElement("root"))
   {
-    XBMC->Log(LOG_NOTICE, "Channel list is empty");
+    XBMC->Log(LOG_INFO, "Channel list is empty");
     return true; // empty channel is fine
   }
 
@@ -1039,7 +1039,7 @@ bool Dvb::LoadChannels()
   // user wants to use remote favourites but doesn't have any defined
   if (m_settings.m_useFavourites && !m_settings.m_useFavouritesFile && !hasFavourites)
   {
-    XBMC->Log(LOG_NOTICE, "Favourites enabled but non defined");
+    XBMC->Log(LOG_INFO, "Favourites enabled but non defined");
     XBMC->QueueNotification(QUEUE_ERROR, LocalizedString(30509).c_str());
     return false; // empty favourites is an error
   }
@@ -1134,7 +1134,7 @@ bool Dvb::LoadChannels()
             });
         if (!channel)
         {
-          XBMC->Log(LOG_NOTICE, "Favourites contains unresolvable channel: %s."
+          XBMC->Log(LOG_INFO, "Favourites contains unresolvable channel: %s."
               " Ignoring.", xChannel->Attribute("name"));
           XBMC->QueueNotification(QUEUE_WARNING, LocalizedString(30508).c_str(),
               xChannel->Attribute("name"));
@@ -1240,7 +1240,7 @@ bool Dvb::LoadChannels()
         {
           const char *descr = (channelName.empty()) ? xEntry->GetText()
             : channelName.c_str();
-          XBMC->Log(LOG_NOTICE, "Favourites contains unresolvable channel: %s."
+          XBMC->Log(LOG_INFO, "Favourites contains unresolvable channel: %s."
               " Ignoring.", descr);
           XBMC->QueueNotification(QUEUE_WARNING, LocalizedString(30508).c_str(),
               descr);
@@ -1326,7 +1326,7 @@ bool Dvb::CheckBackendVersion()
   }
 
   m_backendVersion = 0;
-  XBMC->Log(LOG_NOTICE, "Checking backend version...");
+  XBMC->Log(LOG_INFO, "Checking backend version...");
   if (doc.RootElement()->QueryUnsignedAttribute("iver", &m_backendVersion)
       != TIXML_SUCCESS)
   {
@@ -1334,7 +1334,7 @@ bool Dvb::CheckBackendVersion()
     SetConnectionState(PVR_CONNECTION_STATE_SERVER_MISMATCH);
     return false;
   }
-  XBMC->Log(LOG_NOTICE, "Version: %u / %u.%u.%u.%u", m_backendVersion,
+  XBMC->Log(LOG_INFO, "Version: %u / %u.%u.%u.%u", m_backendVersion,
     m_backendVersion >> 24 & 0xFF, m_backendVersion >> 16 & 0xFF,
     m_backendVersion >> 8  & 0xFF, m_backendVersion & 0xFF);
 
@@ -1401,7 +1401,7 @@ bool Dvb::UpdateBackendStatus(bool updateSettings)
     std::string rights("");
     XMLUtils::GetString(root, "rights", rights);
     if ((m_isguest = (rights != "full")))
-      XBMC->Log(LOG_NOTICE, "Only guest permissions available!");
+      XBMC->Log(LOG_INFO, "Only guest permissions available!");
 
     /* read some settings from backend */
     m_settings.ReadFromBackend(*this);

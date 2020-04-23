@@ -526,7 +526,7 @@ Timers::Error Timers::ParseTimerFrom(const TiXmlElement *xml, unsigned int pos,
       });
   if (!timer.channel)
   {
-    XBMC->Log(LOG_NOTICE, "Found timer for unknown channel (backendid=%"
+    XBMC->Log(LOG_INFO, "Found timer for unknown channel (backendid=%"
       PRIu64 "). Ignoring.", backendId);
     return CHANNEL_UNKNOWN;
   }
@@ -852,7 +852,7 @@ Timers::Error Timers::ParseTimerFrom(const TiXmlElement *xml, unsigned int pos,
           { return channel->epgId == backendId; });
       if (!timer.channel)
       {
-        XBMC->Log(LOG_NOTICE, "Found timer for unknown channel (backendid=%"
+        XBMC->Log(LOG_INFO, "Found timer for unknown channel (backendid=%"
           PRIu64 "). Ignoring.", backendId);
         return CHANNEL_UNKNOWN;
       }
