@@ -1,3 +1,11 @@
+/*
+ *  Copyright (C) 2005-2020 Team Kodi (https://kodi.tv)
+ *  Copyright (C) 2013-2020 Manuel Mausz
+ *
+ *  SPDX-License-Identifier: GPL-2.0-or-later
+ *  See LICENSE.md for more information.
+ */
+
 #include "Timers.h"
 #include "client.h"
 #include "DvbData.h"
@@ -518,7 +526,7 @@ Timers::Error Timers::ParseTimerFrom(const TiXmlElement *xml, unsigned int pos,
       });
   if (!timer.channel)
   {
-    XBMC->Log(LOG_NOTICE, "Found timer for unknown channel (backendid=%"
+    XBMC->Log(LOG_INFO, "Found timer for unknown channel (backendid=%"
       PRIu64 "). Ignoring.", backendId);
     return CHANNEL_UNKNOWN;
   }
@@ -844,7 +852,7 @@ Timers::Error Timers::ParseTimerFrom(const TiXmlElement *xml, unsigned int pos,
           { return channel->epgId == backendId; });
       if (!timer.channel)
       {
-        XBMC->Log(LOG_NOTICE, "Found timer for unknown channel (backendid=%"
+        XBMC->Log(LOG_INFO, "Found timer for unknown channel (backendid=%"
           PRIu64 "). Ignoring.", backendId);
         return CHANNEL_UNKNOWN;
       }
