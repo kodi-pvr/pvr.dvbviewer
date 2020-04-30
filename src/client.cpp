@@ -90,7 +90,7 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
 /***********************************************************
  * PVR Client AddOn specific public library functions
  ***********************************************************/
-PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
+PVR_ERROR GetCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
 {
   pCapabilities->bSupportsEPG                = true;
   pCapabilities->bSupportsTV                 = true;
@@ -171,11 +171,11 @@ const char *GetBackendHostname(void)
   return DvbData->GetSettings().m_hostname.c_str();
 }
 
-PVR_ERROR SignalStatus(PVR_SIGNAL_STATUS &signalStatus)
+PVR_ERROR GetSignalStatus(int channelUid, PVR_SIGNAL_STATUS *signalStatus)
 {
   // the RS api doesn't provide information about signal quality (yet)
-  PVR_STRCPY(signalStatus.strAdapterName, "DVBViewer Media Server");
-  PVR_STRCPY(signalStatus.strAdapterStatus, "OK");
+  PVR_STRCPY(signalStatus->strAdapterName, "DVBViewer Media Server");
+  PVR_STRCPY(signalStatus->strAdapterStatus, "OK");
   return PVR_ERROR_NO_ERROR;
 }
 
@@ -539,6 +539,6 @@ PVR_ERROR GetEPGTagStreamProperties(const EPG_TAG*, PVR_NAMED_VALUE*, unsigned i
 PVR_ERROR GetEPGTagEdl(const EPG_TAG* epgTag, PVR_EDL_ENTRY edl[], int *size) { return PVR_ERROR_NOT_IMPLEMENTED; }
 bool SeekTime(double, bool, double*) { return false; }
 void SetSpeed(int) {}
-PVR_ERROR GetDescrambleInfo(PVR_DESCRAMBLE_INFO*) { return PVR_ERROR_NOT_IMPLEMENTED; }
+PVR_ERROR GetDescrambleInfo(int, PVR_DESCRAMBLE_INFO*) { return PVR_ERROR_NOT_IMPLEMENTED; }
 
 }
