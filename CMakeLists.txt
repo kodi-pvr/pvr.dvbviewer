@@ -28,7 +28,6 @@ set(DVBVIEWER_HEADERS src/client.h
                       src/DvbData.h
                       src/IStreamReader.h
                       src/KVStore.h
-                      src/LocalizedString.h
                       src/RecordingReader.h
                       src/Settings.h
                       src/StreamReader.h

@@ -34,7 +34,7 @@ public:
   bool IsTimeshifting() override;
 
 private:
-  void *m_streamHandle;
+  kodi::vfs::CFile m_streamHandle;
   std::time_t m_start = time(nullptr);
 };
 

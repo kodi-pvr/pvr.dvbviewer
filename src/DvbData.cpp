@@ -7,11 +7,15 @@
  */
 
 #include "DvbData.h"
+#include "StreamReader.h"
+#include "TimeshiftBuffer.h"
 #include "client.h"
-#include "LocalizedString.h"
 
+#include "kodi/General.h"
+#include "kodi/Network.h"
 #include "util/XMLUtils.h"
 #include "p8-platform/util/StringUtils.h"
+#include "p8-platform/util/util.h"
 
 #include <tinyxml.h>
 #include <inttypes.h>
@@ -23,7 +27,6 @@
 #include <ctime>
 
 using namespace dvbviewer;
-using namespace ADDON;
 using namespace P8PLATFORM;
 
 /* Copied from xbmc/URL.cpp */
@@ -120,14 +123,13 @@ void dvbviewer::RemoveNullChars(std::string& str)
 
 std::string dvbviewer::ConvertToUtf8(const std::string& src)
 {
-  char *tmp = XBMC->UnknownToUTF8(src.c_str());
-  std::string dest(tmp);
-  XBMC->FreeString(tmp);
+  std::string dest;
+  kodi::UnknownToUTF8(src, dest);
   return dest;
 }
 
-Dvb::Dvb(const Settings &settings)
-  : m_kvstore(*this), m_settings(settings)
+Dvb::Dvb(KODI_HANDLE instance, const std::string& kodiVersion, const Settings &settings)
+  : kodi::addon::CInstancePVRClient(instance, kodiVersion), m_kvstore(*this), m_settings(settings)
 {
   TiXmlBase::SetCondenseWhiteSpace(false);
 
@@ -135,9 +137,9 @@ Dvb::Dvb(const Settings &settings)
     {
       /* kvstore isn't mandatory so a queue error should be enough for now */
       if (err == KVStore::Error::RESPONSE_ERROR)
-        XBMC->QueueNotification(QUEUE_ERROR, LocalizedString(30515).c_str());
+        kodi::QueueNotification(QUEUE_ERROR, "", kodi::GetLocalizedString(30515));
       else if (err == KVStore::Error::GENERIC_PARSE_ERROR)
-        XBMC->QueueNotification(QUEUE_ERROR, LocalizedString(30516).c_str());
+        kodi::QueueNotification(QUEUE_ERROR, "", kodi::GetLocalizedString(30516));
     });
 
   CreateThread();
@@ -156,24 +158,88 @@ bool Dvb::IsConnected()
   return m_state == PVR_CONNECTION_STATE_CONNECTED;
 }
 
-std::string Dvb::GetBackendName()
+PVR_ERROR Dvb::GetCapabilities(kodi::addon::PVRCapabilities& capabilities)
 {
-  return m_backendName;
+  capabilities.SetSupportsEPG(true);
+  capabilities.SetSupportsTV(true);
+  capabilities.SetSupportsRadio(true);
+  capabilities.SetSupportsRecordings(true);
+  capabilities.SetSupportsRecordingsUndelete(false);
+  capabilities.SetSupportsTimers(true);
+  capabilities.SetSupportsChannelGroups(true);
+  capabilities.SetSupportsChannelScan(false);
+  capabilities.SetSupportsChannelSettings(false);
+  capabilities.SetHandlesInputStream(true);
+  capabilities.SetHandlesDemuxing(false);
+  capabilities.SetSupportsRecordingPlayCount(false);
+  capabilities.SetSupportsLastPlayedPosition(false);
+  capabilities.SetSupportsRecordingEdl(true);
+  capabilities.SetSupportsRecordingsRename(false);
+  capabilities.SetSupportsRecordingsLifetimeChange(false);
+  capabilities.SetSupportsDescrambleInfo(false);
+
+  if (IsConnected())
+  {
+    if (IsGuest())
+      capabilities.SetSupportsTimers(false);
+
+    if (HasKVStore())
+    {
+      capabilities.SetSupportsRecordingPlayCount(true);
+      capabilities.SetSupportsLastPlayedPosition(true);
+    }
+  }
+  return PVR_ERROR_NO_ERROR;
+}
+
+PVR_ERROR Dvb::GetBackendName(std::string& name)
+{
+  if (!IsConnected())
+    return PVR_ERROR_SERVER_ERROR;
+
+  name = m_backendName;
+  return PVR_ERROR_NO_ERROR;
+}
+
+PVR_ERROR Dvb::GetBackendVersion(std::string& version)
+{
+  if (!IsConnected())
+    return PVR_ERROR_SERVER_ERROR;
+
+  version = StringUtils::Format("%u.%u.%u.%u", m_backendVersion >> 24 & 0xFF,
+      m_backendVersion >> 16 & 0xFF, m_backendVersion >> 8  & 0xFF, m_backendVersion & 0xFF);
+  return PVR_ERROR_NO_ERROR;
+}
+
+PVR_ERROR Dvb::GetBackendHostname(std::string& hostname)
+{
+  hostname = StringUtils::Format("%s:%u", m_settings.m_hostname.c_str(),
+      m_settings.m_webPort);
+
+  if (!IsConnected())
+    hostname += " (Not connected!)";
+  return PVR_ERROR_NO_ERROR;
+}
+
+PVR_ERROR Dvb::GetConnectionString(std::string& connection)
+{
+  connection = m_settings.m_hostname;
+  return PVR_ERROR_NO_ERROR;
+}
+
+PVR_ERROR Dvb::GetDriveSpace(uint64_t& total, uint64_t& used)
+{
+  CLockObject lock(m_mutex);
+  if (!UpdateBackendStatus())
+    return PVR_ERROR_SERVER_ERROR;
+  total = m_diskspace.total;
+  used  = m_diskspace.used;
+  return PVR_ERROR_NO_ERROR;
 }
 
 unsigned int Dvb::GetBackendVersion()
 {
   return m_backendVersion;
-}
-
-bool Dvb::GetDriveSpace(long long *total, long long *used)
-{
-  CLockObject lock(m_mutex);
-  if (!UpdateBackendStatus())
-    return false;
-  *total = m_diskspace.total;
-  *used  = m_diskspace.used;
-  return true;
 }
 
 /***************************************************************************
@@ -185,34 +251,40 @@ unsigned int Dvb::GetCurrentClientChannel(void)
   return m_currentChannel;
 }
 
-bool Dvb::GetChannels(ADDON_HANDLE handle, bool radio)
+PVR_ERROR Dvb::GetChannels(bool radio,
+    kodi::addon::PVRChannelsResultSet& results)
 {
-  for (auto channel : m_channels)
+  if (!IsConnected())
+    return PVR_ERROR_SERVER_ERROR;
+
+   for (auto channel : m_channels)
   {
     if (channel->hidden)
       continue;
     if (channel->radio != radio)
       continue;
 
-    PVR_CHANNEL xbmcChannel;
-    memset(&xbmcChannel, 0, sizeof(PVR_CHANNEL));
-    xbmcChannel.iUniqueId         = channel->id;
-    xbmcChannel.bIsRadio          = channel->radio;
-    xbmcChannel.iChannelNumber    = channel->frontendNr;
-    xbmcChannel.iEncryptionSystem = channel->encrypted;
-    xbmcChannel.bIsHidden         = false;
-    PVR_STRCPY(xbmcChannel.strChannelName, channel->name.c_str());
-    PVR_STRCPY(xbmcChannel.strIconPath,    channel->logo.c_str());
+    kodi::addon::PVRChannel xbmcChannel;
+    xbmcChannel.SetUniqueId(channel->id);
+    xbmcChannel.SetIsRadio(channel->radio);
+    xbmcChannel.SetChannelNumber(channel->frontendNr);
+    xbmcChannel.SetEncryptionSystem(channel->encrypted);
+    xbmcChannel.SetIsHidden(false);
+    xbmcChannel.SetChannelName(channel->name);
+    xbmcChannel.SetIconPath(channel->logo);
 
-    PVR->TransferChannelEntry(handle, &xbmcChannel);
+    results.Add(xbmcChannel);
   }
-  return true;
+  return PVR_ERROR_NO_ERROR;
 }
 
-bool Dvb::GetEPGForChannel(ADDON_HANDLE handle, int iChannelUid,
-    std::time_t start, std::time_t end)
+PVR_ERROR Dvb::GetEPGForChannel(int channelUid, time_t start,
+    time_t end, kodi::addon::PVREPGTagsResultSet& results)
 {
-  DvbChannel *channel = GetChannel(iChannelUid);
+  if (!IsConnected())
+    return PVR_ERROR_SERVER_ERROR;
+
+  DvbChannel *channel = GetChannel(channelUid);
 
   const httpResponse &res = GetFromAPI("api/epg.html?lvl=2&channel=%" PRIu64
       "&start=%f&end=%f", channel->epgId, start/86400.0 + DELPHI_DATE,
@@ -220,16 +292,16 @@ bool Dvb::GetEPGForChannel(ADDON_HANDLE handle, int iChannelUid,
   if (res.error)
   {
     SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
-    return false;
+    return PVR_ERROR_SERVER_ERROR;
   }
 
   TiXmlDocument doc;
   doc.Parse(res.content.c_str());
   if (doc.Error())
   {
-    XBMC->Log(LOG_ERROR, "Unable to parse EPG. Error: %s",
+    kodi::Log(ADDON_LOG_ERROR, "Unable to parse EPG. Error: %s",
         doc.ErrorDesc());
-    return false;
+    return PVR_ERROR_FAILED;
   }
 
   unsigned int numEPG = 0;
@@ -273,45 +345,61 @@ bool Dvb::GetEPGForChannel(ADDON_HANDLE handle, int iChannelUid,
 
     XMLUtils::GetUInt(xEntry, "content", entry.genre);
 
-    EPG_TAG broadcast;
-    memset(&broadcast, 0, sizeof(EPG_TAG));
-    broadcast.iUniqueBroadcastId  = entry.id;
-    broadcast.strTitle            = entry.title.c_str();
-    broadcast.iUniqueChannelId    = iChannelUid;
-    broadcast.startTime           = entry.start;
-    broadcast.endTime             = entry.end;
-    broadcast.strPlotOutline      = entry.plotOutline.c_str();
-    broadcast.strPlot             = entry.plot.c_str();
-    broadcast.iGenreType          = entry.genre & 0xF0;
-    broadcast.iGenreSubType       = entry.genre & 0x0F;
-    broadcast.iFlags              = EPG_TAG_FLAG_UNDEFINED;
-    broadcast.iSeriesNumber       = EPG_TAG_INVALID_SERIES_EPISODE;
-    broadcast.iEpisodeNumber      = EPG_TAG_INVALID_SERIES_EPISODE;
-    broadcast.iEpisodePartNumber  = EPG_TAG_INVALID_SERIES_EPISODE;
+    kodi::addon::PVREPGTag broadcast;
+    broadcast.SetUniqueBroadcastId(entry.id);
+    broadcast.SetTitle(entry.title);
+    broadcast.SetUniqueChannelId(channelUid);
+    broadcast.SetStartTime(entry.start);
+    broadcast.SetEndTime(entry.end);
+    broadcast.SetPlotOutline(entry.plotOutline);
+    broadcast.SetPlot(entry.plot);
+    broadcast.SetGenreType(entry.genre & 0xF0);
+    broadcast.SetGenreSubType(entry.genre & 0x0F);
+    broadcast.SetFlags(EPG_TAG_FLAG_UNDEFINED);
+    broadcast.SetSeriesNumber(EPG_TAG_INVALID_SERIES_EPISODE);
+    broadcast.SetEpisodeNumber(EPG_TAG_INVALID_SERIES_EPISODE);
+    broadcast.SetEpisodePartNumber(EPG_TAG_INVALID_SERIES_EPISODE);
 
-    PVR->TransferEpgEntry(handle, &broadcast);
+    results.Add(broadcast);
     ++numEPG;
 
-    XBMC->Log(LOG_DEBUG, "%s: Loaded EPG entry '%u:%s': start=%u, end=%u",
+    kodi::Log(ADDON_LOG_DEBUG, "%s: Loaded EPG entry '%u:%s': start=%u, end=%u",
         __FUNCTION__, entry.id, entry.title.c_str(),
         entry.start, entry.end);
   }
 
-  XBMC->Log(LOG_INFO, "Loaded %u EPG entries for channel '%s'",
+  kodi::Log(ADDON_LOG_INFO, "Loaded %u EPG entries for channel '%s'",
       numEPG, channel->name.c_str());
-  return true;
+  return PVR_ERROR_NO_ERROR;
 }
 
-unsigned int Dvb::GetChannelsAmount()
+PVR_ERROR Dvb::GetChannelsAmount(int& amount)
 {
-  return m_channelAmount;
+  if (!IsConnected())
+    return PVR_ERROR_SERVER_ERROR;
+
+  amount = m_channelAmount;
+  return PVR_ERROR_NO_ERROR;
+}
+
+PVR_ERROR Dvb::GetSignalStatus(int channelUid,
+    kodi::addon::PVRSignalStatus& signalStatus)
+{
+  // the RS api doesn't provide information about signal quality (yet)
+  signalStatus.SetAdapterName("DVBViewer Media Server");
+  signalStatus.SetAdapterStatus("OK");
+  return PVR_ERROR_NO_ERROR;
 }
 
 /***************************************************************************
  * Channel groups
  **************************************************************************/
-bool Dvb::GetChannelGroups(ADDON_HANDLE handle, bool radio)
+PVR_ERROR Dvb::GetChannelGroups(bool radio,
+    kodi::addon::PVRChannelGroupsResultSet& results)
 {
+  if (!IsConnected())
+    return PVR_ERROR_SERVER_ERROR;
+
   for (auto &group : m_groups)
   {
     if (group.hidden)
@@ -319,70 +407,84 @@ bool Dvb::GetChannelGroups(ADDON_HANDLE handle, bool radio)
     if (group.radio != radio)
       continue;
 
-    PVR_CHANNEL_GROUP tag;
-    memset(&tag, 0, sizeof(PVR_CHANNEL_GROUP));
-    tag.bIsRadio = group.radio;
-    PVR_STRCPY(tag.strGroupName, group.name.c_str());
+    kodi::addon::PVRChannelGroup tag;
+    tag.SetIsRadio(group.radio);
+    tag.SetGroupName(group.name);
 
-    PVR->TransferChannelGroup(handle, &tag);
+    results.Add(tag);
   }
-  return true;
+  return PVR_ERROR_NO_ERROR;
 }
 
-bool Dvb::GetChannelGroupMembers(ADDON_HANDLE handle,
-    const PVR_CHANNEL_GROUP &pvrGroup)
+PVR_ERROR Dvb::GetChannelGroupMembers(const kodi::addon::PVRChannelGroup& pvrGroup,
+    kodi::addon::PVRChannelGroupMembersResultSet& results)
 {
+  if (!IsConnected())
+    return PVR_ERROR_SERVER_ERROR;
+
   unsigned int channelNumberInGroup = 1;
 
   for (auto &group : m_groups)
   {
-    if (group.name != pvrGroup.strGroupName)
+    if (group.name != pvrGroup.GetGroupName())
       continue;
 
     for (auto channel : group.channels)
     {
-      PVR_CHANNEL_GROUP_MEMBER tag;
-      memset(&tag, 0, sizeof(PVR_CHANNEL_GROUP_MEMBER));
-      PVR_STRCPY(tag.strGroupName, pvrGroup.strGroupName);
-      tag.iChannelUniqueId = channel->id;
-      tag.iChannelNumber   = channelNumberInGroup++;
+      kodi::addon::PVRChannelGroupMember tag;
 
-      PVR->TransferChannelGroupMember(handle, &tag);
+      tag.SetGroupName(pvrGroup.GetGroupName());
+      tag.SetChannelUniqueId(channel->id);
+      tag.SetChannelNumber(channelNumberInGroup++);
 
-      XBMC->Log(LOG_DEBUG, "%s: Add channel '%s' (backendid=%" PRIu64 ") to group '%s'",
+      results.Add(tag);
+
+      kodi::Log(ADDON_LOG_DEBUG, "%s: Add channel '%s' (backendid=%" PRIu64 ") to group '%s'",
           __FUNCTION__, channel->name.c_str(), channel->backendIds.front(),
           group.name.c_str());
     }
   }
-  return true;
+  return PVR_ERROR_NO_ERROR;
 }
 
-unsigned int Dvb::GetChannelGroupsAmount()
+PVR_ERROR Dvb::GetChannelGroupsAmount(int& amount)
 {
-  return m_groupAmount;
+  if (!IsConnected())
+    return PVR_ERROR_SERVER_ERROR;
+
+  amount = m_groupAmount;
+
+  return PVR_ERROR_NO_ERROR;
 }
 
 /***************************************************************************
  * Timers
  **************************************************************************/
-void Dvb::GetTimerTypes(PVR_TIMER_TYPE types[], int *size)
+PVR_ERROR Dvb::GetTimerTypes(std::vector<kodi::addon::PVRTimerType>& types)
 {
-  std::vector< std::unique_ptr<PVR_TIMER_TYPE> > timerTypes;
+  if (!IsConnected())
+    return PVR_ERROR_SERVER_ERROR;
+
+  std::vector< std::unique_ptr<kodi::addon::PVRTimerType> > timerTypes;
   {
     CLockObject lock(m_mutex);
     m_timers.GetTimerTypes(timerTypes);
   }
 
-  int i = 0;
   for (auto &timer : timerTypes)
-    types[i++] = *timer;
-  *size = static_cast<int>(timerTypes.size());
-  XBMC->Log(LOG_DEBUG, "transfered %u timers", *size);
+    types.push_back(*timer);
+
+  kodi::Log(ADDON_LOG_DEBUG, "transfered %u timers", timerTypes.size());
+
+  return PVR_ERROR_NO_ERROR;
 }
 
-bool Dvb::GetTimers(ADDON_HANDLE handle)
+PVR_ERROR Dvb::GetTimers(kodi::addon::PVRTimersResultSet& results)
 {
-  std::vector<PVR_TIMER> timers;
+  if (!IsConnected())
+    return PVR_ERROR_SERVER_ERROR;
+
+  std::vector<kodi::addon::PVRTimer> timers;
   {
     CLockObject lock(m_mutex);
     m_timers.GetAutoTimers(timers);
@@ -390,66 +492,111 @@ bool Dvb::GetTimers(ADDON_HANDLE handle)
   }
 
   for (auto &timer : timers)
-    PVR->TransferTimerEntry(handle, &timer);
-  return true;
+    results.Add(timer);
+  return PVR_ERROR_NO_ERROR;
 }
 
-bool Dvb::AddTimer(const PVR_TIMER &timer, bool update)
+PVR_ERROR Dvb::AddTimer(const kodi::addon::PVRTimer& timer)
 {
-  XBMC->Log(LOG_DEBUG, "%sTimer: channel=%u, title='%s'",
-      (update) ? "Edit" : "Add", timer.iClientChannelUid, timer.strTitle);
+  if (!IsConnected())
+    return PVR_ERROR_SERVER_ERROR;
+
+  kodi::Log(ADDON_LOG_DEBUG, "AddTimer: channel=%u, title='%s'",
+      timer.GetClientChannelUid(), timer.GetTitle().c_str());
   CLockObject lock(m_mutex);
 
-  Timers::Error err = m_timers.AddUpdateTimer(timer, update);
+  Timers::Error err = m_timers.AddUpdateTimer(timer, false);
   if (err != Timers::SUCCESS)
   {
     if (err == Timers::TIMESPAN_OVERFLOW)
-      XBMC->QueueNotification(QUEUE_ERROR, LocalizedString(30510).c_str());
+      kodi::QueueNotification(QUEUE_ERROR, "", kodi::GetLocalizedString(30510));
     else if (err == Timers::EMPTY_SEARCH_PHRASE)
-      XBMC->QueueNotification(QUEUE_ERROR, LocalizedString(30513).c_str());
+      kodi::QueueNotification(QUEUE_ERROR, "", kodi::GetLocalizedString(30513));
     else if (err == Timers::TIMER_UNKNOWN)
-      XBMC->Log(LOG_ERROR, "Timer %u is unknown", timer.iClientIndex);
+      kodi::Log(ADDON_LOG_ERROR, "Timer %u is unknown", timer.GetClientIndex());
     else if (err == Timers::CHANNEL_UNKNOWN)
-      XBMC->Log(LOG_ERROR, "Channel is unknown");
+      kodi::Log(ADDON_LOG_ERROR, "Channel is unknown");
     else if (err == Timers::RECFOLDER_UNKNOWN)
-      XBMC->Log(LOG_ERROR, "Recording folder is unknown");
+      kodi::Log(ADDON_LOG_ERROR, "Recording folder is unknown");
     else
-      XBMC->Log(LOG_ERROR, "Unexpected error while add/edit timer");
-    return false;
+      kodi::Log(ADDON_LOG_ERROR, "Unexpected error while add/edit timer");
+    return PVR_ERROR_FAILED;
   }
   // full timer sync here to get the backend specific properties
   m_updateTimers = true;
-  return true;
+  return PVR_ERROR_NO_ERROR;
 }
 
-bool Dvb::DeleteTimer(const PVR_TIMER &timer)
+PVR_ERROR Dvb::UpdateTimer(const kodi::addon::PVRTimer& timer)
 {
+  if (!IsConnected())
+    return PVR_ERROR_SERVER_ERROR;
+
+  kodi::Log(ADDON_LOG_DEBUG, "UpdateTimer: channel=%u, title='%s'",
+      timer.GetClientChannelUid(), timer.GetTitle().c_str());
+  CLockObject lock(m_mutex);
+
+  Timers::Error err = m_timers.AddUpdateTimer(timer, true);
+  if (err != Timers::SUCCESS)
+  {
+    if (err == Timers::TIMESPAN_OVERFLOW)
+      kodi::QueueNotification(QUEUE_ERROR, "", kodi::GetLocalizedString(30510));
+    else if (err == Timers::EMPTY_SEARCH_PHRASE)
+      kodi::QueueNotification(QUEUE_ERROR, "", kodi::GetLocalizedString(30513));
+    else if (err == Timers::TIMER_UNKNOWN)
+      kodi::Log(ADDON_LOG_ERROR, "Timer %u is unknown", timer.GetClientIndex());
+    else if (err == Timers::CHANNEL_UNKNOWN)
+      kodi::Log(ADDON_LOG_ERROR, "Channel is unknown");
+    else if (err == Timers::RECFOLDER_UNKNOWN)
+      kodi::Log(ADDON_LOG_ERROR, "Recording folder is unknown");
+    else
+      kodi::Log(ADDON_LOG_ERROR, "Unexpected error while add/edit timer");
+    return PVR_ERROR_FAILED;
+  }
+  // full timer sync here to get the backend specific properties
+  m_updateTimers = true;
+  return PVR_ERROR_NO_ERROR;
+}
+
+PVR_ERROR Dvb::DeleteTimer(const kodi::addon::PVRTimer& timer, bool forceDelete)
+{
+  if (!IsConnected())
+    return PVR_ERROR_SERVER_ERROR;
+
   CLockObject lock(m_mutex);
   Timers::Error err = m_timers.DeleteTimer(timer);
   if (err != Timers::SUCCESS)
-    return false;
+    return PVR_ERROR_FAILED;
 
-  PVR->TriggerTimerUpdate();
-  return true;
+  TriggerTimerUpdate();
+  return PVR_ERROR_NO_ERROR;
 }
 
-unsigned int Dvb::GetTimersAmount()
+PVR_ERROR Dvb::GetTimersAmount(int& amount)
 {
+  if (!IsConnected())
+    return PVR_ERROR_SERVER_ERROR;
+
   CLockObject lock(m_mutex);
-  return static_cast<int>(m_timers.GetTimerCount());
+  amount = static_cast<int>(m_timers.GetTimerCount());
+  return PVR_ERROR_NO_ERROR;
 }
 
 /***************************************************************************
  * Recordings
  **************************************************************************/
-bool Dvb::GetRecordings(ADDON_HANDLE handle)
+PVR_ERROR Dvb::GetRecordings(bool deleted,
+      kodi::addon::PVRRecordingsResultSet& results)
 {
+  if (!IsConnected())
+    return PVR_ERROR_SERVER_ERROR;
+
   CLockObject lock(m_mutex);
   httpResponse &&res = GetFromAPI("api/recordings.html?utf8=1&images=1");
   if (res.error)
   {
     SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
-    return false;
+    return PVR_ERROR_SERVER_ERROR;
   }
 
   TiXmlDocument doc;
@@ -457,9 +604,9 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
   doc.Parse(res.content.c_str());
   if (doc.Error())
   {
-    XBMC->Log(LOG_ERROR, "Unable to parse recordings. Error: %s",
+    kodi::Log(ADDON_LOG_ERROR, "Unable to parse recordings. Error: %s",
         doc.ErrorDesc());
-    return false;
+    return PVR_ERROR_FAILED;
   }
 
   TiXmlElement *root = doc.RootElement();
@@ -575,92 +722,102 @@ bool Dvb::GetRecordings(ADDON_HANDLE handle)
 
   for (auto &recording : recordings)
   {
-    PVR_RECORDING recinfo;
-    memset(&recinfo, 0, sizeof(PVR_RECORDING));
-    PVR_STRCPY(recinfo.strRecordingId,   recording.id.c_str());
-    PVR_STRCPY(recinfo.strTitle,         recording.title.c_str());
-    PVR_STRCPY(recinfo.strPlotOutline,   recording.plotOutline.c_str());
-    PVR_STRCPY(recinfo.strPlot,          recording.plot.c_str());
-    PVR_STRCPY(recinfo.strChannelName,   recording.channelName.c_str());
-    PVR_STRCPY(recinfo.strThumbnailPath, recording.thumbnail.c_str());
-    recinfo.recordingTime       = recording.start;
-    recinfo.iDuration           = recording.duration;
-    recinfo.iGenreType          = recording.genre & 0xF0;
-    recinfo.iGenreSubType       = recording.genre & 0x0F;
-    recinfo.iPlayCount          = recording.playCount;
-    recinfo.iLastPlayedPosition = recording.lastPlayPosition;
-    recinfo.iChannelUid         = PVR_CHANNEL_INVALID_UID;
-    recinfo.channelType         = PVR_RECORDING_CHANNEL_TYPE_UNKNOWN;
-    recinfo.iSeriesNumber       = PVR_RECORDING_INVALID_SERIES_EPISODE;
-    recinfo.iEpisodeNumber      = PVR_RECORDING_INVALID_SERIES_EPISODE;
+    kodi::addon::PVRRecording recinfo;
+
+    recinfo.SetRecordingId(recording.id);
+    recinfo.SetTitle(recording.title);
+    recinfo.SetPlotOutline(recording.plotOutline);
+    recinfo.SetPlot(recording.plot);
+    recinfo.SetChannelName(recording.channelName);
+    recinfo.SetThumbnailPath(recording.thumbnail);
+    recinfo.SetRecordingTime(recording.start);
+    recinfo.SetDuration(recording.duration);
+    recinfo.SetGenreType(recording.genre & 0xF0);
+    recinfo.SetGenreSubType(recording.genre & 0x0F);
+    recinfo.SetPlayCount(recording.playCount);
+    recinfo.SetLastPlayedPosition(recording.lastPlayPosition);
+    recinfo.SetChannelUid(PVR_CHANNEL_INVALID_UID);
+    recinfo.SetChannelType(PVR_RECORDING_CHANNEL_TYPE_UNKNOWN);
+    recinfo.SetSeriesNumber(PVR_RECORDING_INVALID_SERIES_EPISODE);
+    recinfo.SetEpisodeNumber(PVR_RECORDING_INVALID_SERIES_EPISODE);
 
     if (recording.channel)
     {
-      recinfo.iChannelUid = recording.channel->id;
-      recinfo.channelType = (recording.channel->radio)
-          ? PVR_RECORDING_CHANNEL_TYPE_RADIO : PVR_RECORDING_CHANNEL_TYPE_TV;
+      recinfo.SetChannelUid(recording.channel->id);
+      recinfo.SetChannelType(recording.channel->radio
+          ? PVR_RECORDING_CHANNEL_TYPE_RADIO : PVR_RECORDING_CHANNEL_TYPE_TV);
     }
 
     // no grouping for single entry groups if by_title
     if (m_settings.m_groupRecordings != RecordGrouping::BY_TITLE
         || recording.group->second > 1)
-      PVR_STRCPY(recinfo.strDirectory, recording.group->first.c_str());
+      recinfo.SetDirectory(recording.group->first);
 
-    PVR->TransferRecordingEntry(handle, &recinfo);
+    results.Add(recinfo);
     ++m_recordingAmount;
 
-    XBMC->Log(LOG_DEBUG, "%s: Loaded recording entry '%s': start=%u, length=%u",
+    kodi::Log(ADDON_LOG_DEBUG, "%s: Loaded recording entry '%s': start=%u, length=%u",
         __FUNCTION__, recording.title.c_str(), recording.start,
         recording.duration);
   }
 
-  XBMC->Log(LOG_INFO, "Loaded %u recording entries", m_recordingAmount);
-  return true;
+  kodi::Log(ADDON_LOG_INFO, "Loaded %u recording entries", m_recordingAmount);
+  return PVR_ERROR_NO_ERROR;
 }
 
-bool Dvb::DeleteRecording(const PVR_RECORDING &recinfo)
+PVR_ERROR Dvb::DeleteRecording(const kodi::addon::PVRRecording& recording)
 {
+  if (!IsConnected())
+    return PVR_ERROR_SERVER_ERROR;
+
   if (m_isguest)
   {
-    XBMC->QueueNotification(QUEUE_ERROR, LocalizedString(30512).c_str());
-    return false;
+    kodi::QueueNotification(QUEUE_ERROR, "", kodi::GetLocalizedString(30512));
+    return PVR_ERROR_REJECTED;
   }
 
   const httpResponse &res = GetFromAPI("api/recdelete.html?recid=%s&delfile=1",
-      recinfo.strRecordingId);
+      recording.GetRecordingId().c_str());
   if (res.error)
-    return false;
-  PVR->TriggerRecordingUpdate();
-  return true;
+    return PVR_ERROR_FAILED;
+  TriggerRecordingUpdate();
+  return PVR_ERROR_NO_ERROR;
 }
 
-unsigned int Dvb::GetRecordingsAmount()
+PVR_ERROR Dvb::GetRecordingsAmount(bool deleted, int& amount)
 {
+  if (!IsConnected())
+    return PVR_ERROR_SERVER_ERROR;
+
   CLockObject lock(m_mutex);
-  return m_recordingAmount;
+  amount = m_recordingAmount;
+  return PVR_ERROR_NO_ERROR;
 }
 
-dvbviewer::RecordingReader *Dvb::OpenRecordedStream(const PVR_RECORDING &recinfo)
+bool Dvb::OpenRecordedStream(const kodi::addon::PVRRecording& recinfo)
 {
   CLockObject lock(m_mutex);
+
+  if (m_recReader)
+    SAFE_DELETE(m_recReader);
 
   std::string url;
   switch(m_settings.m_recordingTranscoding)
   {
     case Transcoding::TS:
       url = BuildURL("flashstream/stream.ts?recid=%s&%s",
-        recinfo.strRecordingId, m_settings.m_recordingTranscodingParams.c_str());
+        recinfo.GetRecordingId().c_str(), m_settings.m_recordingTranscodingParams.c_str());
       break;
     case Transcoding::WEBM:
       url = BuildURL("flashstream/stream.webm?recid=%s&%s",
-        recinfo.strRecordingId, m_settings.m_recordingTranscodingParams.c_str());
+        recinfo.GetRecordingId().c_str(), m_settings.m_recordingTranscodingParams.c_str());
       break;
     case Transcoding::FLV:
       url = BuildURL("flashstream/stream.flv?recid=%s&%s",
-        recinfo.strRecordingId, m_settings.m_recordingTranscodingParams.c_str());
+        recinfo.GetRecordingId().c_str(), m_settings.m_recordingTranscodingParams.c_str());
       break;
     default:
-      url = BuildURL("upnp/recordings/%s.ts", recinfo.strRecordingId);
+      url = BuildURL("upnp/recordings/%s.ts", recinfo.GetRecordingId().c_str());
       break;
   }
 
@@ -669,7 +826,7 @@ dvbviewer::RecordingReader *Dvb::OpenRecordedStream(const PVR_RECORDING &recinfo
   if (m_settings.m_recordingTranscoding == Transcoding::OFF)
   {
     std::time_t now = std::time(nullptr);
-    const std::string channelName = recinfo.strChannelName;
+    const std::string channelName = recinfo.GetChannelName();
     auto timer = m_timers.GetTimer([&](const Timer &timer)
         {
           return timer.isRunning(&now, &channelName);
@@ -678,44 +835,74 @@ dvbviewer::RecordingReader *Dvb::OpenRecordedStream(const PVR_RECORDING &recinfo
       startEndTimes = std::make_pair(timer->realStart, timer->end);
   }
 
-  return new RecordingReader(url, startEndTimes);
+  m_recReader = new RecordingReader(url, startEndTimes);
+  return m_recReader->Start();
 }
 
-bool Dvb::GetRecordingEdl(const PVR_RECORDING &recinfo, PVR_EDL_ENTRY edl[],
-    int *size)
+void Dvb::CloseRecordedStream()
 {
-  int maxSize = *size;
-  *size = 0;
+  if (m_recReader)
+    SAFE_DELETE(m_recReader);
+}
+
+int Dvb::ReadRecordedStream(unsigned char* buffer, unsigned int size)
+{
+  if (!m_recReader)
+    return 0;
+
+  return static_cast<int>(m_recReader->ReadData(buffer, size));
+}
+
+int64_t Dvb::SeekRecordedStream(int64_t position, int whence)
+{
+  if (!m_recReader)
+    return 0;
+
+  return m_recReader->Seek(position, whence);
+}
+
+int64_t Dvb::LengthRecordedStream()
+{
+  if (!m_recReader)
+    return -1;
+
+  return m_recReader->Length();
+}
+
+PVR_ERROR Dvb::GetRecordingEdl(const kodi::addon::PVRRecording& recinfo,
+    std::vector<kodi::addon::PVREDLEntry>& edl)
+{
+  if (!m_settings.m_edl.enabled)
+    return PVR_ERROR_NO_ERROR;
+
+  if (!IsConnected())
+    return PVR_ERROR_SERVER_ERROR;
 
   if (m_backendVersion < DMS_VERSION_NUM(2, 1, 0, 0))
   {
-    XBMC->Log(LOG_ERROR, "Backend server is too old. Disabling EDL support.");
-    XBMC->QueueNotification(QUEUE_ERROR, LocalizedString(30511).c_str(),
+    kodi::Log(ADDON_LOG_ERROR, "Backend server is too old. Disabling EDL support.");
+    kodi::QueueFormattedNotification(QUEUE_ERROR, kodi::GetLocalizedString(30511).c_str(),
       DMS_VERSION_STR(2, 1, 0, 0));
     m_settings.m_edl.enabled = false;
-    return false;
+    return PVR_ERROR_NOT_IMPLEMENTED;
   }
 
-  const httpResponse &res = OpenFromAPI("api/sideload.html?rec=1&file=.edl"
-    "&fileid=%s", recinfo.strRecordingId);
+  httpResponse&& res = OpenFromAPI("api/sideload.html?rec=1&file=.edl"
+    "&fileid=%s", recinfo.GetRecordingId().c_str());
   if (res.error)
-    return true; // no EDL file found
+    return PVR_ERROR_NO_ERROR; // no EDL file found
 
-  int idx = 0;
   size_t lineNumber = 0;
-  char buffer[2048];
-  while(XBMC->ReadFileString(res.file, buffer, 2048))
+  std::string buffer;
+  while(res.file.ReadLine(buffer))
   {
-    if (idx >= maxSize)
-      break;
-
     float start = 0.0f, stop = 0.0f;
     unsigned int type = PVR_EDL_TYPE_CUT;
     ++lineNumber;
-    if (std::sscanf(buffer, "%f %f %u", &start, &stop, &type) < 2
+    if (std::sscanf(buffer.c_str(), "%f %f %u", &start, &stop, &type) < 2
       || type > PVR_EDL_TYPE_COMBREAK)
     {
-      XBMC->Log(LOG_INFO, "Unable to parse EDL entry at line %zu. Skipping.",
+      kodi::Log(ADDON_LOG_INFO, "Unable to parse EDL entry at line %zu. Skipping.",
           lineNumber);
       continue;
     }
@@ -728,65 +915,136 @@ bool Dvb::GetRecordingEdl(const PVR_RECORDING &recinfo, PVR_EDL_ENTRY edl[],
     start = std::min(start, stop);
     stop  = std::max(start, stop);
 
-    XBMC->Log(LOG_DEBUG, "edl line=%zu start=%f stop=%f type=%u", lineNumber,
+    kodi::Log(ADDON_LOG_DEBUG, "edl line=%zu start=%f stop=%f type=%u", lineNumber,
         start, stop, type);
 
-    edl[idx].start = static_cast<int64_t>(start * 1000.0f);
-    edl[idx].end   = static_cast<int64_t>(stop  * 1000.0f);
-    edl[idx].type  = static_cast<PVR_EDL_TYPE>(type);
-    ++idx;
+    kodi::addon::PVREDLEntry entry;
+    entry.SetStart(static_cast<int64_t>(start * 1000.0f));
+    entry.SetEnd(static_cast<int64_t>(stop  * 1000.0f));
+    entry.SetType(static_cast<PVR_EDL_TYPE>(type));
+    edl.emplace_back(entry);
   }
 
-  *size = idx;
-  XBMC->CloseFile(res.file);
-  return true;
+  res.file.Close();
+  return PVR_ERROR_NO_ERROR;
 }
 
-bool Dvb::SetRecordingPlayCount(const PVR_RECORDING &recinfo, int count)
+
+PVR_ERROR Dvb::SetRecordingPlayCount(const kodi::addon::PVRRecording& recinfo,
+    int count)
 {
-  const std::string value = std::string("recplaycount_") + recinfo.strRecordingId;
-  return m_kvstore.Set(value, count);
+  if (!IsConnected())
+    return PVR_ERROR_SERVER_ERROR;
+  if (!HasKVStore())
+    return PVR_ERROR_NOT_IMPLEMENTED;
+
+  const std::string value = std::string("recplaycount_") + recinfo.GetRecordingId();
+  return m_kvstore.Set(value, count)
+     ? PVR_ERROR_NO_ERROR : PVR_ERROR_SERVER_ERROR;
 }
 
-int Dvb::GetRecordingLastPlayedPosition(const PVR_RECORDING &recinfo)
+PVR_ERROR Dvb::SetRecordingLastPlayedPosition(
+    const kodi::addon::PVRRecording& recinfo, int lastplayedposition)
 {
-  const std::string value = std::string("recplaypos_") + recinfo.strRecordingId;
-  int pos;
-  return m_kvstore.Get<int>(value, pos) ? pos : -1;
+  if (!IsConnected())
+    return PVR_ERROR_SERVER_ERROR;
+  if (!HasKVStore())
+    return PVR_ERROR_NOT_IMPLEMENTED;
+
+  const std::string value = std::string("recplaypos_") + recinfo.GetRecordingId();
+  return m_kvstore.Set<int>(value, lastplayedposition)
+    ? PVR_ERROR_NO_ERROR : PVR_ERROR_SERVER_ERROR;
 }
 
-bool Dvb::SetRecordingLastPlayedPosition(const PVR_RECORDING &recinfo, int pos)
+PVR_ERROR Dvb::GetRecordingLastPlayedPosition(
+    const kodi::addon::PVRRecording& recinfo, int& position)
 {
-  const std::string value = std::string("recplaypos_") + recinfo.strRecordingId;
-  return m_kvstore.Set<int>(value, pos);
+  if (!IsConnected())
+    return PVR_ERROR_SERVER_ERROR;
+  if (!HasKVStore())
+    return PVR_ERROR_NOT_IMPLEMENTED;
+
+  const std::string value = std::string("recplaypos_") + recinfo.GetRecordingId();
+  return m_kvstore.Get<int>(value, position)
+   ? PVR_ERROR_NO_ERROR : PVR_ERROR_SERVER_ERROR;
 }
 
 /***************************************************************************
  * Livestream
  **************************************************************************/
-bool Dvb::OpenLiveStream(const PVR_CHANNEL &channelinfo)
+bool Dvb::OpenLiveStream(const kodi::addon::PVRChannel& channelinfo)
 {
-  XBMC->Log(LOG_DEBUG, "%s: channel=%u", __FUNCTION__, channelinfo.iUniqueId);
+  if (!IsConnected())
+    return false;
+
+  kodi::Log(ADDON_LOG_DEBUG, "%s: channel=%u", __FUNCTION__,
+      channelinfo.GetUniqueId());
   CLockObject lock(m_mutex);
 
-  if (channelinfo.iUniqueId != m_currentChannel)
+  if (channelinfo.GetUniqueId() != m_currentChannel)
   {
-    m_currentChannel = channelinfo.iUniqueId;
+    m_currentChannel = channelinfo.GetUniqueId();
     if (!m_settings.m_lowPerformance)
       m_updateEPG = true;
   }
-  return true;
+
+  /* queue a warning if the timeshift buffer path does not exist */
+  if (m_settings.m_timeshift != Timeshift::OFF
+      && !m_settings.IsTimeshiftBufferPathValid())
+    kodi::QueueNotification(QUEUE_ERROR, "", kodi::GetLocalizedString(30514));
+
+  std::string streamURL = GetLiveStreamURL(channelinfo);
+  m_strReader = new dvbviewer::StreamReader(streamURL, m_settings);
+  if (m_settings.m_timeshift == Timeshift::ON_PLAYBACK)
+    m_strReader = new dvbviewer::TimeshiftBuffer(m_strReader, m_settings);
+  return m_strReader->Start();
 }
 
-void Dvb::CloseLiveStream(void)
+void Dvb::CloseLiveStream()
 {
   CLockObject lock(m_mutex);
   m_currentChannel = 0;
+  SAFE_DELETE(m_strReader);
 }
 
-const std::string Dvb::GetLiveStreamURL(const PVR_CHANNEL &channelinfo)
+bool Dvb::IsRealTimeStream()
 {
-  DvbChannel *channel = GetChannel(channelinfo.iUniqueId);
+  return (m_strReader) ? m_strReader->IsRealTime() : false;
+}
+
+bool Dvb::CanPauseStream()
+{
+  if (m_settings.m_timeshift != Timeshift::OFF && m_strReader)
+    return (m_strReader->IsTimeshifting() || m_settings.IsTimeshiftBufferPathValid());
+  return false;
+}
+
+bool Dvb::CanSeekStream()
+{
+  // pause button seems to check CanSeekStream() too
+  //return (m_strReader && m_strReader->IsTimeshifting());
+  return (m_settings.m_timeshift != Timeshift::OFF);
+}
+
+int Dvb::ReadLiveStream(unsigned char* buffer, unsigned int size)
+{
+  return (m_strReader) ? static_cast<int>(m_strReader->ReadData(buffer, size)) : 0;
+}
+
+int64_t Dvb::SeekLiveStream(int64_t position, int whence)
+{
+  return (m_strReader) ? m_strReader->Seek(position, whence) : -1;
+}
+
+int64_t Dvb::LengthLiveStream()
+{
+  return (m_strReader) ? m_strReader->Length() : -1;
+}
+
+const std::string Dvb::GetLiveStreamURL(
+    const kodi::addon::PVRChannel& channelinfo)
+{
+  DvbChannel *channel = GetChannel(channelinfo.GetUniqueId());
   uint64_t backendId = channel->backendIds.front();
   switch(m_settings.m_transcoding)
   {
@@ -808,12 +1066,48 @@ const std::string Dvb::GetLiveStreamURL(const PVR_CHANNEL &channelinfo)
   return BuildURL("upnp/channelstream/%" PRIu64 ".ts", backendId);
 }
 
+PVR_ERROR Dvb::GetStreamTimes(kodi::addon::PVRStreamTimes& times)
+{
+  int64_t timeStart, timeEnd;
+  if (m_strReader)
+  {
+    timeStart = timeEnd = 0;
+    if (m_strReader->IsTimeshifting())
+    {
+      timeStart = m_strReader->TimeStart();
+      timeEnd   = m_strReader->TimeEnd();
+    }
+  }
+  else if (m_recReader && m_recReader->TimeStart() > 0)
+  {
+    timeStart = m_recReader->TimeStart();
+    timeEnd   = m_recReader->TimeRecorded();
+  }
+  else
+    return PVR_ERROR_NOT_IMPLEMENTED;
+
+  times.SetStartTime(timeStart);
+  times.SetPTSStart(0);
+  times.SetPTSBegin(0);
+  times.SetPTSEnd((timeEnd - timeStart) * DVD_TIME_BASE);
+  return PVR_ERROR_NO_ERROR;
+}
+
+PVR_ERROR Dvb::GetStreamReadChunkSize(int& chunksize)
+{
+  int size = m_settings.m_streamReadChunkSize;
+  if (!size)
+    return PVR_ERROR_NOT_IMPLEMENTED;
+  chunksize = m_settings.m_streamReadChunkSize * 1024;
+  return PVR_ERROR_NO_ERROR;
+}
+
 /***************************************************************************
  * Internal
  **************************************************************************/
 void *Dvb::Process()
 {
-  XBMC->Log(LOG_DEBUG, "%s: Running...", __FUNCTION__);
+  kodi::Log(ADDON_LOG_DEBUG, "%s: Running...", __FUNCTION__);
   int update = 0;
   int interval = (!m_settings.m_lowPerformance) ? 60 : 300;
 
@@ -826,27 +1120,27 @@ void *Dvb::Process()
     {
       if (m_settings.m_useWoL)
       {
-        if (!XBMC->WakeOnLan(m_settings.m_mac.c_str()))
-          XBMC->Log(LOG_ERROR, "Error sending WoL packet to %s",
+        if (!kodi::network::WakeOnLan(m_settings.m_mac))
+          kodi::Log(ADDON_LOG_ERROR, "Error sending WoL packet to %s",
               m_settings.m_mac.c_str());
       }
 
-      XBMC->Log(LOG_INFO, "Trying to connect to the backend server...");
+      kodi::Log(ADDON_LOG_INFO, "Trying to connect to the backend server...");
 
       if (CheckBackendVersion() && UpdateBackendStatus(true) && LoadChannels())
       {
         m_kvstore.Reset();
 
-        XBMC->Log(LOG_INFO, "Connection to the backend server successful.");
+        kodi::Log(ADDON_LOG_INFO, "Connection to the backend server successful.");
         SetConnectionState(PVR_CONNECTION_STATE_CONNECTED);
 
         TimerUpdates();
         // force recording sync as Kodi won't update recordings on PVR restart
-        PVR->TriggerRecordingUpdate();
+        TriggerRecordingUpdate();
       }
       else
       {
-        XBMC->Log(LOG_INFO, "Connection to the backend server failed."
+        kodi::Log(ADDON_LOG_INFO, "Connection to the backend server failed."
           " Retrying in 10 seconds...");
         Sleep(10000);
       }
@@ -863,8 +1157,8 @@ void *Dvb::Process()
         m_mutex.Unlock();
         Sleep(8000); /* Sleep enough time to let the media server grab the EPG data */
         m_mutex.Lock();
-        XBMC->Log(LOG_INFO, "Triggering EPG update on current channel!");
-        PVR->TriggerEpgUpdate(m_currentChannel);
+        kodi::Log(ADDON_LOG_INFO, "Triggering EPG update on current channel!");
+        TriggerEpgUpdate(m_currentChannel);
       }
 
       if (m_updateTimers)
@@ -873,7 +1167,7 @@ void *Dvb::Process()
         m_mutex.Unlock();
         Sleep(1000);
         m_mutex.Lock();
-        XBMC->Log(LOG_INFO, "Running forced timer updates!");
+        kodi::Log(ADDON_LOG_INFO, "Running forced timer updates!");
         TimerUpdates();
         update = 0;
       }
@@ -881,9 +1175,9 @@ void *Dvb::Process()
       if (update >= interval)
       {
         update = 0;
-        XBMC->Log(LOG_INFO, "Running timer + recording updates!");
+        kodi::Log(ADDON_LOG_INFO, "Running timer + recording updates!");
         TimerUpdates();
-        PVR->TriggerRecordingUpdate();
+        TriggerRecordingUpdate();
 
         /* actually the DMS should do this itself... */
         if (m_kvstore.IsSupported())
@@ -900,39 +1194,37 @@ Dvb::httpResponse Dvb::OpenFromAPI(const char* format, va_list args)
   static const std::string baseUrl = m_settings.BaseURL(false);
   std::string url = baseUrl + StringUtils::FormatV(format, args);
 
-  httpResponse res = { nullptr, true, 0, "" };
-  void *file = XBMC->CURLCreate(url.c_str());
-  if (!file)
+  httpResponse res;
+  if (!res.file.CURLCreate(url))
   {
-    XBMC->Log(LOG_ERROR, "Unable to create curl handle for %s", url.c_str());
+    kodi::Log(ADDON_LOG_ERROR, "Unable to create curl handle for %s", url.c_str());
     SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
     return res;
   }
 
-  XBMC->CURLAddOption(file, XFILE::CURL_OPTION_PROTOCOL, "user-agent", "Kodi PVR");
-  XBMC->CURLAddOption(file, XFILE::CURL_OPTION_HEADER, "Accept", "text/xml");
+  res.file.CURLAddOption(ADDON_CURL_OPTION_PROTOCOL, "user-agent", "Kodi PVR");
+  res.file.CURLAddOption(ADDON_CURL_OPTION_HEADER, "Accept", "text/xml");
   if (!m_settings.m_username.empty() && !m_settings.m_password.empty())
-    XBMC->CURLAddOption(file, XFILE::CURL_OPTION_CREDENTIALS,
-        m_settings.m_username.c_str(), m_settings.m_password.c_str());
+    res.file.CURLAddOption(ADDON_CURL_OPTION_CREDENTIALS,
+        m_settings.m_username, m_settings.m_password);
 
   /*
    * FIXME
    * CURLOpen fails on http!=2xy responses and the underlaying handle gets
    * deleted. So we can't parse the status line anymore.
    */
-  if (!XBMC->CURLOpen(file, XFILE::READ_NO_CACHE))
+  if (!res.file.CURLOpen(ADDON_READ_NO_CACHE))
   {
-    XBMC->Log(LOG_ERROR, "Unable to open url: %s", url.c_str());
-    XBMC->CloseFile(file);
+    kodi::Log(ADDON_LOG_ERROR, "Unable to open url: %s", url.c_str());
+    res.file.Close();
     return res;
   }
 
-  char *status = XBMC->GetFilePropertyValue(file,
-    XFILE::FILE_PROPERTY_RESPONSE_PROTOCOL, "");
-  if (!status)
+  std::string status = res.file.GetPropertyValue(ADDON_FILE_PROPERTY_RESPONSE_PROTOCOL, "");
+  if (status.empty())
   {
-    XBMC->Log(LOG_ERROR, "Endpoint %s didn't return a status line.", url.c_str());
-    XBMC->CloseFile(file);
+    kodi::Log(ADDON_LOG_ERROR, "Endpoint %s didn't return a status line.", url.c_str());
+    res.file.Close();
     SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
     return res;
   }
@@ -942,9 +1234,9 @@ Dvb::httpResponse Dvb::OpenFromAPI(const char* format, va_list args)
   ss >> res.code;
   if (!ss.good())
   {
-    XBMC->Log(LOG_ERROR, "Endpoint %s returned an invalid status line: ",
-        url.c_str(), status);
-    XBMC->CloseFile(file);
+    kodi::Log(ADDON_LOG_ERROR, "Endpoint %s returned an invalid status line: %s",
+        url.c_str(), status.c_str());
+    res.file.Close();
     SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
     return res;
   }
@@ -953,13 +1245,12 @@ Dvb::httpResponse Dvb::OpenFromAPI(const char* format, va_list args)
   // NOTE: this doesn't work for now. see above
   if (res.code >= 300)
   {
-    XBMC->Log(LOG_INFO, "Endpoint %s returned non-successful status code %hu",
+    kodi::Log(ADDON_LOG_INFO, "Endpoint %s returned non-successful status code %hu",
         url.c_str(), res.code);
-    XBMC->CloseFile(file);
+    res.file.Close();
     return res;
   }
 
-  res.file  = file;
   res.error = false;
   return res;
 }
@@ -980,15 +1271,14 @@ Dvb::httpResponse Dvb::GetFromAPI(const char* format, ...)
   httpResponse &&res = OpenFromAPI(format, args);
   va_end(args);
 
-  if (res.file)
+  if (res.file.IsOpen())
   {
     char buffer[1024];
-    while (ssize_t bytesRead = XBMC->ReadFile(res.file, buffer, 1024))
+    while (ssize_t bytesRead = res.file.Read(buffer, 1024))
       res.content.append(buffer, bytesRead);
-    XBMC->CloseFile(res.file);
-    res.file = nullptr;
+    res.file.Close();
   }
-  return res;
+  return std::move(res);
 }
 
 bool Dvb::LoadChannels()
@@ -1005,10 +1295,10 @@ bool Dvb::LoadChannels()
   doc.Parse(res.content.c_str());
   if (doc.Error())
   {
-    XBMC->Log(LOG_ERROR, "Unable to parse channels. Error: %s",
+    kodi::Log(ADDON_LOG_ERROR, "Unable to parse channels. Error: %s",
         doc.ErrorDesc());
     SetConnectionState(PVR_CONNECTION_STATE_SERVER_MISMATCH,
-        LocalizedString(30502).c_str());
+        kodi::GetLocalizedString(30502).c_str());
     return false;
   }
 
@@ -1020,7 +1310,7 @@ bool Dvb::LoadChannels()
   TiXmlElement *root = doc.RootElement();
   if (!root->FirstChildElement("root"))
   {
-    XBMC->Log(LOG_INFO, "Channel list is empty");
+    kodi::Log(ADDON_LOG_INFO, "Channel list is empty");
     return true; // empty channel is fine
   }
 
@@ -1039,8 +1329,8 @@ bool Dvb::LoadChannels()
   // user wants to use remote favourites but doesn't have any defined
   if (m_settings.m_useFavourites && !m_settings.m_useFavouritesFile && !hasFavourites)
   {
-    XBMC->Log(LOG_INFO, "Favourites enabled but non defined");
-    XBMC->QueueNotification(QUEUE_ERROR, LocalizedString(30509).c_str());
+    kodi::Log(ADDON_LOG_INFO, "Favourites enabled but non defined");
+    kodi::QueueNotification(QUEUE_ERROR, "", kodi::GetLocalizedString(30509));
     return false; // empty favourites is an error
   }
 
@@ -1134,9 +1424,9 @@ bool Dvb::LoadChannels()
             });
         if (!channel)
         {
-          XBMC->Log(LOG_INFO, "Favourites contains unresolvable channel: %s."
+          kodi::Log(ADDON_LOG_INFO, "Favourites contains unresolvable channel: %s."
               " Ignoring.", xChannel->Attribute("name"));
-          XBMC->QueueNotification(QUEUE_WARNING, LocalizedString(30508).c_str(),
+          kodi::QueueNotification(QUEUE_WARNING, "", kodi::GetLocalizedString(30508),
               xChannel->Attribute("name"));
           continue;
         }
@@ -1152,30 +1442,30 @@ bool Dvb::LoadChannels()
   }
   else if (m_settings.m_useFavourites && m_settings.m_useFavouritesFile)
   {
-    void *fileHandle = XBMC->OpenFile(m_settings.m_favouritesFile.c_str(), 0);
-    if (!fileHandle)
+    kodi::vfs::CFile fileHandle;
+    if (!fileHandle.OpenFile(m_settings.m_favouritesFile))
     {
-      XBMC->Log(LOG_ERROR, "Unable to open local favourites.xml");
+      kodi::Log(ADDON_LOG_ERROR, "Unable to open local favourites.xml");
       SetConnectionState(PVR_CONNECTION_STATE_SERVER_MISMATCH,
-          LocalizedString(30504).c_str());
+          kodi::GetLocalizedString(30504).c_str());
       return false;
     }
 
     std::string content;
     char buffer[1024];
-    while (ssize_t bytesRead = XBMC->ReadFile(fileHandle, buffer, 1024))
+    while (ssize_t bytesRead = fileHandle.Read(buffer, 1024))
       content.append(buffer, bytesRead);
-    XBMC->CloseFile(fileHandle);
+    fileHandle.Close();
 
     TiXmlDocument doc;
     RemoveNullChars(content);
     doc.Parse(content.c_str());
     if (doc.Error())
     {
-      XBMC->Log(LOG_ERROR, "Unable to parse favourites.xml. Error: %s",
+      kodi::Log(ADDON_LOG_ERROR, "Unable to parse favourites.xml. Error: %s",
           doc.ErrorDesc());
       SetConnectionState(PVR_CONNECTION_STATE_SERVER_MISMATCH,
-          LocalizedString(30505).c_str());
+          kodi::GetLocalizedString(30505).c_str());
       return false;
     }
 
@@ -1240,9 +1530,9 @@ bool Dvb::LoadChannels()
         {
           const char *descr = (channelName.empty()) ? xEntry->GetText()
             : channelName.c_str();
-          XBMC->Log(LOG_INFO, "Favourites contains unresolvable channel: %s."
+          kodi::Log(ADDON_LOG_INFO, "Favourites contains unresolvable channel: %s."
               " Ignoring.", descr);
-          XBMC->QueueNotification(QUEUE_WARNING, LocalizedString(30508).c_str(),
+          kodi::QueueNotification(QUEUE_WARNING, "", kodi::GetLocalizedString(30508),
               descr);
           continue;
         }
@@ -1270,10 +1560,10 @@ bool Dvb::LoadChannels()
     }
   }
 
-  XBMC->Log(LOG_INFO, "Loaded (%u/%lu) channels in (%u/%lu) groups",
+  kodi::Log(ADDON_LOG_INFO, "Loaded (%u/%lu) channels in (%u/%lu) groups",
       m_channelAmount, m_channels.size(), m_groupAmount, m_groups.size());
   // force channel sync as stream urls may have changed (e.g. rstp on/off)
-  PVR->TriggerChannelUpdate();
+  TriggerChannelUpdate();
   return true;
 }
 
@@ -1288,11 +1578,11 @@ void Dvb::TimerUpdates()
       SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
     else if (err == Timers::GENERIC_PARSE_ERROR)
       SetConnectionState(PVR_CONNECTION_STATE_SERVER_MISMATCH,
-          LocalizedString(30506).c_str());
+          kodi::GetLocalizedString(30506).c_str());
     return;
   }
-  XBMC->Log(LOG_INFO, "Changes in timerlist detected, triggering an update!");
-  PVR->TriggerTimerUpdate();
+  kodi::Log(ADDON_LOG_INFO, "Changes in timerlist detected, triggering an update!");
+  TriggerTimerUpdate();
 }
 
 DvbChannel *Dvb::GetChannel(std::function<bool (const DvbChannel*)> func)
@@ -1319,31 +1609,31 @@ bool Dvb::CheckBackendVersion()
   doc.Parse(res.content.c_str());
   if (doc.Error())
   {
-    XBMC->Log(LOG_ERROR, "Unable to connect to the backend server. Error: %s",
+    kodi::Log(ADDON_LOG_ERROR, "Unable to connect to the backend server. Error: %s",
         doc.ErrorDesc());
     SetConnectionState(PVR_CONNECTION_STATE_SERVER_MISMATCH);
     return false;
   }
 
   m_backendVersion = 0;
-  XBMC->Log(LOG_INFO, "Checking backend version...");
+  kodi::Log(ADDON_LOG_INFO, "Checking backend version...");
   if (doc.RootElement()->QueryUnsignedAttribute("iver", &m_backendVersion)
       != TIXML_SUCCESS)
   {
-    XBMC->Log(LOG_ERROR, "Unable to parse version");
+    kodi::Log(ADDON_LOG_ERROR, "Unable to parse version");
     SetConnectionState(PVR_CONNECTION_STATE_SERVER_MISMATCH);
     return false;
   }
-  XBMC->Log(LOG_INFO, "Version: %u / %u.%u.%u.%u", m_backendVersion,
+  kodi::Log(ADDON_LOG_INFO, "Version: %u / %u.%u.%u.%u", m_backendVersion,
     m_backendVersion >> 24 & 0xFF, m_backendVersion >> 16 & 0xFF,
     m_backendVersion >> 8  & 0xFF, m_backendVersion & 0xFF);
 
   if (m_backendVersion < DMS_MIN_VERSION_NUM)
   {
-    XBMC->Log(LOG_ERROR, "DVBViewer Media Server version %s or higher required",
+    kodi::Log(ADDON_LOG_ERROR, "DVBViewer Media Server version %s or higher required",
         DMS_MIN_VERSION_STR);
     SetConnectionState(PVR_CONNECTION_STATE_VERSION_MISMATCH,
-      LocalizedString(30501).c_str(), DMS_MIN_VERSION_STR);
+      kodi::GetLocalizedString(30501).c_str(), DMS_MIN_VERSION_STR);
     return false;
   }
 
@@ -1364,7 +1654,7 @@ bool Dvb::UpdateBackendStatus(bool updateSettings)
   doc.Parse(res.content.c_str());
   if (doc.Error())
   {
-    XBMC->Log(LOG_ERROR, "Unable to get backend status. Error: %s",
+    kodi::Log(ADDON_LOG_ERROR, "Unable to get backend status. Error: %s",
         doc.ErrorDesc());
     return false;
   }
@@ -1401,7 +1691,7 @@ bool Dvb::UpdateBackendStatus(bool updateSettings)
     std::string rights("");
     XMLUtils::GetString(root, "rights", rights);
     if ((m_isguest = (rights != "full")))
-      XBMC->Log(LOG_INFO, "Only guest permissions available!");
+      kodi::Log(ADDON_LOG_INFO, "Only guest permissions available!");
 
     /* read some settings from backend */
     m_settings.ReadFromBackend(*this);
@@ -1415,7 +1705,7 @@ void Dvb::SetConnectionState(PVR_CONNECTION_STATE state,
 {
   if (state != m_state)
   {
-    XBMC->Log(LOG_DEBUG, "Connection state change (%d -> %d)", m_state, state);
+    kodi::Log(ADDON_LOG_DEBUG, "Connection state change (%d -> %d)", m_state, state);
     m_state = state;
 
     std::string tmp;
@@ -1427,7 +1717,7 @@ void Dvb::SetConnectionState(PVR_CONNECTION_STATE state,
       message = tmp.c_str();
       va_end(argList);
     }
-    PVR->ConnectionStateChange(m_settings.m_hostname.c_str(), m_state, message);
+    ConnectionStateChange(m_settings.m_hostname, m_state, message);
   }
 }
 

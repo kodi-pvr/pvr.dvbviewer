@@ -9,6 +9,7 @@
 #pragma once
 
 #include "IStreamReader.h"
+#include "kodi/Filesystem.h"
 
 #include <atomic>
 #include <condition_variable>
@@ -43,8 +44,8 @@ private:
 
   std::string m_bufferPath;
   IStreamReader *m_strReader;
-  void *m_filebufferReadHandle;
-  void *m_filebufferWriteHandle;
+  kodi::vfs::CFile m_filebufferReadHandle;
+  kodi::vfs::CFile m_filebufferWriteHandle;
   int m_readTimeout;
   std::time_t m_start = 0;
   std::atomic<uint64_t> m_writePos = { 0 };

@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "kodi/libXBMC_pvr.h"
+#include "kodi/addon-instance/pvr/Timers.h"
 #include "tinyxml.h"
 
 #include <string>
@@ -136,7 +136,7 @@ public:
     : m_cli(cli)
   {};
 
-  void GetTimerTypes(std::vector< std::unique_ptr<PVR_TIMER_TYPE> > &types);
+  void GetTimerTypes(std::vector< std::unique_ptr<kodi::addon::PVRTimerType> > &types);
   Error RefreshAllTimers(bool &changes);
 
   Timer *GetTimer(std::function<bool (const Timer&)> func);
@@ -145,14 +145,14 @@ public:
   std::size_t GetTimerCount();
   std::size_t GetAutoTimerCount();
 
-  void GetTimers(std::vector<PVR_TIMER> &timers);
-  void GetAutoTimers(std::vector<PVR_TIMER> &timers);
+  void GetTimers(std::vector<kodi::addon::PVRTimer> &timers);
+  void GetAutoTimers(std::vector<kodi::addon::PVRTimer> &timers);
 
-  Error AddUpdateTimer(const PVR_TIMER &timer, bool update);
-  Error AddUpdateAutoTimer(const PVR_TIMER &timer, bool update);
+  Error AddUpdateTimer(const kodi::addon::PVRTimer &timer, bool update);
+  Error AddUpdateAutoTimer(const kodi::addon::PVRTimer &timer, bool update);
 
-  Error DeleteTimer(const PVR_TIMER &timer);
-  Error DeleteAutoTimer(const PVR_TIMER &timer);
+  Error DeleteTimer(const kodi::addon::PVRTimer &timer);
+  Error DeleteAutoTimer(const kodi::addon::PVRTimer &timer);
 
 private:
   template <typename T>
@@ -165,11 +165,11 @@ private:
   Error RefreshTimers(bool &changes);
   Error RefreshAutoTimers(bool &changes);
   bool CanAutoTimers() const;
-  bool IsAutoTimer(const PVR_TIMER &timer);
+  bool IsAutoTimer(const kodi::addon::PVRTimer &timer);
 
-  Error ParseTimerFrom(const PVR_TIMER &tmr, Timer &timer);
+  Error ParseTimerFrom(const kodi::addon::PVRTimer &tmr, Timer &timer);
   Error ParseTimerFrom(const TiXmlElement *xml, unsigned int pos, Timer &timer);
-  Error ParseTimerFrom(const PVR_TIMER &tmr, AutoTimer &timer);
+  Error ParseTimerFrom(const kodi::addon::PVRTimer &tmr, AutoTimer &timer);
   Error ParseTimerFrom(const TiXmlElement *xml, unsigned int pos, AutoTimer &timer);
 
   void ParseDate(const std::string &date, std::tm &timeinfo);

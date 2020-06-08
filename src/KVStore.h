@@ -8,8 +8,6 @@
 
 #pragma once
 
-#include "kodi/libXBMC_pvr.h"
-
 #include <atomic>
 #include <chrono>
 #include <functional>
