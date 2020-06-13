@@ -8,12 +8,13 @@
 
 #pragma once
 
+#include "IStreamReader.h"
 #include "KVStore.h"
 #include "RecordingReader.h"
 #include "Settings.h"
 #include "Timers.h"
 
-#include "kodi/libXBMC_pvr.h"
+#include "kodi/addon-instance/PVR.h"
 #include "p8-platform/threads/threads.h"
 
 #include <list>
@@ -132,17 +133,24 @@ typedef std::vector<DvbChannel *> DvbChannels_t;
 typedef std::vector<DvbGroup> DvbGroups_t;
 
 class Dvb
-  : public P8PLATFORM::CThread
+  : public kodi::addon::CInstancePVRClient, public P8PLATFORM::CThread
 {
 public:
-  Dvb(const dvbviewer::Settings &settings);
+  Dvb(KODI_HANDLE instance, const std::string& kodiVersion,
+       const dvbviewer::Settings &settings);
   ~Dvb();
 
   bool IsConnected();
 
-  std::string GetBackendName();
+  PVR_ERROR GetCapabilities(
+      kodi::addon::PVRCapabilities& capabilities) override;
+  PVR_ERROR GetBackendName(std::string& name) override;
+  PVR_ERROR GetBackendVersion(std::string& version) override;
+  PVR_ERROR GetBackendHostname(std::string& hostname) override;
+  PVR_ERROR GetConnectionString(std::string& connection) override;
+  PVR_ERROR GetDriveSpace(uint64_t& total, uint64_t& used) override;
+
   unsigned int GetBackendVersion();
-  bool GetDriveSpace(long long *total, long long *used);
   bool IsGuest()
   { return m_isguest; }
   bool HasKVStore()
@@ -151,35 +159,62 @@ public:
   { return m_settings; };
 
   unsigned int GetCurrentClientChannel(void);
-  bool GetChannels(ADDON_HANDLE handle, bool radio);
-  bool GetEPGForChannel(ADDON_HANDLE handle, int iChannelUid,
-      std::time_t start, std::time_t end);
-  unsigned int GetChannelsAmount(void);
+  PVR_ERROR GetChannels(bool radio,
+      kodi::addon::PVRChannelsResultSet& results) override;
+  PVR_ERROR GetEPGForChannel(int channelUid, time_t start, time_t end,
+      kodi::addon::PVREPGTagsResultSet& results) override;
+  PVR_ERROR GetChannelsAmount(int& amount) override;
+  PVR_ERROR GetSignalStatus(int channelUid,
+      kodi::addon::PVRSignalStatus& signalStatus) override;
 
-  bool GetChannelGroups(ADDON_HANDLE handle, bool radio);
-  bool GetChannelGroupMembers(ADDON_HANDLE handle,
-      const PVR_CHANNEL_GROUP &group);
-  unsigned int GetChannelGroupsAmount(void);
+  PVR_ERROR GetChannelGroups(bool radio,
+      kodi::addon::PVRChannelGroupsResultSet& results) override;
+  PVR_ERROR GetChannelGroupMembers(const kodi::addon::PVRChannelGroup& group,
+      kodi::addon::PVRChannelGroupMembersResultSet& results) override;
+  PVR_ERROR GetChannelGroupsAmount(int& amount) override;
 
-  void GetTimerTypes(PVR_TIMER_TYPE types[], int *size);
-  bool GetTimers(ADDON_HANDLE handle);
-  bool AddTimer(const PVR_TIMER &timer, bool update = false);
-  bool DeleteTimer(const PVR_TIMER &timer);
-  unsigned int GetTimersAmount(void);
+  PVR_ERROR GetTimerTypes(
+      std::vector<kodi::addon::PVRTimerType>& types) override;
+  PVR_ERROR GetTimers(kodi::addon::PVRTimersResultSet& results) override;
+  PVR_ERROR AddTimer(const kodi::addon::PVRTimer& timer) override;
+  PVR_ERROR UpdateTimer(const kodi::addon::PVRTimer& timer) override;
+  PVR_ERROR DeleteTimer(const kodi::addon::PVRTimer& timer,
+      bool forceDelete) override;
+  PVR_ERROR GetTimersAmount(int& amount) override;
 
-  bool GetRecordings(ADDON_HANDLE handle);
-  bool DeleteRecording(const PVR_RECORDING &recinfo);
-  unsigned int GetRecordingsAmount();
-  dvbviewer::RecordingReader *OpenRecordedStream(const PVR_RECORDING &recinfo);
-  bool GetRecordingEdl(const PVR_RECORDING &recinfo, PVR_EDL_ENTRY edl[],
-      int *size);
-  bool SetRecordingPlayCount(const PVR_RECORDING &recinfo, int count);
-  int GetRecordingLastPlayedPosition(const PVR_RECORDING &recinfo);
-  bool SetRecordingLastPlayedPosition(const PVR_RECORDING &recinfo, int pos);
+  PVR_ERROR GetRecordings(bool deleted,
+      kodi::addon::PVRRecordingsResultSet& results) override;
+  PVR_ERROR DeleteRecording(
+      const kodi::addon::PVRRecording& recording) override;
+  PVR_ERROR GetRecordingsAmount(bool deleted, int& amount) override;
+  bool OpenRecordedStream(const kodi::addon::PVRRecording& recinfo) override;
+  void CloseRecordedStream() override;
+  int ReadRecordedStream(unsigned char* buffer, unsigned int size) override;
+  int64_t SeekRecordedStream(int64_t position, int whence) override;
+  int64_t LengthRecordedStream() override;
+  PVR_ERROR GetRecordingEdl(const kodi::addon::PVRRecording& recinfo,
+        std::vector<kodi::addon::PVREDLEntry>& edl) override;
+  PVR_ERROR SetRecordingPlayCount(const kodi::addon::PVRRecording& recinfo,
+        int count) override;
+  PVR_ERROR SetRecordingLastPlayedPosition(
+        const kodi::addon::PVRRecording& recinfo,
+        int lastplayedposition) override;
+  PVR_ERROR GetRecordingLastPlayedPosition(
+        const kodi::addon::PVRRecording& recinfo,
+        int& position) override;
 
-  bool OpenLiveStream(const PVR_CHANNEL &channelinfo);
-  void CloseLiveStream();
-  const std::string GetLiveStreamURL(const PVR_CHANNEL &channelinfo);
+  bool OpenLiveStream(const kodi::addon::PVRChannel& channelinfo) override;
+  void CloseLiveStream() override;
+  bool IsRealTimeStream() override;
+  bool CanPauseStream() override;
+  bool CanSeekStream() override;
+  int ReadLiveStream(unsigned char* buffer, unsigned int size) override;
+  int64_t SeekLiveStream(int64_t position, int whence) override;
+  int64_t LengthLiveStream() override;
+  PVR_ERROR GetStreamTimes(kodi::addon::PVRStreamTimes& times) override;
+
+
+  PVR_ERROR GetStreamReadChunkSize(int& chunksize) override;
 
   DvbChannel *GetChannel(unsigned int id)
   { return (--id < m_channels.size()) ? m_channels[id] : nullptr; };
@@ -188,9 +223,9 @@ public:
   { return m_recfolders; };
 
   struct httpResponse {
-      void *file;
-      bool error;
-      unsigned short code;
+      kodi::vfs::CFile file;
+      bool error = false;
+      unsigned short code = 0;
       std::string content;
   };
   httpResponse OpenFromAPI(const char* format, va_list args);
@@ -211,6 +246,8 @@ private:
   void SetConnectionState(PVR_CONNECTION_STATE state,
       const char *message = nullptr, ...);
   std::string BuildURL(const char* path, ...);
+  const std::string GetLiveStreamURL(
+      const kodi::addon::PVRChannel& channelinfo);
 
 private:
   PVR_CONNECTION_STATE m_state = PVR_CONNECTION_STATE_UNKNOWN;
@@ -235,6 +272,9 @@ private:
   bool m_updateTimers = false;
   bool m_updateEPG = false;
   unsigned int m_recordingAmount = 0;
+
+  dvbviewer::IStreamReader* m_strReader = nullptr;
+  dvbviewer::RecordingReader* m_recReader = nullptr;
 
   dvbviewer::Timers m_timers = dvbviewer::Timers(*this);
   dvbviewer::KVStore m_kvstore;

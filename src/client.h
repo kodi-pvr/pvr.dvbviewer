@@ -8,23 +8,27 @@
 
 #pragma once
 
-#include "kodi/libXBMC_pvr.h"
+#include "p8-platform/threads/threads.h"
 
-#ifndef _UNUSED
-#if defined(__GNUC__)
-# define _UNUSED(x) UNUSED_ ## x __attribute__((unused))
-#elif defined(__LCLINT__)
-# define _UNUSED(x) /*@unused@*/ x
-#else
-# define _UNUSED(x) x
-#endif
-#endif
+#include <kodi/AddonBase.h>
 
-/*!
- * @brief PVR macros for string exchange
- */
-#define PVR_STRCPY(dest, source) do { strncpy(dest, source, sizeof(dest)-1); dest[sizeof(dest)-1] = '\0'; } while(0)
-#define PVR_STRCLR(dest) memset(dest, 0, sizeof(dest))
+class Dvb;
 
-extern ADDON::CHelper_libXBMC_addon *XBMC;
-extern CHelper_libXBMC_pvr *PVR;
+class ATTRIBUTE_HIDDEN CDVBViewerAddon : public kodi::addon::CAddonBase
+{
+public:
+  CDVBViewerAddon() = default;
+
+  ADDON_STATUS CreateInstance(int instanceType, const std::string& instanceID,
+      KODI_HANDLE instance, const std::string& version,
+      KODI_HANDLE& addonInstance) override;
+  void DestroyInstance(int instanceType, const std::string& instanceID,
+      KODI_HANDLE addonInstance) override;
+
+  ADDON_STATUS SetSetting(const std::string& settingName,
+      const kodi::CSettingValue& settingValue) override;
+
+private:
+  Dvb* m_dvbData = nullptr;
+  P8PLATFORM::CMutex m_mutex;
+};

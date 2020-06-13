@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "kodi/libXBMC_addon.h"
+#include "kodi/Filesystem.h"
 
 #include <ctime>
 

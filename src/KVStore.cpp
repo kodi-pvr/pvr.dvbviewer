@@ -15,7 +15,6 @@
 #define CACHE_TTL 60
 
 using namespace dvbviewer;
-using namespace ADDON;
 
 bool KVStore::IsSupported() const
 {
@@ -86,7 +85,7 @@ KVStore::Error KVStore::FetchAll()
     std::string::size_type val_end = s.find("\r\n", key_end);
     if (val_end == std::string::npos)
     {
-      XBMC->Log(LOG_ERROR, "Unable to parse key-value entry: %s", key.c_str());
+      kodi::Log(ADDON_LOG_ERROR, "Unable to parse key-value entry: %s", key.c_str());
       return GENERIC_PARSE_ERROR;
     }
 

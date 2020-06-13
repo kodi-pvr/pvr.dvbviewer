@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "kodi/libXBMC_addon.h"
+#include "kodi/Filesystem.h"
 
 #include <atomic>
 #include <chrono>
@@ -35,7 +35,7 @@ public:
 
 private:
   std::string m_streamURL;
-  void *m_readHandle;
+  kodi::vfs::CFile m_readHandle;
 
   std::time_t m_timeStart; /* start time. 0 if already finished on playback */
   std::time_t m_timeEnd;   /* end time. 0 as soon as recording is finished */

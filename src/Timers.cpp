@@ -9,17 +9,16 @@
 #include "Timers.h"
 #include "client.h"
 #include "DvbData.h"
-#include "LocalizedString.h"
 
 #include <algorithm>
 #include <ctime>
 
 #include "inttypes.h"
+#include "kodi/General.h"
 #include "util/XMLUtils.h"
 #include "p8-platform/util/StringUtils.h"
 
 using namespace dvbviewer;
-using namespace ADDON;
 
 #define TIMER_UPDATE_MEMBER(member) \
   if (member != other.member) \
@@ -60,73 +59,46 @@ bool Timer::isRunning(const std::time_t *now, const std::string *channelName) co
   return true;
 }
 
-void Timers::GetTimerTypes(std::vector< std::unique_ptr<PVR_TIMER_TYPE> > &types)
+void Timers::GetTimerTypes(std::vector< std::unique_ptr<kodi::addon::PVRTimerType> > &types)
 {
   struct TimerType
-    : PVR_TIMER_TYPE
+    : kodi::addon::PVRTimerType
   {
     TimerType(unsigned int id, unsigned int attributes,
       const std::string &description = std::string(),
-      const std::vector< std::pair<int, std::string> > &priorityValues
-        = std::vector< std::pair<int, std::string> >(),
-      const std::vector< std::pair<int, std::string> > &groupValues
-        = std::vector< std::pair<int, std::string> >(),
-      const std::vector< std::pair<int, std::string> > &deDupValues
-        = std::vector< std::pair<int, std::string> >())
+      const std::vector<kodi::addon::PVRTypeIntValue> &priorityValues
+        = std::vector<kodi::addon::PVRTypeIntValue>(),
+      const std::vector<kodi::addon::PVRTypeIntValue> &groupValues
+        = std::vector<kodi::addon::PVRTypeIntValue>(),
+      const std::vector<kodi::addon::PVRTypeIntValue> &deDupValues
+        = std::vector<kodi::addon::PVRTypeIntValue>())
     {
-      int i;
-      memset(this, 0, sizeof(PVR_TIMER_TYPE));
+      SetId(id);
+      SetAttributes(attributes);
+      SetDescription(description);
 
-      iId         = id;
-      iAttributes = attributes;
-      PVR_STRCPY(strDescription, description.c_str());
-
-      if ((iPrioritiesSize = priorityValues.size()))
-        iPrioritiesDefault = priorityValues[0].first;
-      i = 0;
-      for (auto &priority : priorityValues)
-      {
-        priorities[i].iValue = priority.first;
-        PVR_STRCPY(priorities[i].strDescription, priority.second.c_str());
-        ++i;
-      }
-
-      if ((iRecordingGroupSize = groupValues.size()))
-        iRecordingGroupDefault = groupValues[0].first;
-      i = 0;
-      for (auto &group : groupValues)
-      {
-        recordingGroup[i].iValue = group.first;
-        PVR_STRCPY(recordingGroup[i].strDescription, group.second.c_str());
-        ++i;
-      }
-
-      if ((iPreventDuplicateEpisodesSize = deDupValues.size()))
-        iPreventDuplicateEpisodesDefault = deDupValues[0].first;
-      i = 0;
-      for (auto &deDup : deDupValues)
-      {
-        preventDuplicateEpisodes[i].iValue = deDup.first;
-        PVR_STRCPY(preventDuplicateEpisodes[i].strDescription,
-            deDup.second.c_str());
-        ++i;
-      }
+      if (!priorityValues.empty())
+        SetPriorities(priorityValues, priorityValues[0].GetValue());
+      if (!groupValues.empty())
+        SetRecordingGroups(groupValues, groupValues[0].GetValue());
+      if (!deDupValues.empty())
+        SetPreventDuplicateEpisodes(deDupValues, deDupValues[0].GetValue());
     }
   };
 
   /* PVR_Timer.iPriority values and presentation.*/
-  static std::vector< std::pair<int, std::string> > priorityValues = {
-    { -1,  LocalizedString(30400) }, //default
-    { 0,   LocalizedString(30401) },
-    { 25,  LocalizedString(30402) },
-    { 50,  LocalizedString(30403) },
-    { 75,  LocalizedString(30404) },
-    { 100, LocalizedString(30405) },
+  static std::vector<kodi::addon::PVRTypeIntValue> priorityValues = {
+    { -1,  kodi::GetLocalizedString(30400) }, //default
+    { 0,   kodi::GetLocalizedString(30401) },
+    { 25,  kodi::GetLocalizedString(30402) },
+    { 50,  kodi::GetLocalizedString(30403) },
+    { 75,  kodi::GetLocalizedString(30404) },
+    { 100, kodi::GetLocalizedString(30405) },
   };
 
   /* PVR_Timer.iRecordingGroup values and presentation.*/
-  std::vector< std::pair<int, std::string> > groupValues = {
-    { 0, LocalizedString(30410) }, //automatic
+  std::vector<kodi::addon::PVRTypeIntValue> groupValues = {
+    { 0, kodi::GetLocalizedString(30410) }, //automatic
   };
   for (auto &recf : m_cli.GetRecordingFolders())
     groupValues.emplace_back(groupValues.size(), recf);
@@ -177,12 +149,12 @@ void Timers::GetTimerTypes(std::vector< std::unique_ptr<PVR_TIMER_TYPE> > &types
   if (CanAutoTimers())
   {
     /* PVR_Timer.iPreventDuplicateEpisodes values and presentation.*/
-    static std::vector< std::pair<int, std::string> > deDupValues =
+    static std::vector<kodi::addon::PVRTypeIntValue> deDupValues =
     {
-      { AutoTimer::DeDup::DISABLED,             LocalizedString(30430) },
-      { AutoTimer::DeDup::CHECK_TITLE,          LocalizedString(30431) },
-      { AutoTimer::DeDup::CHECK_SUBTITLE,       LocalizedString(30432) },
-      { AutoTimer::DeDup::CHECK_TITLE_SUBTITLE, LocalizedString(30433) },
+      { AutoTimer::DeDup::DISABLED,             kodi::GetLocalizedString(30430) },
+      { AutoTimer::DeDup::CHECK_TITLE,          kodi::GetLocalizedString(30431) },
+      { AutoTimer::DeDup::CHECK_SUBTITLE,       kodi::GetLocalizedString(30432) },
+      { AutoTimer::DeDup::CHECK_TITLE_SUBTITLE, kodi::GetLocalizedString(30433) },
     };
 
      /* epg auto search */
@@ -206,8 +178,8 @@ void Timers::GetTimerTypes(std::vector< std::unique_ptr<PVR_TIMER_TYPE> > &types
         PVR_TIMER_TYPE_SUPPORTS_RECORD_ONLY_NEW_EPISODES,
         "", /* Let Kodi generate the description */
         priorityValues, groupValues, deDupValues)));
-    types.back()->iPreventDuplicateEpisodesDefault =
-        AutoTimer::DeDup::CHECK_TITLE_SUBTITLE;
+    types.back()->SetPreventDuplicateEpisodesDefault(
+        AutoTimer::DeDup::CHECK_TITLE_SUBTITLE);
 
     /* One-shot created by epg auto search */
     types.emplace_back(std::unique_ptr<TimerType>(new TimerType(
@@ -221,7 +193,7 @@ void Timers::GetTimerTypes(std::vector< std::unique_ptr<PVR_TIMER_TYPE> > &types
         PVR_TIMER_TYPE_SUPPORTS_START_END_MARGIN |
         PVR_TIMER_TYPE_SUPPORTS_PRIORITY         |
         PVR_TIMER_TYPE_SUPPORTS_RECORDING_GROUP,
-        LocalizedString(30420),
+        kodi::GetLocalizedString(30420),
         priorityValues, groupValues)));
   }
 }
@@ -253,7 +225,7 @@ Timers::Error Timers::RefreshTimers(const char *name, const char *endpoint,
   doc.Parse(res.content.c_str());
   if (doc.Error())
   {
-    XBMC->Log(LOG_ERROR, "Unable to parse %s list. Error: %s",
+    kodi::Log(ADDON_LOG_ERROR, "Unable to parse %s list. Error: %s",
         name, doc.ErrorDesc());
     return GENERIC_PARSE_ERROR;
   }
@@ -281,7 +253,7 @@ Timers::Error Timers::RefreshTimers(const char *name, const char *endpoint,
       {
         timer.syncState = newTimer.syncState = T::SyncState::UPDATED;
         ++updated;
-        XBMC->Log(LOG_DEBUG, "timer %s updated", timer.title.c_str());
+        kodi::Log(ADDON_LOG_DEBUG, "timer %s updated", timer.title.c_str());
       }
       else
       {
@@ -301,7 +273,7 @@ Timers::Error Timers::RefreshTimers(const char *name, const char *endpoint,
     const T &timer = it->second;
     if (timer.syncState == T::SyncState::NONE)
     {
-      XBMC->Log(LOG_DEBUG, "Removed %s '%s': id=%u",
+      kodi::Log(ADDON_LOG_DEBUG, "Removed %s '%s': id=%u",
           name, timer.title.c_str(), timer.id);
       it = timerlist.erase(it);
       ++removed;
@@ -314,12 +286,12 @@ Timers::Error Timers::RefreshTimers(const char *name, const char *endpoint,
   for (auto &newTimer : newTimers)
   {
     newTimer.id = m_nextTimerId++;
-    XBMC->Log(LOG_DEBUG, "New %s '%s': id=%u",
+    kodi::Log(ADDON_LOG_DEBUG, "New %s '%s': id=%u",
         name, newTimer.title.c_str(), newTimer.id);
     timerlist[newTimer.id] = newTimer;
   }
 
-  XBMC->Log(LOG_DEBUG, "%s list update: removed=%lu, unchanged=%lu, updated=%lu"
+  kodi::Log(ADDON_LOG_DEBUG, "%s list update: removed=%lu, unchanged=%lu, updated=%lu"
       ", added=%lu", name, removed, unchanged, updated, added);
   changes = (removed || updated || added);
   return SUCCESS;
@@ -350,27 +322,27 @@ std::size_t Timers::GetTimerCount()
   return m_timers.size();
 }
 
-void Timers::GetTimers(std::vector<PVR_TIMER> &timers)
+void Timers::GetTimers(std::vector<kodi::addon::PVRTimer> &timers)
 {
   for (auto &pair : m_timers)
   {
     const Timer &timer = pair.second;
-    PVR_TIMER tmr = { 0 };
+    kodi::addon::PVRTimer tmr;
 
-    PVR_STRCPY(tmr.strTitle, timer.title.c_str());
-    tmr.iClientIndex      = timer.id;
-    tmr.iClientChannelUid = timer.channel->id;
+    tmr.SetTitle(timer.title);
+    tmr.SetClientIndex(timer.id);
+    tmr.SetClientChannelUid(timer.channel->id);
     // Kodi requires starttime/endtime to exclude the margins
-    tmr.startTime         = timer.start + timer.marginStart * 60;
-    tmr.endTime           = timer.end   - timer.marginEnd   * 60;
-    tmr.iMarginStart      = timer.marginStart;
-    tmr.iMarginEnd        = timer.marginEnd;
-    tmr.state             = timer.state;
-    tmr.iTimerType        = timer.type;
-    tmr.iPriority         = timer.priority;
-    tmr.iRecordingGroup   = timer.recfolder + 1; /* first entry is automatic */
-    tmr.firstDay          = (timer.weekdays != 0) ? tmr.startTime : 0;
-    tmr.iWeekdays         = timer.weekdays;
+    tmr.SetStartTime(timer.start + timer.marginStart * 60);
+    tmr.SetEndTime(timer.end   - timer.marginEnd   * 60);
+    tmr.SetMarginStart(timer.marginStart);
+    tmr.SetMarginEnd(timer.marginEnd);
+    tmr.SetState(timer.state);
+    tmr.SetTimerType(timer.type);
+    tmr.SetPriority(timer.priority);
+    tmr.SetRecordingGroup(timer.recfolder + 1); /* first entry is automatic */
+    tmr.SetFirstDay((timer.weekdays != 0) ? tmr.GetStartTime() : 0);
+    tmr.SetWeekdays(timer.weekdays);
 
     if (timer.type == Timer::Type::MANUAL_ONCE && !timer.source.empty())
     {
@@ -378,8 +350,8 @@ void Timers::GetTimers(std::vector<PVR_TIMER> &timers)
           { return autotimer.title == timer.source; });
       if (autotimer)
       {
-        tmr.iParentClientIndex = autotimer->id;
-        tmr.iTimerType = Timer::Type::EPG_AUTO_ONCE;
+        tmr.SetParentClientIndex(autotimer->id);
+        tmr.SetTimerType(Timer::Type::EPG_AUTO_ONCE);
       }
     }
 
@@ -387,12 +359,12 @@ void Timers::GetTimers(std::vector<PVR_TIMER> &timers)
   }
 }
 
-Timers::Error Timers::DeleteTimer(const PVR_TIMER &timer)
+Timers::Error Timers::DeleteTimer(const kodi::addon::PVRTimer &timer)
 {
   if (IsAutoTimer(timer))
     return DeleteAutoTimer(timer);
 
-  auto it = m_timers.find(timer.iClientIndex);
+  auto it = m_timers.find(timer.GetClientIndex());
   if (it == m_timers.end())
     return TIMER_UNKNOWN;
 
@@ -403,9 +375,9 @@ Timers::Error Timers::DeleteTimer(const PVR_TIMER &timer)
   return (res.error) ? RESPONSE_ERROR : SUCCESS;
 }
 
-Timers::Error Timers::AddUpdateTimer(const PVR_TIMER &tmr, bool update)
+Timers::Error Timers::AddUpdateTimer(const kodi::addon::PVRTimer &tmr, bool update)
 {
-  if (update && tmr.iClientIndex == PVR_TIMER_NO_CLIENT_INDEX)
+  if (update && tmr.GetClientIndex() == PVR_TIMER_NO_CLIENT_INDEX)
     return TIMER_UNKNOWN;
 
   if (IsAutoTimer(tmr))
@@ -454,17 +426,17 @@ Timers::Error Timers::AddUpdateTimer(const PVR_TIMER &tmr, bool update)
   return (res.error) ? RESPONSE_ERROR : SUCCESS;
 }
 
-Timers::Error Timers::ParseTimerFrom(const PVR_TIMER &tmr, Timer &timer)
+Timers::Error Timers::ParseTimerFrom(const kodi::addon::PVRTimer &tmr, Timer &timer)
 {
-  timer.start       = (tmr.startTime) ? tmr.startTime : std::time(nullptr);
-  timer.end         = tmr.endTime;
-  timer.marginStart = tmr.iMarginStart;
-  timer.marginEnd   = tmr.iMarginEnd;
-  timer.weekdays    = tmr.iWeekdays;
-  timer.title       = tmr.strTitle;
-  timer.priority    = tmr.iPriority;
-  timer.state       = tmr.state;
-  timer.type        = static_cast<Timer::Type>(tmr.iTimerType);
+  timer.start       = (tmr.GetStartTime()) ? tmr.GetStartTime() : std::time(nullptr);
+  timer.end         = tmr.GetEndTime();
+  timer.marginStart = tmr.GetMarginStart();
+  timer.marginEnd   = tmr.GetMarginEnd();
+  timer.weekdays    = tmr.GetWeekdays();
+  timer.title       = tmr.GetTitle();
+  timer.priority    = tmr.GetPriority();
+  timer.state       = tmr.GetState();
+  timer.type        = static_cast<Timer::Type>(tmr.GetTimerType());
 
   // DMS API requires starttime/endtime to include the margins
   timer.start -= timer.marginStart * 60;
@@ -472,24 +444,24 @@ Timers::Error Timers::ParseTimerFrom(const PVR_TIMER &tmr, Timer &timer)
   if (timer.start >= timer.end || timer.start - timer.end >= DAY_SECS)
     return TIMESPAN_OVERFLOW;
 
-  if (tmr.iClientIndex != PVR_TIMER_NO_CLIENT_INDEX)
+  if (tmr.GetClientIndex() != PVR_TIMER_NO_CLIENT_INDEX)
   {
-    auto it = m_timers.find(tmr.iClientIndex);
+    auto it = m_timers.find(tmr.GetClientIndex());
     if (it == m_timers.end())
       return TIMER_UNKNOWN;
     timer.backendId = it->second.backendId;
   }
 
   // timers require an assigned channel
-  timer.channel = m_cli.GetChannel(tmr.iClientChannelUid);
+  timer.channel = m_cli.GetChannel(tmr.GetClientChannelUid());
   if (!timer.channel)
     return CHANNEL_UNKNOWN;
 
-  if (timer.type != Timer::Type::EPG_ONCE && tmr.iRecordingGroup > 0)
+  if (timer.type != Timer::Type::EPG_ONCE && tmr.GetRecordingGroup() > 0)
   {
-    if (tmr.iRecordingGroup > m_cli.GetRecordingFolders().size())
+    if (tmr.GetRecordingGroup() > m_cli.GetRecordingFolders().size())
       return RECFOLDER_UNKNOWN;
-    timer.recfolder = tmr.iRecordingGroup - 1;
+    timer.recfolder = tmr.GetRecordingGroup() - 1;
   }
 
   return SUCCESS;
@@ -526,7 +498,7 @@ Timers::Error Timers::ParseTimerFrom(const TiXmlElement *xml, unsigned int pos,
       });
   if (!timer.channel)
   {
-    XBMC->Log(LOG_INFO, "Found timer for unknown channel (backendid=%"
+    kodi::Log(ADDON_LOG_INFO, "Found timer for unknown channel (backendid=%"
       PRIu64 "). Ignoring.", backendId);
     return CHANNEL_UNKNOWN;
   }
@@ -612,9 +584,9 @@ bool Timers::CanAutoTimers() const
   return m_cli.GetBackendVersion() >= DMS_VERSION_NUM(2, 1, 0, 0);
 }
 
-bool Timers::IsAutoTimer(const PVR_TIMER &timer)
+bool Timers::IsAutoTimer(const kodi::addon::PVRTimer &timer)
 {
-  return timer.iTimerType == Timer::Type::EPG_AUTO_SEARCH;
+  return timer.GetTimerType() == Timer::Type::EPG_AUTO_SEARCH;
 }
 
 AutoTimer *Timers::GetAutoTimer(std::function<bool (const AutoTimer&)> func)
@@ -627,40 +599,40 @@ std::size_t Timers::GetAutoTimerCount()
   return m_autotimers.size();
 }
 
-void Timers::GetAutoTimers(std::vector<PVR_TIMER> &timers)
+void Timers::GetAutoTimers(std::vector<kodi::addon::PVRTimer> &timers)
 {
   for (auto &pair : m_autotimers)
   {
     const AutoTimer &timer = pair.second;
-    PVR_TIMER tmr = { 0 };
+    kodi::addon::PVRTimer tmr;
 
-    PVR_STRCPY(tmr.strTitle, timer.title.c_str());
-    tmr.iClientIndex      = timer.id;
-    tmr.iClientChannelUid = (timer.channel) ? timer.channel->id : PVR_TIMER_ANY_CHANNEL;
-    tmr.startTime         = timer.start;
-    tmr.endTime           = timer.end;
-    tmr.bStartAnyTime     = timer.startAnyTime;
-    tmr.bEndAnyTime       = timer.endAnyTime;
-    tmr.iMarginStart      = timer.marginStart;
-    tmr.iMarginEnd        = timer.marginEnd;
-    tmr.state             = timer.state;
-    tmr.iTimerType        = timer.type;
-    tmr.iPriority         = timer.priority;
-    tmr.iRecordingGroup   = timer.recfolder + 1; /* first entry is automatic */
-    tmr.firstDay          = timer.firstDay;
-    tmr.iWeekdays         = timer.weekdays;
+    tmr.SetTitle(timer.title);
+    tmr.SetClientIndex(timer.id);
+    tmr.SetClientChannelUid(timer.channel ? timer.channel->id : PVR_TIMER_ANY_CHANNEL);
+    tmr.SetStartTime(timer.start);
+    tmr.SetEndTime(timer.end);
+    tmr.SetStartAnyTime(timer.startAnyTime);
+    tmr.SetEndAnyTime(timer.endAnyTime);
+    tmr.SetMarginStart(timer.marginStart);
+    tmr.SetMarginEnd(timer.marginEnd);
+    tmr.SetState(timer.state);
+    tmr.SetTimerType(timer.type);
+    tmr.SetPriority(timer.priority);
+    tmr.SetRecordingGroup(timer.recfolder + 1); /* first entry is automatic */
+    tmr.SetFirstDay(timer.firstDay);
+    tmr.SetWeekdays(timer.weekdays);
 
-    PVR_STRCPY(tmr.strEpgSearchString, timer.searchPhrase.c_str());
-    tmr.bFullTextEpgSearch = timer.searchFulltext;
-    tmr.iPreventDuplicateEpisodes = timer.deDup;
+    tmr.SetEPGSearchString(timer.searchPhrase);
+    tmr.SetFullTextEpgSearch(timer.searchFulltext);
+    tmr.SetPreventDuplicateEpisodes(timer.deDup);
 
     timers.emplace_back(tmr);
   }
 }
 
-Timers::Error Timers::DeleteAutoTimer(const PVR_TIMER &timer)
+Timers::Error Timers::DeleteAutoTimer(const kodi::addon::PVRTimer &timer)
 {
-  auto it = m_autotimers.find(timer.iClientIndex);
+  auto it = m_autotimers.find(timer.GetClientIndex());
   if (it == m_autotimers.end())
     return TIMER_UNKNOWN;
 
@@ -671,7 +643,7 @@ Timers::Error Timers::DeleteAutoTimer(const PVR_TIMER &timer)
   return (res.error) ? RESPONSE_ERROR : SUCCESS;
 }
 
-Timers::Error Timers::AddUpdateAutoTimer(const PVR_TIMER &tmr, bool update)
+Timers::Error Timers::AddUpdateAutoTimer(const kodi::addon::PVRTimer &tmr, bool update)
 {
   AutoTimer timer;
   Error err = ParseTimerFrom(tmr, timer);
@@ -733,7 +705,7 @@ Timers::Error Timers::AddUpdateAutoTimer(const PVR_TIMER &tmr, bool update)
   }
 
   /* updating the name only works by using the index */
-  AutoTimer *oldTimer = (update) ? &m_autotimers.at(tmr.iClientIndex) : nullptr;
+  AutoTimer *oldTimer = (update) ? &m_autotimers.at(tmr.GetClientIndex()) : nullptr;
   if (update && timer.title != oldTimer->title)
     params += "&id=" + std::to_string(timer.backendId);
 
@@ -754,47 +726,47 @@ Timers::Error Timers::AddUpdateAutoTimer(const PVR_TIMER &tmr, bool update)
   return SUCCESS;
 }
 
-Timers::Error Timers::ParseTimerFrom(const PVR_TIMER &tmr, AutoTimer &timer)
+Timers::Error Timers::ParseTimerFrom(const kodi::addon::PVRTimer &tmr, AutoTimer &timer)
 {
-  timer.start          = (tmr.bStartAnyTime) ? 0 : tmr.startTime;
-  timer.end            = (tmr.bEndAnyTime)   ? 0 : tmr.endTime;
-  timer.marginStart    = tmr.iMarginStart;
-  timer.marginEnd      = tmr.iMarginEnd;
-  timer.firstDay       = tmr.firstDay;
-  timer.weekdays       = tmr.iWeekdays;
-  timer.title          = tmr.strTitle;
-  timer.priority       = tmr.iPriority;
-  timer.state          = tmr.state;
-  timer.type           = static_cast<Timer::Type>(tmr.iTimerType);
-  timer.searchPhrase   = tmr.strEpgSearchString;
-  timer.searchFulltext = tmr.bFullTextEpgSearch;
-  timer.startAnyTime   = tmr.bStartAnyTime;
-  timer.endAnyTime     = tmr.bEndAnyTime;
-  timer.deDup          = static_cast<AutoTimer::DeDup>(tmr.iPreventDuplicateEpisodes);
+  timer.start          = (tmr.GetStartAnyTime()) ? 0 : tmr.GetStartTime();
+  timer.end            = (tmr.GetEndAnyTime())   ? 0 : tmr.GetEndTime();
+  timer.marginStart    = tmr.GetMarginStart();
+  timer.marginEnd      = tmr.GetMarginEnd();
+  timer.firstDay       = tmr.GetFirstDay();
+  timer.weekdays       = tmr.GetWeekdays();
+  timer.title          = tmr.GetTitle();
+  timer.priority       = tmr.GetPriority();
+  timer.state          = tmr.GetState();
+  timer.type           = static_cast<Timer::Type>(tmr.GetTimerType());
+  timer.searchPhrase   = tmr.GetEPGSearchString();
+  timer.searchFulltext = tmr.GetFullTextEpgSearch();
+  timer.startAnyTime   = tmr.GetStartAnyTime();
+  timer.endAnyTime     = tmr.GetEndAnyTime();
+  timer.deDup          = static_cast<AutoTimer::DeDup>(tmr.GetPreventDuplicateEpisodes());
 
   if (timer.searchPhrase.empty())
     return EMPTY_SEARCH_PHRASE;
 
-  if (tmr.iClientIndex != PVR_TIMER_NO_CLIENT_INDEX)
+  if (tmr.GetClientIndex() != PVR_TIMER_NO_CLIENT_INDEX)
   {
-    auto it = m_autotimers.find(tmr.iClientIndex);
+    auto it = m_autotimers.find(tmr.GetClientIndex());
     if (it == m_autotimers.end())
       return TIMER_UNKNOWN;
     timer.backendId = it->second.backendId;
   }
 
-  if (tmr.iClientChannelUid != PVR_TIMER_ANY_CHANNEL)
+  if (tmr.GetClientChannelUid() != PVR_TIMER_ANY_CHANNEL)
   {
-    timer.channel = m_cli.GetChannel(tmr.iClientChannelUid);
+    timer.channel = m_cli.GetChannel(tmr.GetClientChannelUid());
     if (!timer.channel)
       return CHANNEL_UNKNOWN;
   }
 
-  if (tmr.iRecordingGroup > 0)
+  if (tmr.GetRecordingGroup() > 0)
   {
-    if (tmr.iRecordingGroup > m_cli.GetRecordingFolders().size())
+    if (tmr.GetRecordingGroup() > m_cli.GetRecordingFolders().size())
       return RECFOLDER_UNKNOWN;
-    timer.recfolder = tmr.iRecordingGroup - 1;
+    timer.recfolder = tmr.GetRecordingGroup() - 1;
   }
 
   timer.CalcGUID();
@@ -852,7 +824,7 @@ Timers::Error Timers::ParseTimerFrom(const TiXmlElement *xml, unsigned int pos,
           { return channel->epgId == backendId; });
       if (!timer.channel)
       {
-        XBMC->Log(LOG_INFO, "Found timer for unknown channel (backendid=%"
+        kodi::Log(ADDON_LOG_INFO, "Found timer for unknown channel (backendid=%"
           PRIu64 "). Ignoring.", backendId);
         return CHANNEL_UNKNOWN;
       }

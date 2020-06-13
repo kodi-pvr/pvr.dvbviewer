@@ -73,7 +73,7 @@ public:
 
   void ReadFromKodi();
   bool ReadFromBackend(Dvb &cli);
-  ADDON_STATUS SetValue(const std::string name, const void *value);
+  ADDON_STATUS SetValue(const std::string name, const kodi::CSettingValue& value);
 
   bool IsTimeshiftBufferPathValid() const;
   std::string BaseURL(bool credentials = true) const;

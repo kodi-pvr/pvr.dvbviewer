@@ -18,32 +18,31 @@
 #define REOPEN_INTERVAL_FAST 10
 
 using namespace dvbviewer;
-using namespace ADDON;
 
 RecordingReader::RecordingReader(const std::string &streamURL,
     const std::pair<std::time_t, std::time_t> &startEnd)
   : m_streamURL(streamURL), m_timeStart(startEnd.first), m_timeEnd(startEnd.second)
 {
-  m_readHandle = XBMC->CURLCreate(m_streamURL.c_str());
-  (void)XBMC->CURLOpen(m_readHandle, XFILE::READ_NO_CACHE | XFILE::READ_AUDIO_VIDEO);
-  m_len = XBMC->GetFileLength(m_readHandle);
+  m_readHandle.CURLCreate(m_streamURL);
+  m_readHandle.CURLOpen(ADDON_READ_NO_CACHE | ADDON_READ_AUDIO_VIDEO);
+  m_len = m_readHandle.GetLength();
   m_nextReopen = std::chrono::steady_clock::now()
       + std::chrono::seconds(REOPEN_INTERVAL);
   m_timeRecorded = std::time(nullptr);
-  XBMC->Log(LOG_DEBUG, "RecordingReader: Started; url=%s, start=%u, end=%u",
+  kodi::Log(ADDON_LOG_DEBUG, "RecordingReader: Started; url=%s, start=%u, end=%u",
       m_streamURL.c_str(), m_timeStart, m_timeEnd);
 }
 
 RecordingReader::~RecordingReader(void)
 {
-  if (m_readHandle)
-    XBMC->CloseFile(m_readHandle);
-  XBMC->Log(LOG_DEBUG, "RecordingReader: Stopped");
+  if (m_readHandle.IsOpen())
+    m_readHandle.Close();
+  kodi::Log(ADDON_LOG_DEBUG, "RecordingReader: Stopped");
 }
 
 bool RecordingReader::Start()
 {
-  return (m_readHandle != nullptr);
+  return m_readHandle.IsOpen();
 }
 
 ssize_t RecordingReader::ReadData(unsigned char *buffer, unsigned int size)
@@ -55,12 +54,12 @@ ssize_t RecordingReader::ReadData(unsigned char *buffer, unsigned int size)
     if (m_pos == m_len || now > m_nextReopen)
     {
       /* reopen stream */
-      XBMC->Log(LOG_DEBUG, "RecordingReader: Reopening stream...");
-      (void)XBMC->CURLOpen(m_readHandle, XFILE::READ_REOPEN | XFILE::READ_NO_CACHE
-          | XFILE::READ_AUDIO_VIDEO);
-      m_len = XBMC->GetFileLength(m_readHandle);
+      kodi::Log(ADDON_LOG_DEBUG, "RecordingReader: Reopening stream...");
+      m_readHandle.CURLOpen(ADDON_READ_REOPEN | ADDON_READ_NO_CACHE
+          | ADDON_READ_AUDIO_VIDEO);
+      m_len = m_readHandle.GetLength();
       m_timeRecorded = std::time(nullptr);
-      XBMC->SeekFile(m_readHandle, m_pos, SEEK_SET);
+      m_readHandle.Seek(m_pos, SEEK_SET);
 
       // random value (10 MiB) we choose to switch to fast reopen interval
       bool nearEnd = (m_len - m_pos <= 10 * 1024 * 1024);
@@ -76,18 +75,18 @@ ssize_t RecordingReader::ReadData(unsigned char *buffer, unsigned int size)
     }
   }
 
-  ssize_t read = XBMC->ReadFile(m_readHandle, buffer, size);
+  ssize_t read = m_readHandle.Read(buffer, size);
   m_pos += read;
   return read;
 }
 
 int64_t RecordingReader::Seek(long long position, int whence)
 {
-  int64_t ret = XBMC->SeekFile(m_readHandle, position, whence);
+  int64_t ret = m_readHandle.Seek(position, whence);
   // for unknown reason seek sometimes doesn't return the correct position
   // so let's sync with the underlaying implementation
-  m_pos = XBMC->GetFilePosition(m_readHandle);
-  m_len = XBMC->GetFileLength(m_readHandle);
+  m_pos = m_readHandle.GetPosition();
+  m_len = m_readHandle.GetLength();
   return ret;
 }
 
