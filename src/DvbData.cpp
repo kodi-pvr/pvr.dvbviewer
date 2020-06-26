@@ -1714,10 +1714,9 @@ void Dvb::SetConnectionState(PVR_CONNECTION_STATE state,
       va_list argList;
       va_start(argList, message);
       tmp = StringUtils::FormatV(message, argList);
-      message = tmp.c_str();
       va_end(argList);
     }
-    ConnectionStateChange(m_settings.m_hostname, m_state, message);
+    ConnectionStateChange(m_settings.m_hostname, m_state, tmp);
   }
 }
 
