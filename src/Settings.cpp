@@ -33,8 +33,8 @@ void Settings::ReadFromKodi()
   if (!kodi::CheckSettingInt("webport", m_webPort))
     m_webPort = DEFAULT_WEB_PORT;
 
-  m_username = kodi::GetSettingInt("user");
-  m_password = kodi::GetSettingInt("pass");
+  m_username = kodi::GetSettingString("user");
+  m_password = kodi::GetSettingString("pass");
   m_profileId = kodi::GetSettingInt("profileid");
   m_useWoL = kodi::GetSettingBoolean("usewol");
   m_mac = kodi::GetSettingString("mac");
