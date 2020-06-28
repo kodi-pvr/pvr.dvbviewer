@@ -1,3 +1,6 @@
+6.0.2:
+[fixed] read user and pass settings as string and not integer
+
 6.0.1:
 [fixed] string nullptr assignment to ConnectionStateChange
 
