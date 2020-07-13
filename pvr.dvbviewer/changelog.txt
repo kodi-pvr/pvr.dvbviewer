@@ -1,3 +1,8 @@
+6.0.3:
+[updated] Namespace and symbol cleanup
+[fixed] Workaround a bug in the PVR manager so the PVR gets correctly marked as "running"
+[fixed] Incorrect user and pass settings read call
+
 6.0.1:
 [fixed] string nullptr assignment to ConnectionStateChange
 
