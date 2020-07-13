@@ -33,8 +33,8 @@ void Settings::ReadFromKodi()
   if (!kodi::CheckSettingInt("webport", m_webPort))
     m_webPort = DEFAULT_WEB_PORT;
 
-  m_username = kodi::GetSettingInt("user");
-  m_password = kodi::GetSettingInt("pass");
+  m_username = kodi::GetSettingString("user");
+  m_password = kodi::GetSettingString("pass");
   m_profileId = kodi::GetSettingInt("profileid");
   m_useWoL = kodi::GetSettingBoolean("usewol");
   m_mac = kodi::GetSettingString("mac");
@@ -67,8 +67,7 @@ void Settings::ReadFromKodi()
   kodi::Log(ADDON_LOG_DEBUG, "DVBViewer Addon Configuration options");
   kodi::Log(ADDON_LOG_DEBUG, "Backend: http://%s:%d/", m_hostname.c_str(), m_webPort);
   if (!m_username.empty() && !m_password.empty())
-    kodi::Log(ADDON_LOG_DEBUG, "Login credentials: %s/%s", m_username.c_str(),
-        m_password.c_str());
+    kodi::Log(ADDON_LOG_DEBUG, "Login credentials: %s/PASSWORD", m_username.c_str());
   kodi::Log(ADDON_LOG_DEBUG, "Profile ID: %d", m_profileId);
   if (m_useWoL)
     kodi::Log(ADDON_LOG_DEBUG, "WoL MAC: %s", m_mac.c_str());
