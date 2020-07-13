@@ -10,7 +10,7 @@
 
 #include "IStreamReader.h"
 
-namespace dvbviewer
+namespace ATTRIBUTE_HIDDEN dvbviewer
 {
 
 /* forward declaration */

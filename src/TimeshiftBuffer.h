@@ -16,7 +16,7 @@
 #include <mutex>
 #include <thread>
 
-namespace dvbviewer
+namespace ATTRIBUTE_HIDDEN dvbviewer
 {
 
 /* forward declaration */

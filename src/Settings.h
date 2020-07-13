@@ -16,11 +16,11 @@
 #define DEFAULT_WEB_PORT     8089
 #define DEFAULT_TSBUFFERPATH "special://userdata/addon_data/pvr.dvbviewer"
 
+namespace ATTRIBUTE_HIDDEN dvbviewer
+{
+
 /* forward declaration */
 class Dvb;
-
-namespace dvbviewer
-{
 
 enum class Timeshift
   : int // same type as addon settings

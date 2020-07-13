@@ -22,10 +22,10 @@ ADDON_STATUS CDVBViewerAddon::CreateInstance(int instanceType,
 
     dvbviewer::Settings settings;
     settings.ReadFromKodi();
-    m_dvbData = new Dvb(instance, version, settings);
+    m_dvbData = new dvbviewer::Dvb(instance, version, settings);
     addonInstance = m_dvbData;
 
-    return GetStatus();
+    return ADDON_STATUS_OK;
   }
 
   return ADDON_STATUS_UNKNOWN;

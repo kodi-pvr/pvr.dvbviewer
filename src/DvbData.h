@@ -41,7 +41,7 @@
 #define DAY_SECS                     (24 * 60 * 60)
 #define DELPHI_DATE                  (25569)
 
-namespace dvbviewer
+namespace ATTRIBUTE_HIDDEN dvbviewer
 {
   std::string URLEncode(const std::string& data);
   std::time_t ParseDateTime(const std::string& date, bool iso8601);
@@ -49,8 +49,10 @@ namespace dvbviewer
   long UTCOffset();
   void RemoveNullChars(std::string& str);
   std::string ConvertToUtf8(const std::string& src);
-} // namespace dvbviewer
+}
 
+namespace ATTRIBUTE_HIDDEN dvbviewer
+{
 /* forward declaration */
 class DvbGroup;
 
@@ -273,12 +275,14 @@ private:
   bool m_updateEPG = false;
   unsigned int m_recordingAmount = 0;
 
-  dvbviewer::IStreamReader* m_strReader = nullptr;
-  dvbviewer::RecordingReader* m_recReader = nullptr;
+  IStreamReader* m_strReader = nullptr;
+  RecordingReader* m_recReader = nullptr;
 
-  dvbviewer::Timers m_timers = dvbviewer::Timers(*this);
-  dvbviewer::KVStore m_kvstore;
-  dvbviewer::Settings m_settings;
+  Timers m_timers = Timers(*this);
+  KVStore m_kvstore;
+  Settings m_settings;
 
   P8PLATFORM::CMutex m_mutex;
 };
+
+} // namespace dvbviewer

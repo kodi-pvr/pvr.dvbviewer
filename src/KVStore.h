@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <kodi/AddonBase.h>
+
 #include <atomic>
 #include <chrono>
 #include <functional>
@@ -17,11 +19,11 @@
 #include <string>
 #include <vector>
 
+namespace ATTRIBUTE_HIDDEN dvbviewer
+{
+
 /* forward declaration */
 class Dvb;
-
-namespace dvbviewer
-{
 
 class KVStore
 {

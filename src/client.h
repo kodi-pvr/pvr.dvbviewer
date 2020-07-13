@@ -8,13 +8,14 @@
 
 #pragma once
 
+#include "DvbData.h"
+
 #include "p8-platform/threads/threads.h"
 
 #include <kodi/AddonBase.h>
 
-class Dvb;
-
-class ATTRIBUTE_HIDDEN CDVBViewerAddon : public kodi::addon::CAddonBase
+class ATTRIBUTE_HIDDEN CDVBViewerAddon
+  : public kodi::addon::CAddonBase
 {
 public:
   CDVBViewerAddon() = default;
@@ -29,6 +30,6 @@ public:
       const kodi::CSettingValue& settingValue) override;
 
 private:
-  Dvb* m_dvbData = nullptr;
+  dvbviewer::Dvb* m_dvbData = nullptr;
   P8PLATFORM::CMutex m_mutex;
 };

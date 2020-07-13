@@ -18,12 +18,12 @@
 #include <ctime>
 #include <type_traits>
 
+namespace ATTRIBUTE_HIDDEN dvbviewer
+{
+
 /* forward declaration */
 class Dvb;
 class DvbChannel;
-
-namespace dvbviewer
-{
 
 class Timer
 {

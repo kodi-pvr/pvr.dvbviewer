@@ -12,7 +12,7 @@
 
 #include <ctime>
 
-namespace dvbviewer
+namespace ATTRIBUTE_HIDDEN dvbviewer
 {
 
 class IStreamReader
