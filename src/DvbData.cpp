@@ -194,18 +194,12 @@ PVR_ERROR Dvb::GetCapabilities(kodi::addon::PVRCapabilities& capabilities)
 
 PVR_ERROR Dvb::GetBackendName(std::string& name)
 {
-  if (!IsConnected())
-    return PVR_ERROR_SERVER_ERROR;
-
-  name = m_backendName;
+  name = (!IsConnected()) ? "not connected" : m_backendName;
   return PVR_ERROR_NO_ERROR;
 }
 
 PVR_ERROR Dvb::GetBackendVersion(std::string& version)
 {
-  if (!IsConnected())
-    return PVR_ERROR_SERVER_ERROR;
-
   version = StringUtils::Format("%u.%u.%u.%u", m_backendVersion >> 24 & 0xFF,
       m_backendVersion >> 16 & 0xFF, m_backendVersion >> 8  & 0xFF, m_backendVersion & 0xFF);
   return PVR_ERROR_NO_ERROR;
@@ -257,7 +251,7 @@ PVR_ERROR Dvb::GetChannels(bool radio,
   if (!IsConnected())
     return PVR_ERROR_SERVER_ERROR;
 
-   for (auto channel : m_channels)
+  for (auto channel : m_channels)
   {
     if (channel->hidden)
       continue;
@@ -462,9 +456,6 @@ PVR_ERROR Dvb::GetChannelGroupsAmount(int& amount)
  **************************************************************************/
 PVR_ERROR Dvb::GetTimerTypes(std::vector<kodi::addon::PVRTimerType>& types)
 {
-  if (!IsConnected())
-    return PVR_ERROR_SERVER_ERROR;
-
   std::vector< std::unique_ptr<kodi::addon::PVRTimerType> > timerTypes;
   {
     CLockObject lock(m_mutex);
@@ -474,7 +465,7 @@ PVR_ERROR Dvb::GetTimerTypes(std::vector<kodi::addon::PVRTimerType>& types)
   for (auto &timer : timerTypes)
     types.push_back(*timer);
 
-  kodi::Log(ADDON_LOG_DEBUG, "transfered %u timers", timerTypes.size());
+  kodi::Log(ADDON_LOG_DEBUG, "GetTimerTypes: transferred %u types", timerTypes.size());
 
   return PVR_ERROR_NO_ERROR;
 }
@@ -568,7 +559,7 @@ PVR_ERROR Dvb::DeleteTimer(const kodi::addon::PVRTimer& timer, bool forceDelete)
   if (err != Timers::SUCCESS)
     return PVR_ERROR_FAILED;
 
-  TriggerTimerUpdate();
+  kodi::addon::CInstancePVRClient::TriggerTimerUpdate();
   return PVR_ERROR_NO_ERROR;
 }
 
@@ -780,7 +771,7 @@ PVR_ERROR Dvb::DeleteRecording(const kodi::addon::PVRRecording& recording)
       recording.GetRecordingId().c_str());
   if (res.error)
     return PVR_ERROR_FAILED;
-  TriggerRecordingUpdate();
+  kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
   return PVR_ERROR_NO_ERROR;
 }
 
@@ -1136,7 +1127,7 @@ void *Dvb::Process()
 
         TimerUpdates();
         // force recording sync as Kodi won't update recordings on PVR restart
-        TriggerRecordingUpdate();
+        kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
       }
       else
       {
@@ -1158,7 +1149,7 @@ void *Dvb::Process()
         Sleep(8000); /* Sleep enough time to let the media server grab the EPG data */
         m_mutex.Lock();
         kodi::Log(ADDON_LOG_INFO, "Triggering EPG update on current channel!");
-        TriggerEpgUpdate(m_currentChannel);
+        kodi::addon::CInstancePVRClient::TriggerEpgUpdate(m_currentChannel);
       }
 
       if (m_updateTimers)
@@ -1177,7 +1168,7 @@ void *Dvb::Process()
         update = 0;
         kodi::Log(ADDON_LOG_INFO, "Running timer + recording updates!");
         TimerUpdates();
-        TriggerRecordingUpdate();
+        kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
 
         /* actually the DMS should do this itself... */
         if (m_kvstore.IsSupported())
@@ -1563,7 +1554,7 @@ bool Dvb::LoadChannels()
   kodi::Log(ADDON_LOG_INFO, "Loaded (%u/%lu) channels in (%u/%lu) groups",
       m_channelAmount, m_channels.size(), m_groupAmount, m_groups.size());
   // force channel sync as stream urls may have changed (e.g. rstp on/off)
-  TriggerChannelUpdate();
+  kodi::addon::CInstancePVRClient::TriggerChannelUpdate();
   return true;
 }
 
@@ -1582,7 +1573,7 @@ void Dvb::TimerUpdates()
     return;
   }
   kodi::Log(ADDON_LOG_INFO, "Changes in timerlist detected, triggering an update!");
-  TriggerTimerUpdate();
+  kodi::addon::CInstancePVRClient::TriggerTimerUpdate();
 }
 
 DvbChannel *Dvb::GetChannel(std::function<bool (const DvbChannel*)> func)
@@ -1708,7 +1699,7 @@ void Dvb::SetConnectionState(PVR_CONNECTION_STATE state,
     kodi::Log(ADDON_LOG_DEBUG, "Connection state change (%d -> %d)", m_state, state);
     m_state = state;
 
-    std::string tmp;
+    std::string tmp("");
     if (message)
     {
       va_list argList;
@@ -1716,7 +1707,7 @@ void Dvb::SetConnectionState(PVR_CONNECTION_STATE state,
       tmp = StringUtils::FormatV(message, argList);
       va_end(argList);
     }
-    ConnectionStateChange(m_settings.m_hostname, m_state, tmp);
+    kodi::addon::CInstancePVRClient::ConnectionStateChange(m_settings.m_hostname, m_state, tmp);
   }
 }
 
