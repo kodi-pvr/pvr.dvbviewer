@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 
-namespace ATTRIBUTE_HIDDEN dvbviewer
+namespace dvbviewer ATTRIBUTE_HIDDEN
 {
 
 /* forward declaration */

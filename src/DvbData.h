@@ -41,7 +41,7 @@
 #define DAY_SECS                     (24 * 60 * 60)
 #define DELPHI_DATE                  (25569)
 
-namespace ATTRIBUTE_HIDDEN dvbviewer
+namespace dvbviewer ATTRIBUTE_HIDDEN
 {
   std::string URLEncode(const std::string& data);
   std::time_t ParseDateTime(const std::string& date, bool iso8601);
@@ -51,7 +51,7 @@ namespace ATTRIBUTE_HIDDEN dvbviewer
   std::string ConvertToUtf8(const std::string& src);
 }
 
-namespace ATTRIBUTE_HIDDEN dvbviewer
+namespace dvbviewer ATTRIBUTE_HIDDEN
 {
 /* forward declaration */
 class DvbGroup;

@@ -18,7 +18,7 @@
 #include <ctime>
 #include <type_traits>
 
-namespace ATTRIBUTE_HIDDEN dvbviewer
+namespace dvbviewer ATTRIBUTE_HIDDEN
 {
 
 /* forward declaration */

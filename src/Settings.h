@@ -16,7 +16,7 @@
 #define DEFAULT_WEB_PORT     8089
 #define DEFAULT_TSBUFFERPATH "special://userdata/addon_data/pvr.dvbviewer"
 
-namespace ATTRIBUTE_HIDDEN dvbviewer
+namespace dvbviewer ATTRIBUTE_HIDDEN
 {
 
 /* forward declaration */
