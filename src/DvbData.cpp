@@ -14,6 +14,7 @@
 
 #include <kodi/General.h>
 #include <kodi/Network.h>
+#include <kodi/addon-instance/inputstream/TimingConstants.h>
 #include <kodi/tools/StringUtils.h>
 
 #include <tinyxml.h>
@@ -1098,7 +1099,7 @@ PVR_ERROR Dvb::GetStreamTimes(kodi::addon::PVRStreamTimes& times)
   times.SetStartTime(timeStart);
   times.SetPTSStart(0);
   times.SetPTSBegin(0);
-  times.SetPTSEnd((timeEnd - timeStart) * DVD_TIME_BASE);
+  times.SetPTSEnd((timeEnd - timeStart) * STREAM_TIME_BASE);
   return PVR_ERROR_NO_ERROR;
 }
 
