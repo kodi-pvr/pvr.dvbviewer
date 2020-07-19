@@ -1,3 +1,6 @@
+6.0.5:
+[fixed] Crash introduced in 6.0.0
+
 6.0.4:
 [fixed] Compilation with older gcc
 
