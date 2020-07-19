@@ -226,7 +226,7 @@ public:
 
   struct httpResponse {
       kodi::vfs::CFile file;
-      bool error = false;
+      bool error = true;
       unsigned short code = 0;
       std::string content;
   };
