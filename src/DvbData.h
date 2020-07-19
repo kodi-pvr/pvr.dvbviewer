@@ -19,7 +19,9 @@
 
 #include <list>
 #include <map>
+#include <memory>
 #include <functional>
+#include <atomic>
 
 // minimum version required
 #define DMS_MIN_VERSION 1, 33, 2, 0
@@ -230,9 +232,9 @@ public:
       unsigned short code = 0;
       std::string content;
   };
-  httpResponse OpenFromAPI(const char* format, va_list args);
-  httpResponse OpenFromAPI(const char* format, ...);
-  httpResponse GetFromAPI(const char* format, ...);
+  std::unique_ptr<httpResponse> OpenFromAPI(const char* format, va_list args);
+  std::unique_ptr<httpResponse> OpenFromAPI(const char* format, ...);
+  std::unique_ptr<httpResponse> GetFromAPI(const char* format, ...);
 
 protected:
   virtual void *Process(void) override;
@@ -252,9 +254,9 @@ private:
       const kodi::addon::PVRChannel& channelinfo);
 
 private:
-  PVR_CONNECTION_STATE m_state = PVR_CONNECTION_STATE_UNKNOWN;
+  std::atomic<PVR_CONNECTION_STATE> m_state = { PVR_CONNECTION_STATE_UNKNOWN };
   std::string m_backendName = "";
-  unsigned int m_backendVersion = 0;
+  uint32_t m_backendVersion = 0;
   bool m_isguest = false;
 
   struct { long long total, used; } m_diskspace;

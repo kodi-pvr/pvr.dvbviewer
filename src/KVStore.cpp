@@ -69,15 +69,15 @@ KVStore::Error KVStore::FetchAll()
   if (InCoolDown())
     return NOT_FOUND;
 
-  const Dvb::httpResponse &res = m_cli.GetFromAPI("api/store.html"
+  std::unique_ptr<const Dvb::httpResponse> res = m_cli.GetFromAPI("api/store.html"
     "?action=read&sec=%s", m_section.c_str());
-  if (res.error)
+  if (res->error)
     return RESPONSE_ERROR;
 
   m_cache.clear();
   std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
   std::string::size_type key_beg = 0, key_end;
-  const std::string &s = res.content;
+  const std::string &s = res->content;
   while((key_end = s.find('=', key_beg)) != std::string::npos)
   {
     std::string key = s.substr(key_beg, key_end - key_beg);
@@ -103,13 +103,13 @@ KVStore::Error KVStore::FetchSingle(const std::string &key)
   if (InCoolDown())
     return NOT_FOUND;
 
-  const Dvb::httpResponse &res = m_cli.GetFromAPI("api/store.html"
+  std::unique_ptr<const Dvb::httpResponse> res = m_cli.GetFromAPI("api/store.html"
     "?action=read&sec=%s&key=%s", m_section.c_str(), key.c_str());
-  if (res.error)
+  if (res->error)
     return RESPONSE_ERROR;
 
-  m_cache[key] = std::make_pair(std::chrono::steady_clock::now(), res.content);
-  return (res.content.empty()) ? NOT_FOUND : SUCCESS;
+  m_cache[key] = std::make_pair(std::chrono::steady_clock::now(), res->content);
+  return (res->content.empty()) ? NOT_FOUND : SUCCESS;
 }
 
 bool KVStore::Get(const std::string &key, std::string &value, Hint hint)
@@ -150,10 +150,10 @@ bool KVStore::Set(const std::string &key, const std::string &value)
   if (IsErrorState() || value.empty())
     return false;
 
-  const Dvb::httpResponse &res = m_cli.GetFromAPI("api/store.html"
+  std::unique_ptr<const Dvb::httpResponse> res = m_cli.GetFromAPI("api/store.html"
     "?action=write&sec=%s&key=%s&value=%s", m_section.c_str(),
     key.c_str(), value.c_str());
-  if (res.error)
+  if (res->error)
   {
     SetErrorState(RESPONSE_ERROR);
     return false;

@@ -216,13 +216,13 @@ template <typename T>
 Timers::Error Timers::RefreshTimers(const char *name, const char *endpoint,
   const char *xmltag, std::map<unsigned int, T> &timerlist, bool &changes)
 {
-  Dvb::httpResponse &&res = m_cli.GetFromAPI(endpoint);
-  if (res.error)
+  std::unique_ptr<Dvb::httpResponse> res = m_cli.GetFromAPI(endpoint);
+  if (res->error)
     return RESPONSE_ERROR;
 
   TiXmlDocument doc;
-  RemoveNullChars(res.content);
-  doc.Parse(res.content.c_str());
+  RemoveNullChars(res->content);
+  doc.Parse(res->content.c_str());
   if (doc.Error())
   {
     kodi::Log(ADDON_LOG_ERROR, "Unable to parse %s list. Error: %s",
@@ -368,11 +368,11 @@ Timers::Error Timers::DeleteTimer(const kodi::addon::PVRTimer &timer)
   if (it == m_timers.end())
     return TIMER_UNKNOWN;
 
-  const Dvb::httpResponse &res = m_cli.GetFromAPI(
+  std::unique_ptr<const Dvb::httpResponse> res = m_cli.GetFromAPI(
       "api/timerdelete.html?id=%u", it->second.backendId);
-  if (!res.error)
+  if (!res->error)
     m_timers.erase(it);
-  return (res.error) ? RESPONSE_ERROR : SUCCESS;
+  return (res->error) ? RESPONSE_ERROR : SUCCESS;
 }
 
 Timers::Error Timers::AddUpdateTimer(const kodi::addon::PVRTimer &tmr, bool update)
@@ -421,9 +421,9 @@ Timers::Error Timers::AddUpdateTimer(const kodi::addon::PVRTimer &tmr, bool upda
   if (update)
     params += "&id=" + std::to_string(timer.backendId);
 
-  const Dvb::httpResponse &res = m_cli.GetFromAPI("api/timer%s.html?%s",
+  std::unique_ptr<const Dvb::httpResponse> res = m_cli.GetFromAPI("api/timer%s.html?%s",
       (update) ? "edit" : "add", params.c_str());
-  return (res.error) ? RESPONSE_ERROR : SUCCESS;
+  return (res->error) ? RESPONSE_ERROR : SUCCESS;
 }
 
 Timers::Error Timers::ParseTimerFrom(const kodi::addon::PVRTimer &tmr, Timer &timer)
@@ -636,11 +636,11 @@ Timers::Error Timers::DeleteAutoTimer(const kodi::addon::PVRTimer &timer)
   if (it == m_autotimers.end())
     return TIMER_UNKNOWN;
 
-  const Dvb::httpResponse &res = m_cli.GetFromAPI(
+  std::unique_ptr<const Dvb::httpResponse> res = m_cli.GetFromAPI(
       "api/searchdelete.html?name=%s", URLEncode(it->second.title).c_str());
-  if (!res.error)
+  if (!res->error)
     m_autotimers.erase(it);
-  return (res.error) ? RESPONSE_ERROR : SUCCESS;
+  return (res->error) ? RESPONSE_ERROR : SUCCESS;
 }
 
 Timers::Error Timers::AddUpdateAutoTimer(const kodi::addon::PVRTimer &tmr, bool update)
@@ -709,18 +709,18 @@ Timers::Error Timers::AddUpdateAutoTimer(const kodi::addon::PVRTimer &tmr, bool 
   if (update && timer.title != oldTimer->title)
     params += "&id=" + std::to_string(timer.backendId);
 
-  const Dvb::httpResponse &res = m_cli.GetFromAPI("api/search%s.html?%s",
+  std::unique_ptr<const Dvb::httpResponse> res = m_cli.GetFromAPI("api/search%s.html?%s",
       (update) ? "edit" : "add", params.c_str());
-  if (res.error)
+  if (res->error)
     return RESPONSE_ERROR;
 
   /* make sure we can recognize the timer during sync */
   if (update && timer != *oldTimer)
     oldTimer->guid = timer.guid;
 
-  const Dvb::httpResponse &res2 = m_cli.GetFromAPI(
+  std::unique_ptr<const Dvb::httpResponse> res2 = m_cli.GetFromAPI(
     "api/tasks.html?action=AutoTimer");
-  if (res2.error)
+  if (res2->error)
     return RESPONSE_ERROR;
 
   return SUCCESS;

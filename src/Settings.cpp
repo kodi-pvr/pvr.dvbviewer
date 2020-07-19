@@ -264,13 +264,13 @@ bool Settings::ReadFromBackend(Dvb &cli)
 {
   ResetBackendSettings();
 
-  const Dvb::httpResponse &res = cli.GetFromAPI(
+  std::unique_ptr<const Dvb::httpResponse> res = cli.GetFromAPI(
     "api/getconfigfile.html?file=config%%5Cservice.xml");
-  if (res.error)
+  if (res->error)
     return false;
 
   TiXmlDocument doc;
-  doc.Parse(res.content.c_str());
+  doc.Parse(res->content.c_str());
   if (doc.Error())
   {
     kodi::Log(ADDON_LOG_ERROR, "Unable to parse service.xml. Error: %s",
