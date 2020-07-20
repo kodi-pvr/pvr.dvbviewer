@@ -1264,7 +1264,7 @@ std::unique_ptr<Dvb::httpResponse> Dvb::GetFromAPI(const char* format, ...)
   std::unique_ptr<httpResponse> res = OpenFromAPI(format, args);
   va_end(args);
 
-  if (res->file.IsOpen())
+  if (!res->error)
   {
     char buffer[1024];
     ssize_t bytesRead;
@@ -1593,7 +1593,7 @@ DvbChannel *Dvb::GetChannel(std::function<bool (const DvbChannel*)> func)
 bool Dvb::CheckBackendVersion()
 {
   std::unique_ptr<const httpResponse> res = GetFromAPI("api/version.html");
-  if (res->error)
+  if (res->error || res->content.empty())
   {
     SetConnectionState((res->code == 401) ? PVR_CONNECTION_STATE_ACCESS_DENIED
       : PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
