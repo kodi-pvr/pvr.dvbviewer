@@ -10,10 +10,10 @@
 #include "StreamReader.h"
 #include "TimeshiftBuffer.h"
 #include "client.h"
+#include "utilities/XMLUtils.h"
 
 #include "kodi/General.h"
 #include "kodi/Network.h"
-#include "util/XMLUtils.h"
 #include "p8-platform/util/StringUtils.h"
 #include "p8-platform/util/util.h"
 
@@ -27,6 +27,7 @@
 #include <ctime>
 
 using namespace dvbviewer;
+using namespace dvbviewer::utilities;
 using namespace P8PLATFORM;
 
 /* Copied from xbmc/URL.cpp */

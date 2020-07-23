@@ -9,16 +9,17 @@
 #include "Timers.h"
 #include "client.h"
 #include "DvbData.h"
+#include "utilities/XMLUtils.h"
 
 #include <algorithm>
 #include <ctime>
 
 #include "inttypes.h"
 #include "kodi/General.h"
-#include "util/XMLUtils.h"
 #include "p8-platform/util/StringUtils.h"
 
 using namespace dvbviewer;
+using namespace dvbviewer::utilities;
 
 #define TIMER_UPDATE_MEMBER(member) \
   if (member != other.member) \
