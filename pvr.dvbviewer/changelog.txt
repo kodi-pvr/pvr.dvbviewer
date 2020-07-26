@@ -1,3 +1,7 @@
+6.0.6:
+[removed] External kodiplatform dependency
+[added] libp8-platform-dev dependency
+
 6.0.5:
 [fixed] Crash introduced in 6.0.0
 
