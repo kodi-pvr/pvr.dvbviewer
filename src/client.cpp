@@ -14,7 +14,7 @@ ADDON_STATUS CDVBViewerAddon::CreateInstance(int instanceType,
     const std::string& instanceID, KODI_HANDLE instance,
     const std::string& version, KODI_HANDLE& addonInstance)
 {
-  P8PLATFORM::CLockObject lock(m_mutex);
+  std::lock_guard<std::mutex> lock(m_mutex);
 
   if (instanceType == ADDON_INSTANCE_PVR)
   {
@@ -34,7 +34,7 @@ ADDON_STATUS CDVBViewerAddon::CreateInstance(int instanceType,
 void CDVBViewerAddon::DestroyInstance(int instanceType,
     const std::string& instanceID, KODI_HANDLE addonInstance)
 {
-  P8PLATFORM::CLockObject lock(m_mutex);
+  std::lock_guard<std::mutex> lock(m_mutex);
 
   kodi::Log(ADDON_LOG_DEBUG, "%s: Destroying DVBViewer PVR-Client", __FUNCTION__);
 
@@ -45,7 +45,7 @@ void CDVBViewerAddon::DestroyInstance(int instanceType,
 ADDON_STATUS CDVBViewerAddon::SetSetting(const std::string& settingName,
     const kodi::CSettingValue& settingValue)
 {
-  P8PLATFORM::CLockObject lock(m_mutex);
+  std::lock_guard<std::mutex> lock(m_mutex);
 
   // SetSetting can occur when the addon is enabled, but TV support still
   // disabled. In that case the addon is not loaded, so we should not try

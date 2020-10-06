@@ -10,7 +10,7 @@
 
 #include "DvbData.h"
 
-#include "p8-platform/threads/threads.h"
+#include <mutex>
 
 #include <kodi/AddonBase.h>
 
@@ -31,5 +31,5 @@ public:
 
 private:
   dvbviewer::Dvb* m_dvbData = nullptr;
-  P8PLATFORM::CMutex m_mutex;
+  std::mutex m_mutex;
 };

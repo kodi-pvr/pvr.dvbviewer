@@ -20,6 +20,7 @@
 #include <list>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <functional>
 #include <atomic>
 
@@ -284,7 +285,7 @@ private:
   KVStore m_kvstore;
   Settings m_settings;
 
-  P8PLATFORM::CMutex m_mutex;
+  std::mutex m_mutex;
 };
 
 } // namespace dvbviewer

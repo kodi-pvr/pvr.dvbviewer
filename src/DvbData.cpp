@@ -233,7 +233,7 @@ PVR_ERROR Dvb::GetConnectionString(std::string& connection)
 
 PVR_ERROR Dvb::GetDriveSpace(uint64_t& total, uint64_t& used)
 {
-  CLockObject lock(m_mutex);
+  std::lock_guard<std::mutex> lock(m_mutex);
   if (!UpdateBackendStatus())
     return PVR_ERROR_SERVER_ERROR;
   total = m_diskspace.total;
@@ -251,7 +251,7 @@ unsigned int Dvb::GetBackendVersion()
  **************************************************************************/
 unsigned int Dvb::GetCurrentClientChannel(void)
 {
-  CLockObject lock(m_mutex);
+  std::lock_guard<std::mutex> lock(m_mutex);
   return m_currentChannel;
 }
 
@@ -471,7 +471,7 @@ PVR_ERROR Dvb::GetTimerTypes(std::vector<kodi::addon::PVRTimerType>& types)
 
   std::vector< std::unique_ptr<kodi::addon::PVRTimerType> > timerTypes;
   {
-    CLockObject lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
     m_timers.GetTimerTypes(timerTypes);
   }
 
@@ -489,7 +489,7 @@ PVR_ERROR Dvb::GetTimers(kodi::addon::PVRTimersResultSet& results)
 
   std::vector<kodi::addon::PVRTimer> timers;
   {
-    CLockObject lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
     m_timers.GetAutoTimers(timers);
     m_timers.GetTimers(timers);
   }
@@ -506,7 +506,7 @@ PVR_ERROR Dvb::AddTimer(const kodi::addon::PVRTimer& timer)
 
   kodi::Log(ADDON_LOG_DEBUG, "AddTimer: channel=%u, title='%s'",
       timer.GetClientChannelUid(), timer.GetTitle().c_str());
-  CLockObject lock(m_mutex);
+  std::lock_guard<std::mutex> lock(m_mutex);
 
   Timers::Error err = m_timers.AddUpdateTimer(timer, false);
   if (err != Timers::SUCCESS)
@@ -537,7 +537,7 @@ PVR_ERROR Dvb::UpdateTimer(const kodi::addon::PVRTimer& timer)
 
   kodi::Log(ADDON_LOG_DEBUG, "UpdateTimer: channel=%u, title='%s'",
       timer.GetClientChannelUid(), timer.GetTitle().c_str());
-  CLockObject lock(m_mutex);
+  std::lock_guard<std::mutex> lock(m_mutex);
 
   Timers::Error err = m_timers.AddUpdateTimer(timer, true);
   if (err != Timers::SUCCESS)
@@ -566,7 +566,7 @@ PVR_ERROR Dvb::DeleteTimer(const kodi::addon::PVRTimer& timer, bool forceDelete)
   if (!IsConnected())
     return PVR_ERROR_SERVER_ERROR;
 
-  CLockObject lock(m_mutex);
+  std::lock_guard<std::mutex> lock(m_mutex);
   Timers::Error err = m_timers.DeleteTimer(timer);
   if (err != Timers::SUCCESS)
     return PVR_ERROR_FAILED;
@@ -580,7 +580,7 @@ PVR_ERROR Dvb::GetTimersAmount(int& amount)
   if (!IsConnected())
     return PVR_ERROR_SERVER_ERROR;
 
-  CLockObject lock(m_mutex);
+  std::lock_guard<std::mutex> lock(m_mutex);
   amount = static_cast<int>(m_timers.GetTimerCount());
   return PVR_ERROR_NO_ERROR;
 }
@@ -594,7 +594,7 @@ PVR_ERROR Dvb::GetRecordings(bool deleted,
   if (!IsConnected())
     return PVR_ERROR_SERVER_ERROR;
 
-  CLockObject lock(m_mutex);
+  std::lock_guard<std::mutex> lock(m_mutex);
   std::unique_ptr<httpResponse> res = GetFromAPI("api/recordings.html?utf8=1&images=1");
   if (res->error)
   {
@@ -792,14 +792,14 @@ PVR_ERROR Dvb::GetRecordingsAmount(bool deleted, int& amount)
   if (!IsConnected())
     return PVR_ERROR_SERVER_ERROR;
 
-  CLockObject lock(m_mutex);
+  std::lock_guard<std::mutex> lock(m_mutex);
   amount = m_recordingAmount;
   return PVR_ERROR_NO_ERROR;
 }
 
 bool Dvb::OpenRecordedStream(const kodi::addon::PVRRecording& recinfo)
 {
-  CLockObject lock(m_mutex);
+  std::lock_guard<std::mutex> lock(m_mutex);
 
   if (m_recReader)
     SafeDelete(m_recReader);
@@ -982,7 +982,7 @@ bool Dvb::OpenLiveStream(const kodi::addon::PVRChannel& channelinfo)
 
   kodi::Log(ADDON_LOG_DEBUG, "%s: channel=%u", __FUNCTION__,
       channelinfo.GetUniqueId());
-  CLockObject lock(m_mutex);
+  std::lock_guard<std::mutex> lock(m_mutex);
 
   if (channelinfo.GetUniqueId() != m_currentChannel)
   {
@@ -1005,7 +1005,7 @@ bool Dvb::OpenLiveStream(const kodi::addon::PVRChannel& channelinfo)
 
 void Dvb::CloseLiveStream()
 {
-  CLockObject lock(m_mutex);
+  std::lock_guard<std::mutex> lock(m_mutex);
   m_currentChannel = 0;
   SafeDelete(m_strReader);
 }
@@ -1137,7 +1137,10 @@ void *Dvb::Process()
         kodi::Log(ADDON_LOG_INFO, "Connection to the backend server successful.");
         SetConnectionState(PVR_CONNECTION_STATE_CONNECTED);
 
-        TimerUpdates();
+        {
+          std::lock_guard<std::mutex> lock(m_mutex);
+          TimerUpdates();
+        }
         // force recording sync as Kodi won't update recordings on PVR restart
         kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
       }
@@ -1153,13 +1156,13 @@ void *Dvb::Process()
       Sleep(1000);
       ++update;
 
-      CLockObject lock(m_mutex);
+      std::unique_lock<std::mutex> lock(m_mutex);
       if (m_updateEPG)
       {
         m_updateEPG = false;
-        m_mutex.Unlock();
+        lock.unlock();
         Sleep(8000); /* Sleep enough time to let the media server grab the EPG data */
-        m_mutex.Lock();
+        lock.lock();
         kodi::Log(ADDON_LOG_INFO, "Triggering EPG update on current channel!");
         kodi::addon::CInstancePVRClient::TriggerEpgUpdate(m_currentChannel);
       }
@@ -1167,9 +1170,9 @@ void *Dvb::Process()
       if (m_updateTimers)
       {
         m_updateTimers = false;
-        m_mutex.Unlock();
+        lock.unlock();
         Sleep(1000);
-        m_mutex.Lock();
+        lock.lock();
         kodi::Log(ADDON_LOG_INFO, "Running forced timer updates!");
         TimerUpdates();
         update = 0;
@@ -1575,7 +1578,7 @@ bool Dvb::LoadChannels()
 void Dvb::TimerUpdates()
 {
   bool changes;
-  CLockObject lock(m_mutex);
+  // Locking handled by calling functions
   Timers::Error err = m_timers.RefreshAllTimers(changes);
   if (err != Timers::SUCCESS || !changes)
   {
