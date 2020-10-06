@@ -10,12 +10,13 @@
 #include "client.h"
 #include "DvbData.h"
 
-#include "kodi/Filesystem.h"
-#include "kodi/General.h"
-#include "p8-platform/util/StringUtils.h"
-#include "tinyxml.h"
+#include <kodi/Filesystem.h>
+#include <kodi/General.h>
+#include <kodi/tools/StringUtils.h>
+#include <tinyxml.h>
 
 using namespace dvbviewer;
+using namespace kodi::tools;
 
 Settings::Settings()
 {

@@ -14,12 +14,13 @@
 #include <algorithm>
 #include <ctime>
 
-#include "inttypes.h"
-#include "kodi/General.h"
-#include "p8-platform/util/StringUtils.h"
+#include <inttypes.h>
+#include <kodi/General.h>
+#include <kodi/tools/StringUtils.h>
 
 using namespace dvbviewer;
 using namespace dvbviewer::utilities;
+using namespace kodi::tools;
 
 #define TIMER_UPDATE_MEMBER(member) \
   if (member != other.member) \

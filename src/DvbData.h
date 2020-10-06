@@ -14,7 +14,7 @@
 #include "Settings.h"
 #include "Timers.h"
 
-#include "kodi/addon-instance/PVR.h"
+#include <kodi/addon-instance/PVR.h>
 #include "p8-platform/threads/threads.h"
 
 #include <list>

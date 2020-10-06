@@ -10,7 +10,7 @@
 #include "client.h"
 #include "DvbData.h"
 
-#include "p8-platform/util/StringUtils.h"
+#include <kodi/tools/StringUtils.h>
 
 #define CACHE_TTL 60
 
@@ -35,7 +35,7 @@ void KVStore::Reset()
   /* UUID like section name for our keys. Prefixed for better readability.
    * Suffixed by our PVR instance/profile.
    */
-  m_section = StringUtils::Format("kodi-bfa5-4ac6-8bc2-profile%02x",
+  m_section = kodi::tools::StringUtils::Format("kodi-bfa5-4ac6-8bc2-profile%02x",
     m_cli.GetSettings().m_profileId);
 }
 

@@ -12,9 +12,9 @@
 #include "client.h"
 #include "utilities/XMLUtils.h"
 
-#include "kodi/General.h"
-#include "kodi/Network.h"
-#include "p8-platform/util/StringUtils.h"
+#include <kodi/General.h>
+#include <kodi/Network.h>
+#include <kodi/tools/StringUtils.h>
 #include "p8-platform/util/util.h"
 
 #include <tinyxml.h>
@@ -28,6 +28,7 @@
 
 using namespace dvbviewer;
 using namespace dvbviewer::utilities;
+using namespace kodi::tools;
 using namespace P8PLATFORM;
 
 /* Copied from xbmc/URL.cpp */
@@ -44,7 +45,7 @@ std::string dvbviewer::URLEncode(const std::string& data)
 
     // Don't URL encode "-_.!()" according to RFC1738
     // TODO: Update it to "-_.~" after Gotham according to RFC3986
-    if (StringUtils::isasciialphanum(kar) || kar == '-' || kar == '.'
+    if (StringUtils::IsAsciiAlphaNum(kar) || kar == '-' || kar == '.'
         || kar == '_' || kar == '!' || kar == '(' || kar == ')')
       result.push_back(kar);
     else
