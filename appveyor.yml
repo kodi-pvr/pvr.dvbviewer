@@ -17,8 +17,6 @@ environment:
       PLATFORM: linux-x86_64
     - APPVEYOR_BUILD_WORKER_IMAGE: ubuntu
       PLATFORM: linux-clang-x86_64
-    - APPVEYOR_BUILD_WORKER_IMAGE: ubuntu
-      PLATFORM: rbpi-arm
 
 init:
   - ps: |
@@ -37,11 +35,6 @@ install:
           sudo apt-get install --yes --no-install-recommends --no-upgrade clang
           export CC=clang CXX=clang++
           ;;
-        "rbpi-arm")
-          git clone -q --depth=1 https://github.com/raspberrypi/tools.git $ROOT/tools
-          # we don't need the firmware. fake it
-          mkdir -p $ROOT/firmware/opt/vc/include
-          ;;
       esac
 
 before_build:
@@ -56,17 +49,6 @@ before_build:
 
       # generate toolchain file
       params=()
-      case "$PLATFORM" in
-        "rbpi-arm")
-          params+=(
-            --with-platform=raspberry-pi2
-            --host=arm-linux-gnueabihf
-            --with-toolchain="$ROOT/tools/arm-bcm2708/arm-linux-gnueabihf"
-            --with-firmware="$ROOT/firmware"
-            --build=x86_64-linux
-          )
-          ;;
-      esac
 
       cd "$KODI/tools/depends"
       sed -i 's/@platform_ldflags@//' target/Toolchain_binaddons.cmake.in
