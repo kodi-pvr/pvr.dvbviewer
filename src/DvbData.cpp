@@ -25,6 +25,10 @@
 #include <memory>
 #include <ctime>
 
+#if defined(TARGET_WINDOWS)
+#include <windows.h>
+#endif
+
 using namespace dvbviewer;
 using namespace dvbviewer::utilities;
 using namespace kodi::tools;
