@@ -11,8 +11,6 @@
 #include "StreamReader.h"
 #include "client.h"
 
-#include "p8-platform/util/util.h"
-
 #define BUFFER_SIZE 32 * 1024
 #define DEFAULT_READ_TIMEOUT 10
 #define READ_WAITTIME 50
@@ -48,7 +46,7 @@ TimeshiftBuffer::~TimeshiftBuffer(void)
   }
   if (m_filebufferReadHandle.IsOpen())
     m_filebufferReadHandle.Close();
-  SAFE_DELETE(m_strReader);
+  delete m_strReader;
   kodi::Log(ADDON_LOG_DEBUG, "Timeshift: Stopped");
 }
 

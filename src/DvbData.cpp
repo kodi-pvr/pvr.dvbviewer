@@ -15,7 +15,6 @@
 #include <kodi/General.h>
 #include <kodi/Network.h>
 #include <kodi/tools/StringUtils.h>
-#include "p8-platform/util/util.h"
 
 #include <tinyxml.h>
 #include <inttypes.h>
@@ -30,6 +29,15 @@ using namespace dvbviewer;
 using namespace dvbviewer::utilities;
 using namespace kodi::tools;
 using namespace P8PLATFORM;
+
+template<typename T> void SafeDelete(T*& p)
+{
+  if (p)
+  {
+    delete p;
+    p = nullptr;
+  }
+}
 
 /* Copied from xbmc/URL.cpp */
 std::string dvbviewer::URLEncode(const std::string& data)
@@ -794,7 +802,7 @@ bool Dvb::OpenRecordedStream(const kodi::addon::PVRRecording& recinfo)
   CLockObject lock(m_mutex);
 
   if (m_recReader)
-    SAFE_DELETE(m_recReader);
+    SafeDelete(m_recReader);
 
   std::string url;
   switch(m_settings.m_recordingTranscoding)
@@ -837,7 +845,7 @@ bool Dvb::OpenRecordedStream(const kodi::addon::PVRRecording& recinfo)
 void Dvb::CloseRecordedStream()
 {
   if (m_recReader)
-    SAFE_DELETE(m_recReader);
+    SafeDelete(m_recReader);
 }
 
 int Dvb::ReadRecordedStream(unsigned char* buffer, unsigned int size)
@@ -999,7 +1007,7 @@ void Dvb::CloseLiveStream()
 {
   CLockObject lock(m_mutex);
   m_currentChannel = 0;
-  SAFE_DELETE(m_strReader);
+  SafeDelete(m_strReader);
 }
 
 bool Dvb::IsRealTimeStream()
