@@ -253,6 +253,7 @@ private:
   std::string BuildURL(const char* path, ...);
   const std::string GetLiveStreamURL(
       const kodi::addon::PVRChannel& channelinfo);
+  void SleepMs(uint32_t ms);
 
 private:
   std::atomic<PVR_CONNECTION_STATE> m_state = { PVR_CONNECTION_STATE_UNKNOWN };

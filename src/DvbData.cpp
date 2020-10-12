@@ -1114,6 +1114,20 @@ PVR_ERROR Dvb::GetStreamReadChunkSize(int& chunksize)
 /***************************************************************************
  * Internal
  **************************************************************************/
+void Dvb::SleepMs(uint32_t ms)
+{
+  while (ms >= 100)
+  {
+    ms -= 100;
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    if (!m_running)
+      break;
+  }
+
+  if (m_running && ms > 0)
+    std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+}
+
 void Dvb::Process()
 {
   kodi::Log(ADDON_LOG_DEBUG, "%s: Running...", __FUNCTION__);
@@ -1154,12 +1168,12 @@ void Dvb::Process()
       {
         kodi::Log(ADDON_LOG_INFO, "Connection to the backend server failed."
           " Retrying in 10 seconds...");
-        std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+        SleepMs(10000);
       }
     }
     else
     {
-      std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+      SleepMs(1000);
       ++update;
 
       std::unique_lock<std::mutex> lock(m_mutex);
@@ -1167,7 +1181,7 @@ void Dvb::Process()
       {
         m_updateEPG = false;
         lock.unlock();
-        std::this_thread::sleep_for(std::chrono::milliseconds(8000)); /* Sleep enough time to let the media server grab the EPG data */
+        SleepMs(8000); /* Sleep enough time to let the media server grab the EPG data */
         lock.lock();
         kodi::Log(ADDON_LOG_INFO, "Triggering EPG update on current channel!");
         kodi::addon::CInstancePVRClient::TriggerEpgUpdate(m_currentChannel);
@@ -1177,7 +1191,7 @@ void Dvb::Process()
       {
         m_updateTimers = false;
         lock.unlock();
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        SleepMs(1000);
         lock.lock();
         kodi::Log(ADDON_LOG_INFO, "Running forced timer updates!");
         TimerUpdates();
