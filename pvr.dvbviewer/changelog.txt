@@ -1,3 +1,14 @@
+6.0.7:
+[removed] Remove dependency on p8-platform and kodi-platform
+[updated] Update to use std::thread
+[updated] Update to use std::mutex and locks
+[updated] Replace SAFE_DELETE macro with SafeDelete template
+[updated] Use kodi StringUtils and update system headers
+[removed] Remove rpi platform as it's now removed from matrix
+[updated] Include windows.h for Windows for GetUTCOffset()
+[updated] While sleeping for long periods allow break on destruction
+[updated] Update travis.yml for cpp17 and debian
+
 6.0.6:
 [removed] External kodiplatform dependency
 [added] libp8-platform-dev dependency

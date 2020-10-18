@@ -5,10 +5,8 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
 
 find_package(TinyXML REQUIRED)
 find_package(Kodi REQUIRED)
-find_package(p8-platform REQUIRED)
 
-include_directories(${p8-platform_INCLUDE_DIRS}
-                    ${KODI_INCLUDE_DIR}/.. # Hack way with "/..", need bigger Kodi cmake rework to match right include ways
+include_directories(${KODI_INCLUDE_DIR}/.. # Hack way with "/..", need bigger Kodi cmake rework to match right include ways
                     ${TINYXML_INCLUDE_DIRS})
 
 add_definitions(-D__STDC_FORMAT_MACROS)
@@ -33,8 +31,7 @@ set(DVBVIEWER_HEADERS src/client.h
                       src/TimeshiftBuffer.h
                       src/utilities/XMLUtils.h)
 
-set(DEPLIBS ${p8-platform_LIBRARIES}
-            ${TINYXML_LIBRARIES})
+set(DEPLIBS ${TINYXML_LIBRARIES})
 
 # check if the linker supports version script or symbols list
 if(NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")

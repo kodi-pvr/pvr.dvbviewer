@@ -8,8 +8,8 @@
 
 #pragma once
 
-#include "kodi/addon-instance/pvr/Timers.h"
-#include "tinyxml.h"
+#include <kodi/addon-instance/pvr/Timers.h>
+#include <tinyxml.h>
 
 #include <string>
 #include <map>

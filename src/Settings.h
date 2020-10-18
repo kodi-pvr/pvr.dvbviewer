@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "kodi/AddonBase.h"
+#include <kodi/AddonBase.h>
 
 #include <string>
 

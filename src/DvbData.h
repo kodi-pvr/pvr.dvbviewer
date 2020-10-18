@@ -14,14 +14,15 @@
 #include "Settings.h"
 #include "Timers.h"
 
-#include "kodi/addon-instance/PVR.h"
-#include "p8-platform/threads/threads.h"
+#include <kodi/addon-instance/PVR.h>
 
+#include <atomic>
+#include <functional>
 #include <list>
 #include <map>
 #include <memory>
-#include <functional>
-#include <atomic>
+#include <mutex>
+#include <thread>
 
 // minimum version required
 #define DMS_MIN_VERSION 1, 33, 2, 0
@@ -137,7 +138,7 @@ typedef std::vector<DvbChannel *> DvbChannels_t;
 typedef std::vector<DvbGroup> DvbGroups_t;
 
 class Dvb
-  : public kodi::addon::CInstancePVRClient, public P8PLATFORM::CThread
+  : public kodi::addon::CInstancePVRClient
 {
 public:
   Dvb(KODI_HANDLE instance, const std::string& kodiVersion,
@@ -237,7 +238,7 @@ public:
   std::unique_ptr<httpResponse> GetFromAPI(const char* format, ...);
 
 protected:
-  virtual void *Process(void) override;
+  void Process();
 
 private:
   // functions
@@ -252,6 +253,7 @@ private:
   std::string BuildURL(const char* path, ...);
   const std::string GetLiveStreamURL(
       const kodi::addon::PVRChannel& channelinfo);
+  void SleepMs(uint32_t ms);
 
 private:
   std::atomic<PVR_CONNECTION_STATE> m_state = { PVR_CONNECTION_STATE_UNKNOWN };
@@ -284,7 +286,9 @@ private:
   KVStore m_kvstore;
   Settings m_settings;
 
-  P8PLATFORM::CMutex m_mutex;
+  std::atomic<bool> m_running = {false};
+  std::thread m_thread;
+  std::mutex m_mutex;
 };
 
 } // namespace dvbviewer

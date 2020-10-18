@@ -9,7 +9,8 @@
 #pragma once
 
 #include "IStreamReader.h"
-#include "kodi/Filesystem.h"
+
+#include <kodi/Filesystem.h>
 
 #include <atomic>
 #include <condition_variable>

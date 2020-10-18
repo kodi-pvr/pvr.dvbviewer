@@ -9,8 +9,6 @@
 #include "RecordingReader.h"
 #include "client.h"
 
-#include "p8-platform/threads/mutex.h"
-
 #include <algorithm>
 #include <ctime>
 
