@@ -1029,6 +1029,18 @@ bool Dvb::CanPauseStream()
   return false;
 }
 
+void Dvb::PauseStream(bool paused)
+{
+  /* start timeshift on pause */
+  if (paused && m_settings.m_timeshift == Timeshift::ON_PAUSE
+      && m_strReader && !m_strReader->IsTimeshifting()
+      && m_settings.IsTimeshiftBufferPathValid())
+  {
+    m_strReader = new TimeshiftBuffer(m_strReader, m_settings);
+    (void)m_strReader->Start();
+  }
+}
+
 bool Dvb::CanSeekStream()
 {
   // pause button seems to check CanSeekStream() too

@@ -213,6 +213,7 @@ public:
   bool IsRealTimeStream() override;
   bool CanPauseStream() override;
   bool CanSeekStream() override;
+  void PauseStream(bool paused) override;
   int ReadLiveStream(unsigned char* buffer, unsigned int size) override;
   int64_t SeekLiveStream(int64_t position, int whence) override;
   int64_t LengthLiveStream() override;
