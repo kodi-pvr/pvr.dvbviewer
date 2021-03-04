@@ -1,9 +1,12 @@
-7.2.0
+7.3.0:
+[fixed] Timeshift on pause
+
+7.2.0:
 [updated] Update PVR API 7.1.0
 
 7.1.0:
 [updated] inputstream API 3.0.1
-          Fix wrong flags bit shift
+[updated] Fix wrong flags bit shift
 
 7.0.0:
 [updated] PVR API 7.0.2
