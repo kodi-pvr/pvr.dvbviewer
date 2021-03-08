@@ -164,7 +164,6 @@ private:
       const char *xmltag, std::map<unsigned int, T> &timerlist, bool &changes);
   Error RefreshTimers(bool &changes);
   Error RefreshAutoTimers(bool &changes);
-  bool CanAutoTimers() const;
   bool IsAutoTimer(const kodi::addon::PVRTimer &timer);
 
   Error ParseTimerFrom(const kodi::addon::PVRTimer &tmr, Timer &timer);
