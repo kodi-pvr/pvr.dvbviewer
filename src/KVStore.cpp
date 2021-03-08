@@ -16,11 +16,6 @@
 
 using namespace dvbviewer;
 
-bool KVStore::IsSupported() const
-{
-  return m_cli.GetBackendVersion() >= DMS_VERSION_NUM(2, 1, 2, 0);
-}
-
 bool KVStore::IsErrorState() const
 {
   return m_error;

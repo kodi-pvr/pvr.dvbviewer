@@ -48,7 +48,6 @@ public:
   {};
   KVStore(const KVStore &kvstore) = delete;
 
-  bool IsSupported() const;
   bool IsErrorState() const;
   void Reset();
 

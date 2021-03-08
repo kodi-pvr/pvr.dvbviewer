@@ -25,7 +25,7 @@
 #include <thread>
 
 // minimum version required
-#define DMS_MIN_VERSION 1, 33, 2, 0
+#define DMS_MIN_VERSION 3, 0, 0, 0
 
 #define DMS_MIN_VERSION_NUM DMS_VERSION_NUM2(DMS_MIN_VERSION)
 #define DMS_MIN_VERSION_STR DMS_VERSION_STR2(DMS_MIN_VERSION)
@@ -158,8 +158,6 @@ public:
   unsigned int GetBackendVersion();
   bool IsGuest()
   { return m_isguest; }
-  bool HasKVStore()
-  { return m_kvstore.IsSupported(); };
   dvbviewer::Settings &GetSettings()
   { return m_settings; };
 

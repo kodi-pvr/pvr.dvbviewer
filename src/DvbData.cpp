@@ -188,8 +188,8 @@ PVR_ERROR Dvb::GetCapabilities(kodi::addon::PVRCapabilities& capabilities)
   capabilities.SetSupportsChannelSettings(false);
   capabilities.SetHandlesInputStream(true);
   capabilities.SetHandlesDemuxing(false);
-  capabilities.SetSupportsRecordingPlayCount(false);
-  capabilities.SetSupportsLastPlayedPosition(false);
+  capabilities.SetSupportsRecordingPlayCount(true);
+  capabilities.SetSupportsLastPlayedPosition(true);
   capabilities.SetSupportsRecordingEdl(true);
   capabilities.SetSupportsRecordingsRename(false);
   capabilities.SetSupportsRecordingsLifetimeChange(false);
@@ -199,12 +199,6 @@ PVR_ERROR Dvb::GetCapabilities(kodi::addon::PVRCapabilities& capabilities)
   {
     if (IsGuest())
       capabilities.SetSupportsTimers(false);
-
-    if (HasKVStore())
-    {
-      capabilities.SetSupportsRecordingPlayCount(true);
-      capabilities.SetSupportsLastPlayedPosition(true);
-    }
   }
   return PVR_ERROR_NO_ERROR;
 }
@@ -719,13 +713,10 @@ PVR_ERROR Dvb::GetRecordings(bool deleted,
     recording.group = groups.emplace(group, 0).first;
     ++recording.group->second;
 
-    if (m_kvstore.IsSupported())
-    {
-      m_kvstore.Get<int>("recplaycount_" + recording.id,
-        recording.playCount, KVStore::Hint::FETCH_ALL);
-      m_kvstore.Get<int>("recplaypos_" + recording.id,
-        recording.lastPlayPosition, KVStore::Hint::FETCH_ALL);
-    }
+    m_kvstore.Get<int>("recplaycount_" + recording.id,
+      recording.playCount, KVStore::Hint::FETCH_ALL);
+    m_kvstore.Get<int>("recplaypos_" + recording.id,
+      recording.lastPlayPosition, KVStore::Hint::FETCH_ALL);
 
     recordings.push_back(recording);
   }
@@ -888,15 +879,6 @@ PVR_ERROR Dvb::GetRecordingEdl(const kodi::addon::PVRRecording& recinfo,
   if (!IsConnected())
     return PVR_ERROR_SERVER_ERROR;
 
-  if (m_backendVersion < DMS_VERSION_NUM(2, 1, 0, 0))
-  {
-    kodi::Log(ADDON_LOG_ERROR, "Backend server is too old. Disabling EDL support.");
-    kodi::QueueFormattedNotification(QUEUE_ERROR, kodi::GetLocalizedString(30511).c_str(),
-      DMS_VERSION_STR(2, 1, 0, 0));
-    m_settings.m_edl.enabled = false;
-    return PVR_ERROR_NOT_IMPLEMENTED;
-  }
-
   std::unique_ptr<httpResponse> res = OpenFromAPI("api/sideload.html?rec=1&file=.edl"
     "&fileid=%s", recinfo.GetRecordingId().c_str());
   if (res->error)
@@ -945,8 +927,6 @@ PVR_ERROR Dvb::SetRecordingPlayCount(const kodi::addon::PVRRecording& recinfo,
 {
   if (!IsConnected())
     return PVR_ERROR_SERVER_ERROR;
-  if (!HasKVStore())
-    return PVR_ERROR_NOT_IMPLEMENTED;
 
   const std::string value = std::string("recplaycount_") + recinfo.GetRecordingId();
   return m_kvstore.Set(value, count)
@@ -958,8 +938,6 @@ PVR_ERROR Dvb::SetRecordingLastPlayedPosition(
 {
   if (!IsConnected())
     return PVR_ERROR_SERVER_ERROR;
-  if (!HasKVStore())
-    return PVR_ERROR_NOT_IMPLEMENTED;
 
   const std::string value = std::string("recplaypos_") + recinfo.GetRecordingId();
   return m_kvstore.Set<int>(value, lastplayedposition)
@@ -971,8 +949,6 @@ PVR_ERROR Dvb::GetRecordingLastPlayedPosition(
 {
   if (!IsConnected())
     return PVR_ERROR_SERVER_ERROR;
-  if (!HasKVStore())
-    return PVR_ERROR_NOT_IMPLEMENTED;
 
   const std::string value = std::string("recplaypos_") + recinfo.GetRecordingId();
   return m_kvstore.Get<int>(value, position)
@@ -1219,8 +1195,7 @@ void Dvb::Process()
         kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
 
         /* actually the DMS should do this itself... */
-        if (m_kvstore.IsSupported())
-          m_kvstore.Save();
+        m_kvstore.Save();
       }
     }
   }
