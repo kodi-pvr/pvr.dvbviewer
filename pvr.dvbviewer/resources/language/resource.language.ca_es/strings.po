@@ -10,11 +10,16 @@ msgstr ""
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Kodi Translation Team\n"
 "Language-Team: Catalan (Spain) (http://www.transifex.com/projects/p/kodi-main/language/ca_ES/)\n"
+"Language: ca_ES\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: ca_ES\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# settings labels
+msgctxt "#30000"
+msgid "DVBViewer Media Server IP Address"
+msgstr ""
 
 msgctxt "#30001"
 msgid "Webinterface Port"
@@ -28,9 +33,17 @@ msgctxt "#30003"
 msgid "Password"
 msgstr "Contrasenya"
 
+msgctxt "#30004"
+msgid "Use Wake-on-LAN to wake up service"
+msgstr ""
+
 msgctxt "#30005"
 msgid "MAC address"
 msgstr "Adreça MAC"
+
+msgctxt "#30006"
+msgid "Profile ID"
+msgstr ""
 
 msgctxt "#30010"
 msgid "Use favourites instead of channel list"
@@ -67,6 +80,14 @@ msgstr "Amb la pausa"
 msgctxt "#30040"
 msgid "Enable low performance mode (disables logos & thumbnails)"
 msgstr "Habilita el mode de baix rendiment (inhabilita logotips i miniatures)"
+
+msgctxt "#30041"
+msgid "Custom Live TV timeout (0 to use default)"
+msgstr ""
+
+msgctxt "#30042"
+msgid "Stream read chunk size (0 for Kodi's default)"
+msgstr ""
 
 msgctxt "#30050"
 msgid "Group recordings"
@@ -140,6 +161,24 @@ msgctxt "#30074"
 msgid "FLV"
 msgstr "FLV"
 
+# empty strings from id 30075 to 30076
+msgctxt "#30077"
+msgid "Transcoding URL parameters"
+msgstr ""
+
+# empty strings from id 30078 to 30079
+msgctxt "#30080"
+msgid "Enable EDL support"
+msgstr ""
+
+msgctxt "#30081"
+msgid "Start time padding"
+msgstr ""
+
+msgctxt "#30082"
+msgid "Stop time padding"
+msgstr ""
+
 msgctxt "#30100"
 msgid "General"
 msgstr "General"
@@ -156,6 +195,12 @@ msgctxt "#30103"
 msgid "Live TV"
 msgstr "TV en directe"
 
+# empty strings from id 30104 to 30109
+# subsection labels
+msgctxt "#30110"
+msgid "Wake-on-LAN"
+msgstr ""
+
 msgctxt "#30111"
 msgid "Favourites"
 msgstr "Preferits"
@@ -163,6 +208,14 @@ msgstr "Preferits"
 msgctxt "#30112"
 msgid "Timeshift"
 msgstr "Salts en el temps"
+
+msgctxt "#30113"
+msgid "Edit Decision List"
+msgstr ""
+
+msgctxt "#30114"
+msgid "Transcoding"
+msgstr ""
 
 msgctxt "#30400"
 msgid "Default"
@@ -192,9 +245,36 @@ msgctxt "#30410"
 msgid "Automatic"
 msgstr "Automàtic"
 
+# empty strings from id 30411 to 30419
+msgctxt "#30420"
+msgid "One time (Scheduled by guide-based timer rule)"
+msgstr ""
+
 msgctxt "#30430"
 msgid "Disabled"
 msgstr "Inhabilitat"
+
+msgctxt "#30431"
+msgid "Record if EPG title differs"
+msgstr ""
+
+msgctxt "#30432"
+msgid "Record if EPG subtitle differs"
+msgstr ""
+
+msgctxt "#30433"
+msgid "Record if EPG title and subtitle differs"
+msgstr ""
+
+# empty strings from id 30434 to 30499
+# notifications
+msgctxt "#30500"
+msgid "Unable to connect to the DVBViewer Media Server"
+msgstr ""
+
+msgctxt "#30501"
+msgid "DVBViewer Media Server version %s or higher required"
+msgstr ""
 
 msgctxt "#30502"
 msgid "Unable to parse channel list"
@@ -219,3 +299,39 @@ msgstr "No es pot analitzar la llista de temporitzadors"
 msgctxt "#30507"
 msgid "Please reset the EPG database and restart Kodi afterwards"
 msgstr "Si us plau, restabliu la base de dades EPG i reinicieu Kodi després"
+
+msgctxt "#30508"
+msgid "Favourites contains unresolvable channel: %s"
+msgstr ""
+
+msgctxt "#30509"
+msgid "Favourites enabled but none defined"
+msgstr ""
+
+msgctxt "#30510"
+msgid "The time period cannot span more than 24 hours"
+msgstr ""
+
+msgctxt "#30511"
+msgid "EDL support requires DVBViewer Media Server %s or higher"
+msgstr ""
+
+msgctxt "#30512"
+msgid "PVR is running with guest permissions"
+msgstr ""
+
+msgctxt "#30513"
+msgid "Search phrase cannot be empty"
+msgstr ""
+
+msgctxt "#30514"
+msgid "Timeshift buffer path does not exist"
+msgstr ""
+
+msgctxt "#30515"
+msgid "Unable to retrieve user data from the backend"
+msgstr ""
+
+msgctxt "#30516"
+msgid "Unable to parse user data from the backend"
+msgstr ""

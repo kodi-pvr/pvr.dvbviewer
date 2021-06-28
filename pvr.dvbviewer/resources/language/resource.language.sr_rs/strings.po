@@ -10,11 +10,16 @@ msgstr ""
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Kodi Translation Team\n"
 "Language-Team: Serbian (Serbia) (http://www.transifex.com/projects/p/kodi-main/language/sr_RS/)\n"
+"Language: sr_RS\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: sr_RS\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+# settings labels
+msgctxt "#30000"
+msgid "DVBViewer Media Server IP Address"
+msgstr ""
 
 msgctxt "#30001"
 msgid "Webinterface Port"
@@ -28,9 +33,17 @@ msgctxt "#30003"
 msgid "Password"
 msgstr "Лозинка"
 
+msgctxt "#30004"
+msgid "Use Wake-on-LAN to wake up service"
+msgstr ""
+
 msgctxt "#30005"
 msgid "MAC address"
 msgstr "MAC адреса"
+
+msgctxt "#30006"
+msgid "Profile ID"
+msgstr ""
 
 msgctxt "#30010"
 msgid "Use favourites instead of channel list"
@@ -68,6 +81,14 @@ msgctxt "#30040"
 msgid "Enable low performance mode (disables logos & thumbnails)"
 msgstr "Омогући режим ниских перформанси (онемогућује логое & сличице)"
 
+msgctxt "#30041"
+msgid "Custom Live TV timeout (0 to use default)"
+msgstr ""
+
+msgctxt "#30042"
+msgid "Stream read chunk size (0 for Kodi's default)"
+msgstr ""
+
 msgctxt "#30050"
 msgid "Group recordings"
 msgstr "Групно снимање"
@@ -95,6 +116,10 @@ msgstr "по тв каналу"
 msgctxt "#30056"
 msgid "by series"
 msgstr "по серији"
+
+msgctxt "#30057"
+msgid "by title"
+msgstr ""
 
 msgctxt "#30060"
 msgid "Put outline (e.g. subtitles) before plot"
@@ -140,6 +165,19 @@ msgctxt "#30077"
 msgid "Transcoding URL parameters"
 msgstr "Прекодирање URL параметара"
 
+# empty strings from id 30078 to 30079
+msgctxt "#30080"
+msgid "Enable EDL support"
+msgstr ""
+
+msgctxt "#30081"
+msgid "Start time padding"
+msgstr ""
+
+msgctxt "#30082"
+msgid "Stop time padding"
+msgstr ""
+
 msgctxt "#30100"
 msgid "General"
 msgstr "Опште"
@@ -156,6 +194,12 @@ msgctxt "#30103"
 msgid "Live TV"
 msgstr "ТВ уживо"
 
+# empty strings from id 30104 to 30109
+# subsection labels
+msgctxt "#30110"
+msgid "Wake-on-LAN"
+msgstr ""
+
 msgctxt "#30111"
 msgid "Favourites"
 msgstr "Омиљено"
@@ -163,6 +207,14 @@ msgstr "Омиљено"
 msgctxt "#30112"
 msgid "Timeshift"
 msgstr "Померај времена"
+
+msgctxt "#30113"
+msgid "Edit Decision List"
+msgstr ""
+
+msgctxt "#30114"
+msgid "Transcoding"
+msgstr ""
 
 msgctxt "#30400"
 msgid "Default"
@@ -192,9 +244,36 @@ msgctxt "#30410"
 msgid "Automatic"
 msgstr "Аутоматски"
 
+# empty strings from id 30411 to 30419
+msgctxt "#30420"
+msgid "One time (Scheduled by guide-based timer rule)"
+msgstr ""
+
 msgctxt "#30430"
 msgid "Disabled"
 msgstr "Онемогућено"
+
+msgctxt "#30431"
+msgid "Record if EPG title differs"
+msgstr ""
+
+msgctxt "#30432"
+msgid "Record if EPG subtitle differs"
+msgstr ""
+
+msgctxt "#30433"
+msgid "Record if EPG title and subtitle differs"
+msgstr ""
+
+# empty strings from id 30434 to 30499
+# notifications
+msgctxt "#30500"
+msgid "Unable to connect to the DVBViewer Media Server"
+msgstr ""
+
+msgctxt "#30501"
+msgid "DVBViewer Media Server version %s or higher required"
+msgstr ""
 
 msgctxt "#30502"
 msgid "Unable to parse channel list"
@@ -219,3 +298,39 @@ msgstr "Није могуће рашчланити листу тајмера"
 msgctxt "#30507"
 msgid "Please reset the EPG database and restart Kodi afterwards"
 msgstr "Молимо поново покрените EPG базу података а затим поново покрените Kodi"
+
+msgctxt "#30508"
+msgid "Favourites contains unresolvable channel: %s"
+msgstr ""
+
+msgctxt "#30509"
+msgid "Favourites enabled but none defined"
+msgstr ""
+
+msgctxt "#30510"
+msgid "The time period cannot span more than 24 hours"
+msgstr ""
+
+msgctxt "#30511"
+msgid "EDL support requires DVBViewer Media Server %s or higher"
+msgstr ""
+
+msgctxt "#30512"
+msgid "PVR is running with guest permissions"
+msgstr ""
+
+msgctxt "#30513"
+msgid "Search phrase cannot be empty"
+msgstr ""
+
+msgctxt "#30514"
+msgid "Timeshift buffer path does not exist"
+msgstr ""
+
+msgctxt "#30515"
+msgid "Unable to retrieve user data from the backend"
+msgstr ""
+
+msgctxt "#30516"
+msgid "Unable to parse user data from the backend"
+msgstr ""

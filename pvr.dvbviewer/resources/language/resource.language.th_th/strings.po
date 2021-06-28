@@ -10,11 +10,16 @@ msgstr ""
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Kodi Translation Team\n"
 "Language-Team: Thai (Thailand) (http://www.transifex.com/projects/p/kodi-main/language/th_TH/)\n"
+"Language: th_TH\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: th_TH\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+
+# settings labels
+msgctxt "#30000"
+msgid "DVBViewer Media Server IP Address"
+msgstr ""
 
 msgctxt "#30001"
 msgid "Webinterface Port"
@@ -28,9 +33,17 @@ msgctxt "#30003"
 msgid "Password"
 msgstr "รหัสผ่าน"
 
+msgctxt "#30004"
+msgid "Use Wake-on-LAN to wake up service"
+msgstr ""
+
 msgctxt "#30005"
 msgid "MAC address"
 msgstr "หมายเลขฮาร์ดแวร์"
+
+msgctxt "#30006"
+msgid "Profile ID"
+msgstr ""
 
 msgctxt "#30010"
 msgid "Use favourites instead of channel list"
@@ -56,9 +69,25 @@ msgctxt "#30025"
 msgid "Off"
 msgstr "ปิด"
 
+msgctxt "#30026"
+msgid "On playback"
+msgstr ""
+
+msgctxt "#30027"
+msgid "On pause"
+msgstr ""
+
 msgctxt "#30040"
 msgid "Enable low performance mode (disables logos & thumbnails)"
 msgstr "เปิดใช้งานโหมดการทำงานต่ำ (ปิดใช้งาน โลโก้ & รูปย่อ)"
+
+msgctxt "#30041"
+msgid "Custom Live TV timeout (0 to use default)"
+msgstr ""
+
+msgctxt "#30042"
+msgid "Stream read chunk size (0 for Kodi's default)"
+msgstr ""
 
 msgctxt "#30050"
 msgid "Group recordings"
@@ -88,6 +117,10 @@ msgctxt "#30056"
 msgid "by series"
 msgstr "โดย ชุด"
 
+msgctxt "#30057"
+msgid "by title"
+msgstr ""
+
 msgctxt "#30060"
 msgid "Put outline (e.g. subtitles) before plot"
 msgstr "ดึงเค้าโครง (เช่น. คำบรรยาย) ก่อนเรื่องย่อ"
@@ -108,9 +141,44 @@ msgctxt "#30064"
 msgid "Always"
 msgstr "เสมอ"
 
+# empty strings from id 30065 to 30069
+msgctxt "#30070"
+msgid "Enable transcoding"
+msgstr ""
+
 msgctxt "#30071"
 msgid "Off"
 msgstr "ปิด"
+
+msgctxt "#30072"
+msgid "TS"
+msgstr ""
+
+msgctxt "#30073"
+msgid "WebM"
+msgstr ""
+
+msgctxt "#30074"
+msgid "FLV"
+msgstr ""
+
+# empty strings from id 30075 to 30076
+msgctxt "#30077"
+msgid "Transcoding URL parameters"
+msgstr ""
+
+# empty strings from id 30078 to 30079
+msgctxt "#30080"
+msgid "Enable EDL support"
+msgstr ""
+
+msgctxt "#30081"
+msgid "Start time padding"
+msgstr ""
+
+msgctxt "#30082"
+msgid "Stop time padding"
+msgstr ""
 
 msgctxt "#30100"
 msgid "General"
@@ -128,13 +196,35 @@ msgctxt "#30103"
 msgid "Live TV"
 msgstr "ทีวี สด"
 
+# empty strings from id 30104 to 30109
+# subsection labels
+msgctxt "#30110"
+msgid "Wake-on-LAN"
+msgstr ""
+
 msgctxt "#30111"
 msgid "Favourites"
 msgstr "ที่ชื่นชอบ"
 
+msgctxt "#30112"
+msgid "Timeshift"
+msgstr ""
+
+msgctxt "#30113"
+msgid "Edit Decision List"
+msgstr ""
+
+msgctxt "#30114"
+msgid "Transcoding"
+msgstr ""
+
 msgctxt "#30400"
 msgid "Default"
 msgstr "ค่าพื้นฐาน"
+
+msgctxt "#30401"
+msgid "Unimportant (Lowest)"
+msgstr ""
 
 msgctxt "#30402"
 msgid "Low"
@@ -148,13 +238,44 @@ msgctxt "#30404"
 msgid "High"
 msgstr "สูง"
 
+msgctxt "#30405"
+msgid "Important (Highest)"
+msgstr ""
+
 msgctxt "#30410"
 msgid "Automatic"
 msgstr "อัตโนมัติ"
 
+# empty strings from id 30411 to 30419
+msgctxt "#30420"
+msgid "One time (Scheduled by guide-based timer rule)"
+msgstr ""
+
 msgctxt "#30430"
 msgid "Disabled"
 msgstr "ปิดการใช้งาน"
+
+msgctxt "#30431"
+msgid "Record if EPG title differs"
+msgstr ""
+
+msgctxt "#30432"
+msgid "Record if EPG subtitle differs"
+msgstr ""
+
+msgctxt "#30433"
+msgid "Record if EPG title and subtitle differs"
+msgstr ""
+
+# empty strings from id 30434 to 30499
+# notifications
+msgctxt "#30500"
+msgid "Unable to connect to the DVBViewer Media Server"
+msgstr ""
+
+msgctxt "#30501"
+msgid "DVBViewer Media Server version %s or higher required"
+msgstr ""
 
 msgctxt "#30502"
 msgid "Unable to parse channel list"
@@ -179,3 +300,39 @@ msgstr "ไม่สามารถแยกวิเคราะห์ รา�
 msgctxt "#30507"
 msgid "Please reset the EPG database and restart Kodi afterwards"
 msgstr "กรุณาคืนค่าฐานข้อมูล EPG แล้วเริ่มระบบ Kodi ใหม่ หลังจากนั้น"
+
+msgctxt "#30508"
+msgid "Favourites contains unresolvable channel: %s"
+msgstr ""
+
+msgctxt "#30509"
+msgid "Favourites enabled but none defined"
+msgstr ""
+
+msgctxt "#30510"
+msgid "The time period cannot span more than 24 hours"
+msgstr ""
+
+msgctxt "#30511"
+msgid "EDL support requires DVBViewer Media Server %s or higher"
+msgstr ""
+
+msgctxt "#30512"
+msgid "PVR is running with guest permissions"
+msgstr ""
+
+msgctxt "#30513"
+msgid "Search phrase cannot be empty"
+msgstr ""
+
+msgctxt "#30514"
+msgid "Timeshift buffer path does not exist"
+msgstr ""
+
+msgctxt "#30515"
+msgid "Unable to retrieve user data from the backend"
+msgstr ""
+
+msgctxt "#30516"
+msgid "Unable to parse user data from the backend"
+msgstr ""
