@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.dvbviewer"
-  version="7.3.0"
+  version="7.3.1"
   name="DVBViewer Client"
   provider-name="Manuel Mausz">
   <requires>@ADDON_DEPENDS@</requires>
@@ -185,6 +185,10 @@
     <assets>
       <icon>icon.png</icon>
     </assets>
-    <news>Fix seektime information for ongoing recordings</news>
+    </assets>
+    <news>
+v7.3.1
+- Language update from Weblate
+    </news>
   </extension>
 </addon>
