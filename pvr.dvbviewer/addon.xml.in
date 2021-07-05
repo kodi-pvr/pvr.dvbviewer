@@ -186,9 +186,5 @@
       <icon>icon.png</icon>
     </assets>
     </assets>
-    <news>
-v7.3.1
-- Language update from Weblate
-    </news>
   </extension>
 </addon>
