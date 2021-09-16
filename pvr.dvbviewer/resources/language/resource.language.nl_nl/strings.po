@@ -17,6 +17,18 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Generator: Weblate 4.7\n"
 
+msgctxt "Addon Summary"
+msgid "Kodi's frontend for DVBViewer"
+msgstr "Kodi's Frontend voor DVBViewer"
+
+msgctxt "Addon Description"
+msgid "DVBViewer Media Server; supporting streaming of Live TV &amp; Recordings, EPG, Timers."
+msgstr "DVBViewer opnameservice frontend; ondersteunt streaming van Live-TV, Timers, opnames &amp; EPG. Voor het parsen van de XML-output van de RS-webinterface wordt  de xmlParser-bibliotheek gebruikt, ontwikkeld door Frank van den Berghen (http://www.applied-mathematics.net/tools/xmlParser.html). Hartelijk dank hiervoor!"
+
+msgctxt "Addon Disclaimer"
+msgid "The authors are in no way responsible for failed recordings, incorrect timers, wasted hours, or any other undesirable effects."
+msgstr "Deze software is niet 100% stabiel! De auteurs zijn op geen enkele wijze aansprakelijk voor mislukte opnames, verspilde tijd, of enig ander ongewild neveneffect."
+
 msgctxt "#30000"
 msgid "DVBViewer Media Server IP Address"
 msgstr "DVBViewer Media Server IP-adres"
