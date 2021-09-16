@@ -5,9 +5,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: KODI Main\n"
-"Report-Msgid-Bugs-To: https://github.com/xbmc/xbmc/issues/\n"
+"Report-Msgid-Bugs-To: translations@kodi.tv\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2021-05-01 19:29+0000\n"
+"PO-Revision-Date: 2021-08-04 19:29+0000\n"
 "Last-Translator: Christian Gade <gade@kodi.tv>\n"
 "Language-Team: Danish <https://kodi.weblate.cloud/projects/kodi-add-ons-pvr-clients/pvr-dvbviewer/da_dk/>\n"
 "Language: da_dk\n"
@@ -15,11 +15,11 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 4.6\n"
+"X-Generator: Weblate 4.7.2\n"
 
 msgctxt "#30000"
 msgid "DVBViewer Media Server IP Address"
-msgstr "DVBViewer Media Server IP adresse"
+msgstr "DVBViewer medieserver IP-adresse"
 
 msgctxt "#30001"
 msgid "Webinterface Port"
@@ -51,11 +51,11 @@ msgstr "Brug favoritter i stedet for kanalliste"
 
 msgctxt "#30011"
 msgid "Use local favourites file"
-msgstr "Brug lokal favoritfil"
+msgstr "Brug lokal fil til favoritter"
 
 msgctxt "#30012"
 msgid "Select the favourites.xml file"
-msgstr "Vælg favourites.xml filen"
+msgstr "Vælg favourites.xml-filen"
 
 msgctxt "#30020"
 msgid "Enable Timeshift"
@@ -79,7 +79,7 @@ msgstr "Sat på pause"
 
 msgctxt "#30040"
 msgid "Enable low performance mode (disables logos & thumbnails)"
-msgstr "Aktiver lav ydeevne tilstand (deaktiverer logoer & thumbnails)"
+msgstr "Aktiver tilstand for lav ydeevne (deaktiverer logoer og miniaturebilleder)"
 
 msgctxt "#30041"
 msgid "Custom Live TV timeout (0 to use default)"
@@ -91,7 +91,7 @@ msgstr ""
 
 msgctxt "#30050"
 msgid "Group recordings"
-msgstr "Gruppe optagelser"
+msgstr "Gruppér optagelser"
 
 msgctxt "#30051"
 msgid "disabled"
@@ -99,23 +99,23 @@ msgstr "deaktiveret"
 
 msgctxt "#30052"
 msgid "by recording directory"
-msgstr "ud fra optage mappe"
+msgstr "efter optagelesmappe"
 
 msgctxt "#30053"
 msgid "by recording date"
-msgstr "ud fra optage dato"
+msgstr "efter optagelsesdato"
 
 msgctxt "#30054"
 msgid "by first letter"
-msgstr "ud fra første bogstav"
+msgstr "efter første bogstav"
 
 msgctxt "#30055"
 msgid "by tv channel"
-msgstr "ud fra tv kanal"
+msgstr "efter tv-kanal"
 
 msgctxt "#30056"
 msgid "by series"
-msgstr "ud fra serier"
+msgstr "efter serier"
 
 msgctxt "#30057"
 msgid "by title"
@@ -123,7 +123,7 @@ msgstr "efter titel"
 
 msgctxt "#30060"
 msgid "Put outline (e.g. subtitles) before plot"
-msgstr "Vis resumé (fx. undertekster) før plottet"
+msgstr "Vis resumé (fx. undertitler) før plottet"
 
 msgctxt "#30061"
 msgid "Never"
@@ -276,11 +276,11 @@ msgstr ""
 
 msgctxt "#30502"
 msgid "Unable to parse channel list"
-msgstr "Kan ikke analysere kanalliste"
+msgstr "Kan ikke behandle kanalliste"
 
 msgctxt "#30503"
 msgid "Check Kodi log for more information"
-msgstr "Tjek Kodi log for mere information"
+msgstr "Kontroller Kodis log for mere information"
 
 msgctxt "#30504"
 msgid "Unable to open local favourites.xml"
@@ -288,7 +288,7 @@ msgstr "Kan ikke åbne lokal favourites.xml"
 
 msgctxt "#30505"
 msgid "Unable to parse favourites list"
-msgstr "Kunne ikke fortolke favoritliste"
+msgstr "Kan ikke behandle favoritliste"
 
 msgctxt "#30506"
 msgid "Unable to parse timer list"
@@ -296,7 +296,7 @@ msgstr "Kan ikke analysere timerliste"
 
 msgctxt "#30507"
 msgid "Please reset the EPG database and restart Kodi afterwards"
-msgstr "Nulstil venligst EPG-databasen og genstart bagefter Kodi"
+msgstr "Nulstil venligst EPG-databasen og genstart Kodi bagefter"
 
 msgctxt "#30508"
 msgid "Favourites contains unresolvable channel: %s"
