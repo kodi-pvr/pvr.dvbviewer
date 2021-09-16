@@ -19,11 +19,11 @@ msgstr ""
 
 msgctxt "Addon Summary"
 msgid "Kodi's frontend for DVBViewer"
-msgstr ""Frontend'i" i Kodi'së për DVBViewer"
+msgstr "Frontend'i i Kodi'së për DVBViewer"
 
 msgctxt "Addon Description"
 msgid "DVBViewer Media Server; supporting streaming of Live TV &amp; Recordings, EPG, Timers."
-msgstr "DVBViewer Media Server frontend; përkrahën transmetimin té LiveTV, Orarin, Regjistrime &amp; EPG. Për të bërë "parsing" i XML prej RS "webinterface'it" ky përdorën bibliotekën të "xmlParser'it" që është zhvilluar nga Frank van den Berghen (http://www.applied-mathematics.net/tools/xmlParser.html). Many thanks for this!. Shum i falemnderohemi!"
+msgstr "DVBViewer Media Server frontend; përkrahën transmetimin té LiveTV, Orarin, Regjistrime &amp; EPG. Për të bërë parsing i XML prej RS webinterface'it ky përdorën bibliotekën të xmlParser'it që është zhvilluar nga Frank van den Berghen (http://www.applied-mathematics.net/tools/xmlParser.html). Many thanks for this!. Shum i falemnderohemi!"
 
 msgctxt "Addon Disclaimer"
 msgid "The authors are in no way responsible for failed recordings, incorrect timers, wasted hours, or any other undesirable effects."

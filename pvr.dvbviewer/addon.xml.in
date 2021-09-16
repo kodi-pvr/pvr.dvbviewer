@@ -60,7 +60,7 @@
     <summary lang="ru_RU">Фронтэнд Kodi для DVBViewer</summary>
     <summary lang="sk_SK">Kodi rozhranie pre DVBViewer</summary>
     <summary lang="sl_SI">Kodijev vmesnik za DVBViewer</summary>
-    <summary lang="sq_AL">"Frontend'i" i Kodi'së për DVBViewer</summary>
+    <summary lang="sq_AL">Frontend'i i Kodi'së për DVBViewer</summary>
     <summary lang="sr_RS">Кодијев интерфејс за DVBViewer</summary>
     <summary lang="sr_RS@latin">Kodijev interfejs za DVBViewer</summary>
     <summary lang="sv_SE">Kodis gränssnitt för DVBViewer</summary>
@@ -114,7 +114,7 @@
     <description lang="ru_RU">Фронтэнд сервиса записи DVBViewer; поддерживает потоковое вещание ТВ, таймеры, запись и ЕПГ. Для разбора XML-вывода RS-интерфейса использует библиотеку xmlParser, написанную Frank Vanden Berghen (http://www.applied-mathematics.net/tools/xmlParser.html). За что благодарим его!⏎</description>
     <description lang="sk_SK">Rozhranie pre spoluprácu s nahrávacou službou aplikácie DVBViewer; podporuje streamovanie živej televízie, časovače, nahrávky a EPG. Na získavanie dát zo XML výstupu z RS webového rozhrania používa knižnicu xmlParser, ktorú vyvinul Frank Vanden Berghen (http://www.applied-mathematics.net/tools/xmlParser.html). Za to mu veľmi ďakujeme!</description>
     <description lang="sl_SI">Vmesnik za DVBViewer; podpira pretakanje televizije v živo, časovnike, snemanje &amp; EPG.</description>
-    <description lang="sq_AL">DVBViewer Media Server frontend; përkrahën transmetimin té LiveTV, Orarin, Regjistrime &amp; EPG. Për të bërë "parsing" i XML prej RS "webinterface'it" ky përdorën bibliotekën të "xmlParser'it" që është zhvilluar nga Frank van den Berghen (http://www.applied-mathematics.net/tools/xmlParser.html). Many thanks for this!. Shum i falemnderohemi!</description>
+    <description lang="sq_AL">DVBViewer Media Server frontend; përkrahën transmetimin té LiveTV, Orarin, Regjistrime &amp; EPG. Për të bërë parsing i XML prej RS webinterface'it ky përdorën bibliotekën të xmlParser'it që është zhvilluar nga Frank van den Berghen (http://www.applied-mathematics.net/tools/xmlParser.html). Many thanks for this!. Shum i falemnderohemi!</description>
     <description lang="sr_RS">Интерфејс Сервиса Снимања DVBViewer-a; подржава стримовање ТВ Уживо &amp; Снимака, EPG, Тајмере.</description>
     <description lang="sr_RS@latin">Interfejs Servisa Snimanja DVBViewer-a; podržava strimovanje TV Uživo &amp; Snimaka, EPG, Tajmere.</description>
     <description lang="sv_SE">DVBViewer Media Server; stödjer strömning av Live-TV &amp; Inspelningar, EPG, Timers.</description>
