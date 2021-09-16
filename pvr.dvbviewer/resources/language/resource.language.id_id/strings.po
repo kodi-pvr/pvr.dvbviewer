@@ -16,6 +16,18 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
+msgctxt "Addon Summary"
+msgid "Kodi's frontend for DVBViewer"
+msgstr "Frontend Kodi untuk DVBViewer"
+
+msgctxt "Addon Description"
+msgid "DVBViewer Media Server; supporting streaming of Live TV &amp; Recordings, EPG, Timers."
+msgstr "Frontend Layanan Perekaman DVBViewer; Mendukung pengaliran TV secara langsung, Timer, Perekaman dan EPG. Untuk mengolah keluaran XML dari antar-muka web RS, akan menggunakan pustaka xmlParser yang dikembangkan oleh Frank Vanden Berghen (http://www.applied-mathematics.net/tools/xmlParser.html). Terimakasih untuk hal tersebut!"
+
+msgctxt "Addon Disclaimer"
+msgid "The authors are in no way responsible for failed recordings, incorrect timers, wasted hours, or any other undesirable effects.."
+msgstr "Ini merupakan software yang tidak stabil! Penulis tidak bertanggung jawab untuk rekaman gagal, timer salah, waktu terbuang, atau efek tak diinginkan lainnya..."
+
 # settings labels
 msgctxt "#30000"
 msgid "DVBViewer Media Server IP Address"

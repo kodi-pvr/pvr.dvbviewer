@@ -16,6 +16,18 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
+msgctxt "Addon Summary"
+msgid "Kodi's frontend for DVBViewer"
+msgstr "Надбудова Kodi для переглядача DVBViewer"
+
+msgctxt "Addon Description"
+msgid "DVBViewer Media Server; supporting streaming of Live TV &amp; Recordings, EPG, Timers."
+msgstr "Накладка на сервіс запису DVBViewer'а; підтримує потокове LiveTV, таймери, запис та телегід. Для обробки виводу XML з RS веб-інтерфейсу використовує бібліотеку xmlParser, розроблену Франком Ванденом Бергеном (http://www.applied-mathematics.net/tools/xmlParser.html). Велика подяка йому за це!"
+
+msgctxt "Addon Disclaimer"
+msgid "The authors are in no way responsible for failed recordings, incorrect timers, wasted hours, or any other undesirable effects.."
+msgstr "Це нестабільна програма! Автори не несуть відповідальності за попсуті записи, неправильні таймери, втрачений час та інші небажані ефекти."
+
 # settings labels
 msgctxt "#30000"
 msgid "DVBViewer Media Server IP Address"

@@ -17,6 +17,18 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Weblate 4.7.2\n"
 
+msgctxt "Addon Summary"
+msgid "Kodi's frontend for DVBViewer"
+msgstr "DVBViewer Kodi 프론트엔드"
+
+msgctxt "Addon Description"
+msgid "DVBViewer Media Server; supporting streaming of Live TV &amp; Recordings, EPG, Timers."
+msgstr "DVBViewer 녹화 서비스 프론트엔드; 라이브 TV 스트리밍, 녹화, EPG 지원. RS 웹인터페이스에서 XML을 추출하기 위해 Frank Vanden Berghen이 개발한 xmlParser를 이용합니다 (http://www.applied-mathematics.net/tools/xmlParser.html). Many thanks for this!"
+
+msgctxt "Addon Disclaimer"
+msgid "The authors are in no way responsible for failed recordings, incorrect timers, wasted hours, or any other undesirable effects.."
+msgstr "이 소프트웨어는 불안정합니다! 제작자는 녹화 실패, 부정확한 타이머, 시간 낭비 및 기타 예상하지 못한 결과에 대해 책임지지 않습니다.."
+
 msgctxt "#30000"
 msgid "DVBViewer Media Server IP Address"
 msgstr "DVBViewer 미디어 서버 IP 주소"

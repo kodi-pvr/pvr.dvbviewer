@@ -16,6 +16,18 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgctxt "Addon Summary"
+msgid "Kodi's frontend for DVBViewer"
+msgstr "Estrutura Kodi para DVBViewer"
+
+msgctxt "Addon Description"
+msgid "DVBViewer Media Server; supporting streaming of Live TV &amp; Recordings, EPG, Timers."
+msgstr "Frontend para o serviço de gravação DVBViewer; permite transmissão de TV em directo, temporizadores, gravações e EPG."
+
+msgctxt "Addon Disclaimer"
+msgid "The authors are in no way responsible for failed recordings, incorrect timers, wasted hours, or any other undesirable effects.."
+msgstr "Este software é instável! Os autores não são de forma alguma responsáveis por gravações falhadas, temporizadores incorretos, horas desperdiçadas ou qualquer outro tipo de efeitos indesejáveis."
+
 msgctxt "#30000"
 msgid "DVBViewer Media Server IP Address"
 msgstr "Endereço IP do servidor de media DVBViewer"

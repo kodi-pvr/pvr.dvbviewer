@@ -16,6 +16,18 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
+msgctxt "Addon Summary"
+msgid "Kodi's frontend for DVBViewer"
+msgstr "Giao tiếp của Kodi cho DVBViewer"
+
+msgctxt "Addon Description"
+msgid "DVBViewer Media Server; supporting streaming of Live TV &amp; Recordings, EPG, Timers."
+msgstr "Giao tiếp DVBViewer Media Server; hỗ trợ phát streaming LiveTV, hẹn giờ, thu chương trình và hiển thị lịch chiếu (EPG). Sử dụng trích xuất XML từ RS webinterface dựa trên thư viện xmlParser phát triển bởi Frank Vanden Berghen (http://www.applied-mathematics.net/tools/xmlParser.html). Xin cảm ơn rất nhiều!"
+
+msgctxt "Addon Disclaimer"
+msgid "The authors are in no way responsible for failed recordings, incorrect timers, wasted hours, or any other undesirable effects.."
+msgstr "Đây là phần mềm không ổn định! Các tác giả sẽ không chịu trách nhiệm nào với các bản ghi thất bại, bị đặt giờ sai, giờ lãng phí, hoặc các tác dụng không mong muốn khác.."
+
 # settings labels
 msgctxt "#30000"
 msgid "DVBViewer Media Server IP Address"
