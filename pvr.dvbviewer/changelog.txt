@@ -1,3 +1,7 @@
+v20.0.1
+- Translations updates from Weblate
+	- da_dk, eo, et_ee, ko_kr, pl_pl
+
 v20.0.0
 - Translations updates from Weblate
   - da_dk, eo, et_ee, ko_kr, pl_pl
