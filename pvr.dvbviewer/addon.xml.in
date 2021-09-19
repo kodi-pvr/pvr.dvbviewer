@@ -99,7 +99,7 @@
     <description lang="is_IS">Framendi fyrir upptökuþjónustu DVBViewer; styður streymingu á beinum útsendingum, tímatöku-upptökur og rafræna sjónvarpsvísa (EPG).</description>
     <description lang="it_IT">Frontend del servizio di registrazione DVBViewer; supporta lo streaming LiveTV, i timer, la registrazione e l'EPG. Per scansionare l'output XML dell'interfaccia web RS viene utilizzata la libreria xmlParser sviluppata da Frank Vanden Berghen (http://www.applied-mathematics.net/tools/xmlParser.html). Molte grazie per questo!</description>
     <description lang="ja_JP">DVBViewer 録画サービスのフロントエンドです。LiveTV のストリーミング視聴、タイマー、録画、EPG をサポートしています。RS web インターフェースの XML 出力の読み込みには Frank Vanden Berghen 氏の開発した xmlParser ライブラリ (http://www.applied-mathematics.net/tools/xmlParser.html) を使用しています。ありがとうございます！</description>
-    <description lang="ko_KR">DVBViewer 녹화 서비스 프론트엔드; 라이브 TV 스트리밍, 녹화, EPG 지원. RS 웹인터페이스에서 XML을 추출하기 위해 Frank Vanden Berghen이 개발한 xmlParser를 이용합니다 (http://www.applied-mathematics.net/tools/xmlParser.html). Many thanks for this!</description>
+    <description lang="ko_KR">DVBViewer 미디어 서버; 라이브 TV &amp; 녹음, EPG, 타이머.</description>
     <description lang="lt_LT">DVBViewer įrašymo paslaugų sąsajos; remia transliaciją LiveTV, Taimeriai, įrašų ir EPG.</description>
     <description lang="lv_LV">DVBViewer ierakstīšanas servisa galasistēma; atbalsta tiešraides TV straumēšanu, taimerus, ierakstus un EPG.</description>
     <description lang="mk_MK">DVBViewer Media Server frontend; supporting streaming of LiveTV, Timers, Recordings &amp; EPG. For parsing the XML output from the RS webinterface it uses the xmlParser library developed by Frank Vanden Berghen (http://www.applied-mathematics.net/tools/xmlParser.html). Many thanks for this!</description>
