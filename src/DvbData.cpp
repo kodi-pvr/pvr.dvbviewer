@@ -181,6 +181,7 @@ PVR_ERROR Dvb::GetCapabilities(kodi::addon::PVRCapabilities& capabilities)
   capabilities.SetSupportsTV(true);
   capabilities.SetSupportsRadio(true);
   capabilities.SetSupportsRecordings(true);
+  capabilities.SetSupportsRecordingsDelete(!m_isguest);
   capabilities.SetSupportsRecordingsUndelete(false);
   capabilities.SetSupportsTimers(true);
   capabilities.SetSupportsChannelGroups(true);
