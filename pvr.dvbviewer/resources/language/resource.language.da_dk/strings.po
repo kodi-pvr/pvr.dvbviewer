@@ -5,9 +5,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: KODI Main\n"
-"Report-Msgid-Bugs-To: https://github.com/xbmc/xbmc/issues/\n"
+"Report-Msgid-Bugs-To: translations@kodi.tv\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2021-09-19 08:17+0000\n"
+"PO-Revision-Date: 2021-10-29 13:18+0000\n"
 "Last-Translator: Christian Gade <gade@kodi.tv>\n"
 "Language-Team: Danish <https://kodi.weblate.cloud/projects/kodi-add-ons-pvr-clients/pvr-dvbviewer/da_dk/>\n"
 "Language: da_dk\n"
@@ -19,15 +19,15 @@ msgstr ""
 
 msgctxt "Addon Summary"
 msgid "Kodi's frontend for DVBViewer"
-msgstr "Kodi's frontend til DVBViewer"
+msgstr "Kodi frontend til DVBViewer"
 
 msgctxt "Addon Description"
 msgid "DVBViewer Media Server; supporting streaming of Live TV &amp; Recordings, EPG, Timers."
-msgstr "DVBViewer Media Server frontend; Understøtter streaming af Direkte TV, Timere, Optagelser og EPG. For parsing af XML output fra RS webinterface bruges xmlParser biblioteket, der er udviklet af Frank Vanden Berghen (http://www.applied-mathematics.net/tools/xmlParser.html). Mange tak for dette!"
+msgstr "DVBViewer Media Server; understøtter streaming af direkte tv, timeroptagelser, optagelser og EPG."
 
 msgctxt "Addon Disclaimer"
 msgid "The authors are in no way responsible for failed recordings, incorrect timers, wasted hours, or any other undesirable effects."
-msgstr "Dette er ustabil software! Ophavsmændene er på ingen måde ansvarlige for mislykkede optagelser, fejlagtige timere, spildte timer, eller andre uønskede konsekvenser."
+msgstr "Ophavsmændene er på ingen måde ansvarlige for mislykkede optagelser, ukorrekte timere, spildte timer eller andre uønskede konsekvenser."
 
 msgctxt "#30000"
 msgid "DVBViewer Media Server IP Address"
@@ -43,11 +43,11 @@ msgstr "Brugernavn"
 
 msgctxt "#30003"
 msgid "Password"
-msgstr "Kodeord"
+msgstr "Adgangskode"
 
 msgctxt "#30004"
 msgid "Use Wake-on-LAN to wake up service"
-msgstr ""
+msgstr "Brug Wake-on-LAN-opvågning til at vække tjenesten"
 
 msgctxt "#30005"
 msgid "MAC address"
@@ -55,7 +55,7 @@ msgstr "MAC-adresse"
 
 msgctxt "#30006"
 msgid "Profile ID"
-msgstr ""
+msgstr "Profil ID"
 
 msgctxt "#30010"
 msgid "Use favourites instead of channel list"
@@ -83,7 +83,7 @@ msgstr "Fra"
 
 msgctxt "#30026"
 msgid "On playback"
-msgstr ""
+msgstr "Ved afspilning"
 
 msgctxt "#30027"
 msgid "On pause"
@@ -95,11 +95,11 @@ msgstr "Aktiver tilstand for lav ydeevne (deaktiverer logoer og miniaturebillede
 
 msgctxt "#30041"
 msgid "Custom Live TV timeout (0 to use default)"
-msgstr ""
+msgstr "Brugerdefineret tidsfrist for direkte tv (0 for at bruge standard)"
 
 msgctxt "#30042"
 msgid "Stream read chunk size (0 for Kodi's default)"
-msgstr ""
+msgstr "Klumpstørrelse for læsning af stream (0 for at bruge Kodis standard)"
 
 msgctxt "#30050"
 msgid "Group recordings"
@@ -163,33 +163,33 @@ msgstr "Fra"
 
 msgctxt "#30072"
 msgid "TS"
-msgstr ""
+msgstr "TS"
 
 msgctxt "#30073"
 msgid "WebM"
-msgstr ""
+msgstr "WebM"
 
 msgctxt "#30074"
 msgid "FLV"
-msgstr ""
+msgstr "FLV"
 
 # empty strings from id 30075 to 30076
 msgctxt "#30077"
 msgid "Transcoding URL parameters"
-msgstr ""
+msgstr "Omkodning af URL-parametre"
 
 # empty strings from id 30078 to 30079
 msgctxt "#30080"
 msgid "Enable EDL support"
-msgstr ""
+msgstr "Aktiver understøttelse af EDL"
 
 msgctxt "#30081"
 msgid "Start time padding"
-msgstr ""
+msgstr "Omkringliggende tid for start"
 
 msgctxt "#30082"
 msgid "Stop time padding"
-msgstr ""
+msgstr "Omkringliggende tid for stop"
 
 msgctxt "#30100"
 msgid "General"
@@ -221,7 +221,7 @@ msgstr "Tidsforskydning"
 
 msgctxt "#30113"
 msgid "Edit Decision List"
-msgstr ""
+msgstr "Rediger beslutningsliste"
 
 msgctxt "#30114"
 msgid "Transcoding"
@@ -258,7 +258,7 @@ msgstr "Automatisk"
 # empty strings from id 30411 to 30419
 msgctxt "#30420"
 msgid "One time (Scheduled by guide-based timer rule)"
-msgstr ""
+msgstr "Én gang (planlagt efter guide-baseret timerregel)"
 
 msgctxt "#30430"
 msgid "Disabled"
@@ -266,25 +266,25 @@ msgstr "Deaktiveret"
 
 msgctxt "#30431"
 msgid "Record if EPG title differs"
-msgstr ""
+msgstr "Optag hvis EPG-titlen er forskellig"
 
 msgctxt "#30432"
 msgid "Record if EPG subtitle differs"
-msgstr ""
+msgstr "Optag hvis EPG-undertitlen er forskellig"
 
 msgctxt "#30433"
 msgid "Record if EPG title and subtitle differs"
-msgstr ""
+msgstr "Optag hvis EPG-titlen og -undertitlen er forskellig"
 
 # empty strings from id 30434 to 30499
 # notifications
 msgctxt "#30500"
 msgid "Unable to connect to the DVBViewer Media Server"
-msgstr ""
+msgstr "Kan ikke oprette forbindelse til DVBViewer medieserver"
 
 msgctxt "#30501"
 msgid "DVBViewer Media Server version %s or higher required"
-msgstr ""
+msgstr "DVBViewer medieserver version %s eller højere påkrævet"
 
 msgctxt "#30502"
 msgid "Unable to parse channel list"
@@ -312,36 +312,36 @@ msgstr "Nulstil venligst EPG-databasen og genstart Kodi bagefter"
 
 msgctxt "#30508"
 msgid "Favourites contains unresolvable channel: %s"
-msgstr ""
+msgstr "Favoritter indeholder uløselig kanal: %s"
 
 msgctxt "#30509"
 msgid "Favourites enabled but none defined"
-msgstr ""
+msgstr "Favoritter aktiveret, men ingen defineret"
 
 msgctxt "#30510"
 msgid "The time period cannot span more than 24 hours"
-msgstr ""
+msgstr "Tidsperioden kan ikke strække sig over mere end 24 timer"
 
 msgctxt "#30511"
 msgid "EDL support requires DVBViewer Media Server %s or higher"
-msgstr ""
+msgstr "EDL-understøttelse kræver DVBViewer medieserver %s eller højere"
 
 msgctxt "#30512"
 msgid "PVR is running with guest permissions"
-msgstr ""
+msgstr "PVR kører med gæstetilladelser"
 
 msgctxt "#30513"
 msgid "Search phrase cannot be empty"
-msgstr ""
+msgstr "Søgesætningen må ikke være tom"
 
 msgctxt "#30514"
 msgid "Timeshift buffer path does not exist"
-msgstr ""
+msgstr "Buffersti til tidsforskydning findes ikke"
 
 msgctxt "#30515"
 msgid "Unable to retrieve user data from the backend"
-msgstr ""
+msgstr "Kan ikke hente brugerdata fra backend"
 
 msgctxt "#30516"
 msgid "Unable to parse user data from the backend"
-msgstr ""
+msgstr "Kan ikke behandle brugerdata fra backend"
