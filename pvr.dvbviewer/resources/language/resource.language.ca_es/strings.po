@@ -22,7 +22,7 @@ msgid "Kodi's frontend for DVBViewer"
 msgstr "Frontal de Kodi per a DVBViewer"
 
 msgctxt "Addon Description"
-msgid "DVBViewer Media Server; supporting streaming of Live TV &amp; Recordings, EPG, Timers."
+msgid "DVBViewer Media Server; supporting streaming of Live TV & Recordings, EPG, Timers."
 msgstr "Frontal del servei d'enregistrament de DVBViewer; compatible amb la transmissió de TV en directe, temporitzadors, enregistraments i guia electrònica de programació (EPG)."
 
 msgctxt "Addon Disclaimer"

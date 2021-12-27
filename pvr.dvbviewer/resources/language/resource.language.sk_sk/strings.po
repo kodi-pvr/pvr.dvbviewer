@@ -21,7 +21,7 @@ msgid "Kodi's frontend for DVBViewer"
 msgstr "Kodi rozhranie pre DVBViewer"
 
 msgctxt "Addon Description"
-msgid "DVBViewer Media Server; supporting streaming of Live TV &amp; Recordings, EPG, Timers."
+msgid "DVBViewer Media Server; supporting streaming of Live TV & Recordings, EPG, Timers."
 msgstr "Rozhranie pre spoluprácu s nahrávacou službou aplikácie DVBViewer; podporuje streamovanie živej televízie, časovače, nahrávky a EPG. Na získavanie dát zo XML výstupu z RS webového rozhrania používa knižnicu xmlParser, ktorú vyvinul Frank Vanden Berghen (http://www.applied-mathematics.net/tools/xmlParser.html). Za to mu veľmi ďakujeme!"
 
 msgctxt "Addon Disclaimer"
