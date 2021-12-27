@@ -21,8 +21,8 @@ msgid "Kodi's frontend for DVBViewer"
 msgstr "Kodijev interfejs za DVBViewer"
 
 msgctxt "Addon Description"
-msgid "DVBViewer Media Server; supporting streaming of Live TV &amp; Recordings, EPG, Timers."
-msgstr "Interfejs Servisa Snimanja DVBViewer-a; podržava strimovanje TV Uživo &amp; Snimaka, EPG, Tajmere."
+msgid "DVBViewer Media Server; supporting streaming of Live TV & Recordings, EPG, Timers."
+msgstr "Interfejs Servisa Snimanja DVBViewer-a; podržava strimovanje TV Uživo & Snimaka, EPG, Tajmere."
 
 msgctxt "Addon Disclaimer"
 msgid "The authors are in no way responsible for failed recordings, incorrect timers, wasted hours, or any other undesirable effects."
