@@ -90,17 +90,17 @@ void Timers::GetTimerTypes(std::vector< std::unique_ptr<kodi::addon::PVRTimerTyp
 
   /* PVR_Timer.iPriority values and presentation.*/
   static std::vector<kodi::addon::PVRTypeIntValue> priorityValues = {
-    { -1,  kodi::GetLocalizedString(30400) }, //default
-    { 0,   kodi::GetLocalizedString(30401) },
-    { 25,  kodi::GetLocalizedString(30402) },
-    { 50,  kodi::GetLocalizedString(30403) },
-    { 75,  kodi::GetLocalizedString(30404) },
-    { 100, kodi::GetLocalizedString(30405) },
+    { -1,  kodi::addon::GetLocalizedString(30400) }, //default
+    { 0,   kodi::addon::GetLocalizedString(30401) },
+    { 25,  kodi::addon::GetLocalizedString(30402) },
+    { 50,  kodi::addon::GetLocalizedString(30403) },
+    { 75,  kodi::addon::GetLocalizedString(30404) },
+    { 100, kodi::addon::GetLocalizedString(30405) },
   };
 
   /* PVR_Timer.iRecordingGroup values and presentation.*/
   std::vector<kodi::addon::PVRTypeIntValue> groupValues = {
-    { 0, kodi::GetLocalizedString(30410) }, //automatic
+    { 0, kodi::addon::GetLocalizedString(30410) }, //automatic
   };
   for (auto &recf : m_cli.GetRecordingFolders())
     groupValues.emplace_back(groupValues.size(), recf);
@@ -153,10 +153,10 @@ void Timers::GetTimerTypes(std::vector< std::unique_ptr<kodi::addon::PVRTimerTyp
     /* PVR_Timer.iPreventDuplicateEpisodes values and presentation.*/
     static std::vector<kodi::addon::PVRTypeIntValue> deDupValues =
     {
-      { AutoTimer::DeDup::DISABLED,             kodi::GetLocalizedString(30430) },
-      { AutoTimer::DeDup::CHECK_TITLE,          kodi::GetLocalizedString(30431) },
-      { AutoTimer::DeDup::CHECK_SUBTITLE,       kodi::GetLocalizedString(30432) },
-      { AutoTimer::DeDup::CHECK_TITLE_SUBTITLE, kodi::GetLocalizedString(30433) },
+      { AutoTimer::DeDup::DISABLED,             kodi::addon::GetLocalizedString(30430) },
+      { AutoTimer::DeDup::CHECK_TITLE,          kodi::addon::GetLocalizedString(30431) },
+      { AutoTimer::DeDup::CHECK_SUBTITLE,       kodi::addon::GetLocalizedString(30432) },
+      { AutoTimer::DeDup::CHECK_TITLE_SUBTITLE, kodi::addon::GetLocalizedString(30433) },
     };
 
      /* epg auto search */
@@ -195,7 +195,7 @@ void Timers::GetTimerTypes(std::vector< std::unique_ptr<kodi::addon::PVRTimerTyp
         PVR_TIMER_TYPE_SUPPORTS_START_END_MARGIN |
         PVR_TIMER_TYPE_SUPPORTS_PRIORITY         |
         PVR_TIMER_TYPE_SUPPORTS_RECORDING_GROUP,
-        kodi::GetLocalizedString(30420),
+        kodi::addon::GetLocalizedString(30420),
         priorityValues, groupValues)));
   }
 }

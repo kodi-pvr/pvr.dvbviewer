@@ -28,39 +28,39 @@ Settings::Settings()
  **************************************************************************/
 void Settings::ReadFromKodi()
 {
-  if (!kodi::CheckSettingString("host", m_hostname))
+  if (!kodi::addon::CheckSettingString("host", m_hostname))
     m_hostname = DEFAULT_HOST;
 
-  if (!kodi::CheckSettingInt("webport", m_webPort))
+  if (!kodi::addon::CheckSettingInt("webport", m_webPort))
     m_webPort = DEFAULT_WEB_PORT;
 
-  m_username = kodi::GetSettingString("user");
-  m_password = kodi::GetSettingString("pass");
-  m_profileId = kodi::GetSettingInt("profileid");
-  m_useWoL = kodi::GetSettingBoolean("usewol");
-  m_mac = kodi::GetSettingString("mac");
-  m_useFavourites = kodi::GetSettingBoolean("usefavourites");
-  m_useFavouritesFile = kodi::GetSettingBoolean("usefavouritesfile");
-  m_favouritesFile = kodi::GetSettingString("favouritesfile");
-  m_groupRecordings = kodi::GetSettingEnum<RecordGrouping>("grouprecordings");
-  m_timeshift = kodi::GetSettingEnum<Timeshift>("timeshift");
-  m_timeshiftBufferPath = kodi::GetSettingString("timeshiftpath");
+  m_username = kodi::addon::GetSettingString("user");
+  m_password = kodi::addon::GetSettingString("pass");
+  m_profileId = kodi::addon::GetSettingInt("profileid");
+  m_useWoL = kodi::addon::GetSettingBoolean("usewol");
+  m_mac = kodi::addon::GetSettingString("mac");
+  m_useFavourites = kodi::addon::GetSettingBoolean("usefavourites");
+  m_useFavouritesFile = kodi::addon::GetSettingBoolean("usefavouritesfile");
+  m_favouritesFile = kodi::addon::GetSettingString("favouritesfile");
+  m_groupRecordings = kodi::addon::GetSettingEnum<RecordGrouping>("grouprecordings");
+  m_timeshift = kodi::addon::GetSettingEnum<Timeshift>("timeshift");
+  m_timeshiftBufferPath = kodi::addon::GetSettingString("timeshiftpath");
 
-  m_edl.enabled = kodi::GetSettingBoolean("edl");
-  m_edl.padding_start = kodi::GetSettingInt("edl_padding_start");
-  m_edl.padding_stop = kodi::GetSettingInt("edl_padding_stop");
+  m_edl.enabled = kodi::addon::GetSettingBoolean("edl");
+  m_edl.padding_start = kodi::addon::GetSettingInt("edl_padding_start");
+  m_edl.padding_stop = kodi::addon::GetSettingInt("edl_padding_stop");
 
-  m_prependOutline = kodi::GetSettingEnum<PrependOutline>("prependoutline");
-  m_lowPerformance = kodi::GetSettingBoolean("lowperformance");
-  m_readTimeout = kodi::GetSettingInt("readtimeout");
-  m_streamReadChunkSize = kodi::GetSettingInt("stream_readchunksize");
-  m_transcoding = kodi::GetSettingEnum<Transcoding>("transcoding");
-  m_recordingTranscoding = kodi::GetSettingEnum<Transcoding>("recording_transcoding");
+  m_prependOutline = kodi::addon::GetSettingEnum<PrependOutline>("prependoutline");
+  m_lowPerformance = kodi::addon::GetSettingBoolean("lowperformance");
+  m_readTimeout = kodi::addon::GetSettingInt("readtimeout");
+  m_streamReadChunkSize = kodi::addon::GetSettingInt("stream_readchunksize");
+  m_transcoding = kodi::addon::GetSettingEnum<Transcoding>("transcoding");
+  m_recordingTranscoding = kodi::addon::GetSettingEnum<Transcoding>("recording_transcoding");
 
-  if (kodi::CheckSettingString("transcodingparams", m_transcodingParams))
+  if (kodi::addon::CheckSettingString("transcodingparams", m_transcodingParams))
     StringUtils::Replace(m_transcodingParams, " ", "+");
 
-  if (kodi::CheckSettingString("recording_transcodingparams", m_recordingTranscodingParams))
+  if (kodi::addon::CheckSettingString("recording_transcodingparams", m_recordingTranscodingParams))
     StringUtils::Replace(m_recordingTranscodingParams, " ", "+");
 
   /* Log the current settings for debugging purposes */
@@ -104,7 +104,7 @@ void Settings::ReadFromKodi()
     kodi::Log(ADDON_LOG_DEBUG, "Stream read chunk size: %d kb", m_streamReadChunkSize);
 }
 
-ADDON_STATUS Settings::SetValue(const std::string name, const kodi::CSettingValue& value)
+ADDON_STATUS Settings::SetValue(const std::string name, const kodi::addon::CSettingValue& value)
 {
   if (name == "host")
   {
@@ -200,7 +200,7 @@ ADDON_STATUS Settings::SetValue(const std::string name, const kodi::CSettingValu
       m_prependOutline = newValue;
       // EPG view seems cached, so TriggerEpgUpdate isn't reliable
       // also if PVR is currently disabled we don't get notified at all
-      kodi::QueueNotification(QUEUE_WARNING, "", kodi::GetLocalizedString(30507));
+      kodi::QueueNotification(QUEUE_WARNING, "", kodi::addon::GetLocalizedString(30507));
     }
   }
   else if (name == "lowperformance")

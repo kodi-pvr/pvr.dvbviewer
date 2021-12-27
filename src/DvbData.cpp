@@ -142,8 +142,8 @@ std::string dvbviewer::ConvertToUtf8(const std::string& src)
   return dest;
 }
 
-Dvb::Dvb(KODI_HANDLE instance, const std::string& kodiVersion, const Settings &settings)
-  : kodi::addon::CInstancePVRClient(instance, kodiVersion), m_kvstore(*this), m_settings(settings)
+Dvb::Dvb(const kodi::addon::IInstanceInfo& instance, const Settings &settings)
+  : kodi::addon::CInstancePVRClient(instance), m_kvstore(*this), m_settings(settings)
 {
   TiXmlBase::SetCondenseWhiteSpace(false);
 
@@ -151,9 +151,9 @@ Dvb::Dvb(KODI_HANDLE instance, const std::string& kodiVersion, const Settings &s
     {
       /* kvstore isn't mandatory so a queue error should be enough for now */
       if (err == KVStore::Error::RESPONSE_ERROR)
-        kodi::QueueNotification(QUEUE_ERROR, "", kodi::GetLocalizedString(30515));
+        kodi::QueueNotification(QUEUE_ERROR, "", kodi::addon::GetLocalizedString(30515));
       else if (err == KVStore::Error::GENERIC_PARSE_ERROR)
-        kodi::QueueNotification(QUEUE_ERROR, "", kodi::GetLocalizedString(30516));
+        kodi::QueueNotification(QUEUE_ERROR, "", kodi::addon::GetLocalizedString(30516));
     });
 
   m_running = true;
@@ -520,9 +520,9 @@ PVR_ERROR Dvb::AddTimer(const kodi::addon::PVRTimer& timer)
   if (err != Timers::SUCCESS)
   {
     if (err == Timers::TIMESPAN_OVERFLOW)
-      kodi::QueueNotification(QUEUE_ERROR, "", kodi::GetLocalizedString(30510));
+      kodi::QueueNotification(QUEUE_ERROR, "", kodi::addon::GetLocalizedString(30510));
     else if (err == Timers::EMPTY_SEARCH_PHRASE)
-      kodi::QueueNotification(QUEUE_ERROR, "", kodi::GetLocalizedString(30513));
+      kodi::QueueNotification(QUEUE_ERROR, "", kodi::addon::GetLocalizedString(30513));
     else if (err == Timers::TIMER_UNKNOWN)
       kodi::Log(ADDON_LOG_ERROR, "Timer %u is unknown", timer.GetClientIndex());
     else if (err == Timers::CHANNEL_UNKNOWN)
@@ -551,9 +551,9 @@ PVR_ERROR Dvb::UpdateTimer(const kodi::addon::PVRTimer& timer)
   if (err != Timers::SUCCESS)
   {
     if (err == Timers::TIMESPAN_OVERFLOW)
-      kodi::QueueNotification(QUEUE_ERROR, "", kodi::GetLocalizedString(30510));
+      kodi::QueueNotification(QUEUE_ERROR, "", kodi::addon::GetLocalizedString(30510));
     else if (err == Timers::EMPTY_SEARCH_PHRASE)
-      kodi::QueueNotification(QUEUE_ERROR, "", kodi::GetLocalizedString(30513));
+      kodi::QueueNotification(QUEUE_ERROR, "", kodi::addon::GetLocalizedString(30513));
     else if (err == Timers::TIMER_UNKNOWN)
       kodi::Log(ADDON_LOG_ERROR, "Timer %u is unknown", timer.GetClientIndex());
     else if (err == Timers::CHANNEL_UNKNOWN)
@@ -783,7 +783,7 @@ PVR_ERROR Dvb::DeleteRecording(const kodi::addon::PVRRecording& recording)
 
   if (m_isguest)
   {
-    kodi::QueueNotification(QUEUE_ERROR, "", kodi::GetLocalizedString(30512));
+    kodi::QueueNotification(QUEUE_ERROR, "", kodi::addon::GetLocalizedString(30512));
     return PVR_ERROR_REJECTED;
   }
 
@@ -892,7 +892,7 @@ PVR_ERROR Dvb::GetRecordingEdl(const kodi::addon::PVRRecording& recinfo,
   if (m_backendVersion < DMS_VERSION_NUM(2, 1, 0, 0))
   {
     kodi::Log(ADDON_LOG_ERROR, "Backend server is too old. Disabling EDL support.");
-    kodi::QueueFormattedNotification(QUEUE_ERROR, kodi::GetLocalizedString(30511).c_str(),
+    kodi::QueueFormattedNotification(QUEUE_ERROR, kodi::addon::GetLocalizedString(30511).c_str(),
       DMS_VERSION_STR(2, 1, 0, 0));
     m_settings.m_edl.enabled = false;
     return PVR_ERROR_NOT_IMPLEMENTED;
@@ -1002,7 +1002,7 @@ bool Dvb::OpenLiveStream(const kodi::addon::PVRChannel& channelinfo)
   /* queue a warning if the timeshift buffer path does not exist */
   if (m_settings.m_timeshift != Timeshift::OFF
       && !m_settings.IsTimeshiftBufferPathValid())
-    kodi::QueueNotification(QUEUE_ERROR, "", kodi::GetLocalizedString(30514));
+    kodi::QueueNotification(QUEUE_ERROR, "", kodi::addon::GetLocalizedString(30514));
 
   std::string streamURL = GetLiveStreamURL(channelinfo);
   m_strReader = new dvbviewer::StreamReader(streamURL, m_settings);
@@ -1337,7 +1337,7 @@ bool Dvb::LoadChannels()
     kodi::Log(ADDON_LOG_ERROR, "Unable to parse channels. Error: %s",
         doc.ErrorDesc());
     SetConnectionState(PVR_CONNECTION_STATE_SERVER_MISMATCH,
-        kodi::GetLocalizedString(30502).c_str());
+        kodi::addon::GetLocalizedString(30502).c_str());
     return false;
   }
 
@@ -1369,7 +1369,7 @@ bool Dvb::LoadChannels()
   if (m_settings.m_useFavourites && !m_settings.m_useFavouritesFile && !hasFavourites)
   {
     kodi::Log(ADDON_LOG_INFO, "Favourites enabled but non defined");
-    kodi::QueueNotification(QUEUE_ERROR, "", kodi::GetLocalizedString(30509));
+    kodi::QueueNotification(QUEUE_ERROR, "", kodi::addon::GetLocalizedString(30509));
     return false; // empty favourites is an error
   }
 
@@ -1465,7 +1465,7 @@ bool Dvb::LoadChannels()
         {
           kodi::Log(ADDON_LOG_INFO, "Favourites contains unresolvable channel: %s."
               " Ignoring.", xChannel->Attribute("name"));
-          kodi::QueueNotification(QUEUE_WARNING, "", kodi::GetLocalizedString(30508),
+          kodi::QueueNotification(QUEUE_WARNING, "", kodi::addon::GetLocalizedString(30508),
               xChannel->Attribute("name"));
           continue;
         }
@@ -1486,7 +1486,7 @@ bool Dvb::LoadChannels()
     {
       kodi::Log(ADDON_LOG_ERROR, "Unable to open local favourites.xml");
       SetConnectionState(PVR_CONNECTION_STATE_SERVER_MISMATCH,
-          kodi::GetLocalizedString(30504).c_str());
+          kodi::addon::GetLocalizedString(30504).c_str());
       return false;
     }
 
@@ -1505,7 +1505,7 @@ bool Dvb::LoadChannels()
       kodi::Log(ADDON_LOG_ERROR, "Unable to parse favourites.xml. Error: %s",
           doc.ErrorDesc());
       SetConnectionState(PVR_CONNECTION_STATE_SERVER_MISMATCH,
-          kodi::GetLocalizedString(30505).c_str());
+          kodi::addon::GetLocalizedString(30505).c_str());
       return false;
     }
 
@@ -1572,7 +1572,7 @@ bool Dvb::LoadChannels()
             : channelName.c_str();
           kodi::Log(ADDON_LOG_INFO, "Favourites contains unresolvable channel: %s."
               " Ignoring.", descr);
-          kodi::QueueNotification(QUEUE_WARNING, "", kodi::GetLocalizedString(30508),
+          kodi::QueueNotification(QUEUE_WARNING, "", kodi::addon::GetLocalizedString(30508),
               descr);
           continue;
         }
@@ -1618,7 +1618,7 @@ void Dvb::TimerUpdates()
       SetConnectionState(PVR_CONNECTION_STATE_SERVER_UNREACHABLE);
     else if (err == Timers::GENERIC_PARSE_ERROR)
       SetConnectionState(PVR_CONNECTION_STATE_SERVER_MISMATCH,
-          kodi::GetLocalizedString(30506).c_str());
+          kodi::addon::GetLocalizedString(30506).c_str());
     return;
   }
   kodi::Log(ADDON_LOG_INFO, "Changes in timerlist detected, triggering an update!");
@@ -1673,7 +1673,7 @@ bool Dvb::CheckBackendVersion()
     kodi::Log(ADDON_LOG_ERROR, "DVBViewer Media Server version %s or higher required",
         DMS_MIN_VERSION_STR);
     SetConnectionState(PVR_CONNECTION_STATE_VERSION_MISMATCH,
-      kodi::GetLocalizedString(30501).c_str(), DMS_MIN_VERSION_STR);
+      kodi::addon::GetLocalizedString(30501).c_str(), DMS_MIN_VERSION_STR);
     return false;
   }
 

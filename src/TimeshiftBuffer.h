@@ -17,7 +17,7 @@
 #include <mutex>
 #include <thread>
 
-namespace dvbviewer ATTRIBUTE_HIDDEN
+namespace dvbviewer ATTR_DLL_LOCAL
 {
 
 /* forward declaration */

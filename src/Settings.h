@@ -16,7 +16,7 @@
 #define DEFAULT_WEB_PORT     8089
 #define DEFAULT_TSBUFFERPATH "special://userdata/addon_data/pvr.dvbviewer"
 
-namespace dvbviewer ATTRIBUTE_HIDDEN
+namespace dvbviewer ATTR_DLL_LOCAL
 {
 
 /* forward declaration */
@@ -73,7 +73,7 @@ public:
 
   void ReadFromKodi();
   bool ReadFromBackend(Dvb &cli);
-  ADDON_STATUS SetValue(const std::string name, const kodi::CSettingValue& value);
+  ADDON_STATUS SetValue(const std::string name, const kodi::addon::CSettingValue& value);
 
   bool IsTimeshiftBufferPathValid() const;
   std::string BaseURL(bool credentials = true) const;
