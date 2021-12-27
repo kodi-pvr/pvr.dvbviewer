@@ -1,3 +1,7 @@
+v19.0.2
+- Translations updates from Weblate
+	- be_by, ca_es, da_dk, es_mx, et_ee, lt_lt, nl_nl, tr_tr, zh_tw
+
 v19.0.1
 - Translations updates from Weblate
 	- da_dk, eo, et_ee, ko_kr, pl_pl
