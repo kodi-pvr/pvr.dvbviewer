@@ -21,7 +21,7 @@ msgid "Kodi's frontend for DVBViewer"
 msgstr "Надбудова Kodi для переглядача DVBViewer"
 
 msgctxt "Addon Description"
-msgid "DVBViewer Media Server; supporting streaming of Live TV &amp; Recordings, EPG, Timers."
+msgid "DVBViewer Media Server; supporting streaming of Live TV & Recordings, EPG, Timers."
 msgstr "Накладка на сервіс запису DVBViewer'а; підтримує потокове LiveTV, таймери, запис та телегід. Для обробки виводу XML з RS веб-інтерфейсу використовує бібліотеку xmlParser, розроблену Франком Ванденом Бергеном (http://www.applied-mathematics.net/tools/xmlParser.html). Велика подяка йому за це!"
 
 msgctxt "Addon Disclaimer"

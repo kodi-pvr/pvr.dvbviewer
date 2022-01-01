@@ -21,7 +21,7 @@ msgid "Kodi's frontend for DVBViewer"
 msgstr "Kodi galasistēma DVBViewer"
 
 msgctxt "Addon Description"
-msgid "DVBViewer Media Server; supporting streaming of Live TV &amp; Recordings, EPG, Timers."
+msgid "DVBViewer Media Server; supporting streaming of Live TV & Recordings, EPG, Timers."
 msgstr "DVBViewer ierakstīšanas servisa galasistēma; atbalsta tiešraides TV straumēšanu, taimerus, ierakstus un EPG."
 
 msgctxt "Addon Disclaimer"

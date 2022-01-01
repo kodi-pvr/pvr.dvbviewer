@@ -14,20 +14,19 @@
 
 #include <kodi/AddonBase.h>
 
-class ATTRIBUTE_HIDDEN CDVBViewerAddon
+class ATTR_DLL_LOCAL CDVBViewerAddon
   : public kodi::addon::CAddonBase
 {
 public:
   CDVBViewerAddon() = default;
 
-  ADDON_STATUS CreateInstance(int instanceType, const std::string& instanceID,
-      KODI_HANDLE instance, const std::string& version,
-      KODI_HANDLE& addonInstance) override;
-  void DestroyInstance(int instanceType, const std::string& instanceID,
-      KODI_HANDLE addonInstance) override;
+  ADDON_STATUS CreateInstance(const kodi::addon::IInstanceInfo& instance,
+      KODI_ADDON_INSTANCE_HDL& hdl) override;
+  void DestroyInstance(const kodi::addon::IInstanceInfo& instance,
+      const KODI_ADDON_INSTANCE_HDL hdl) override;
 
   ADDON_STATUS SetSetting(const std::string& settingName,
-      const kodi::CSettingValue& settingValue) override;
+      const kodi::addon::CSettingValue& settingValue) override;
 
 private:
   dvbviewer::Dvb* m_dvbData = nullptr;

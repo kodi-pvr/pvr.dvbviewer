@@ -14,7 +14,7 @@
 #include <chrono>
 #include <ctime>
 
-namespace dvbviewer ATTRIBUTE_HIDDEN
+namespace dvbviewer ATTR_DLL_LOCAL
 {
 
 class RecordingReader

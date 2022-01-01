@@ -10,20 +10,19 @@
 #include "DvbData.h"
 #include "Settings.h"
 
-ADDON_STATUS CDVBViewerAddon::CreateInstance(int instanceType,
-    const std::string& instanceID, KODI_HANDLE instance,
-    const std::string& version, KODI_HANDLE& addonInstance)
+ADDON_STATUS CDVBViewerAddon::CreateInstance(const kodi::addon::IInstanceInfo& instance,
+    KODI_ADDON_INSTANCE_HDL& hdl)
 {
   std::lock_guard<std::mutex> lock(m_mutex);
 
-  if (instanceType == ADDON_INSTANCE_PVR)
+  if (instance.IsType(ADDON_INSTANCE_PVR))
   {
     kodi::Log(ADDON_LOG_DEBUG, "%s: Creating DVBViewer PVR-Client", __FUNCTION__);
 
     dvbviewer::Settings settings;
     settings.ReadFromKodi();
-    m_dvbData = new dvbviewer::Dvb(instance, version, settings);
-    addonInstance = m_dvbData;
+    m_dvbData = new dvbviewer::Dvb(instance, settings);
+    hdl = m_dvbData;
 
     return ADDON_STATUS_OK;
   }
@@ -31,8 +30,8 @@ ADDON_STATUS CDVBViewerAddon::CreateInstance(int instanceType,
   return ADDON_STATUS_UNKNOWN;
 }
 
-void CDVBViewerAddon::DestroyInstance(int instanceType,
-    const std::string& instanceID, KODI_HANDLE addonInstance)
+void CDVBViewerAddon::DestroyInstance(const kodi::addon::IInstanceInfo& instance,
+    const KODI_ADDON_INSTANCE_HDL hdl)
 {
   std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -43,7 +42,7 @@ void CDVBViewerAddon::DestroyInstance(int instanceType,
 }
 
 ADDON_STATUS CDVBViewerAddon::SetSetting(const std::string& settingName,
-    const kodi::CSettingValue& settingValue)
+    const kodi::addon::CSettingValue& settingValue)
 {
   std::lock_guard<std::mutex> lock(m_mutex);
 
