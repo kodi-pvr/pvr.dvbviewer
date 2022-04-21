@@ -772,12 +772,6 @@ PVR_ERROR Dvb::DeleteRecording(const kodi::addon::PVRRecording& recording)
   if (!IsConnected())
     return PVR_ERROR_SERVER_ERROR;
 
-  if (m_isguest)
-  {
-    kodi::QueueNotification(QUEUE_ERROR, "", kodi::addon::GetLocalizedString(30512));
-    return PVR_ERROR_REJECTED;
-  }
-
   std::unique_ptr<const httpResponse> res = GetFromAPI("api/recdelete.html?recid=%s&delfile=1",
       recording.GetRecordingId().c_str());
   if (res->error)
