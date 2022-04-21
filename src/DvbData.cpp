@@ -1407,6 +1407,18 @@ bool Dvb::LoadChannels()
     }
   }
 
+  auto searchChannelByBackendId = [&](uint64_t backendId) -> DvbChannel* {
+    for (auto channel : m_channels)
+    {
+      bool found = (std::find(channel->backendIds.begin(),
+            channel->backendIds.end(), backendId)
+          != channel->backendIds.end());
+      if (found)
+        return channel;
+    }
+    return nullptr;
+  };
+
   if (m_settings.m_useFavourites && !m_settings.m_useFavouritesFile)
   {
     m_groups.clear();
@@ -1429,12 +1441,7 @@ bool Dvb::LoadChannels()
       {
         uint64_t backendId = 0;
         xChannel->QueryValueAttribute<uint64_t>("ID", &backendId);
-        DvbChannel *channel = GetChannel([&](const DvbChannel *channel)
-            {
-              return (std::find(channel->backendIds.begin(),
-                    channel->backendIds.end(), backendId)
-                  != channel->backendIds.end());
-            });
+        DvbChannel *channel = searchChannelByBackendId(backendId);
         if (!channel)
         {
           kodi::Log(ADDON_LOG_INFO, "Favourites contains unresolvable channel: %s."
@@ -1534,12 +1541,7 @@ bool Dvb::LoadChannels()
           channelName = ConvertToUtf8(channelName);
         }
 
-        DvbChannel *channel = GetChannel([&](const DvbChannel *channel)
-            {
-              return (std::find(channel->backendIds.begin(),
-                    channel->backendIds.end(), backendId)
-                  != channel->backendIds.end());
-            });
+        DvbChannel *channel = searchChannelByBackendId(backendId);
         if (!channel)
         {
           const char *descr = (channelName.empty()) ? xEntry->GetText()
@@ -1603,6 +1605,8 @@ DvbChannel *Dvb::GetChannel(std::function<bool (const DvbChannel*)> func)
 {
   for (auto channel : m_channels)
   {
+    if (channel->hidden)
+      continue;
     if (func(channel))
       return channel;
   }
