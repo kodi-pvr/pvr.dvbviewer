@@ -5,11 +5,11 @@ environment:
   CONFIG: Debug
   KODI_BRANCH: master # usually synced with APPVEYOR_REPO_BRANCH
   matrix:
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
       PLATFORM: win32
       MSVC_PLATFORM: x86
       CONFIG: RelWithDebInfo
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
       PLATFORM: win64
       MSVC_PLATFORM: amd64
       CONFIG: RelWithDebInfo
