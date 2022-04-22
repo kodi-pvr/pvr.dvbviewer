@@ -53,7 +53,7 @@ before_build:
       cd "$KODI/tools/depends"
       sed -i 's/@platform_ldflags@//' target/Toolchain_binaddons.cmake.in
       ./bootstrap
-      ./configure --prefix="$ROOT/kodi-build" --disable-debug ${params[@]}
+      ./configure --prefix="$ROOT/kodi-build" --disable-debug --with-rendersystem=gles ${params[@]}
       sed -i 's/^$(TOOLCHAIN_FILE): /mytoolchain: /' xbmc-addons.include
       make -C target/binary-addons mytoolchain
       cp target/binary-addons/mytoolchain $ROOT/Toolchain_binaddons.cmake
