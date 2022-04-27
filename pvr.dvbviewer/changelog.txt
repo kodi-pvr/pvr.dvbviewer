@@ -1,3 +1,7 @@
+v19.1.1
+- Translations updates from Weblate
+	- en_gb
+
 v19.1.0
 - Require DMS 3.0.0 or higher
 - Make sure to only reference non-hidden channels
