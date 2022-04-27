@@ -1,24 +1,29 @@
+v20.3.0
+- Require DMS 3.0.0 or higher
+- Make sure to only reference non-hidden channels
+- Delete recordings: remove extra guest check
+
 v20.2.0
 - Translation updates by Weblate
 - Kodi main API update to version 2.0.0
 
 v20.1.0
 - Kodi API to 8.0.0
-  - Add supports recordings delete capability
-  - Enforce EDL limits
+- Add supports recordings delete capability
+- Enforce EDL limits
 
 v20.0.0
 - Translations updates from Weblate
-  - da_dk, eo, et_ee, ko_kr, pl_pl
-  - Also allow addon.xml content update by Weblate
+- da_dk, eo, et_ee, ko_kr, pl_pl
+- Also allow addon.xml content update by Weblate
 - Changed test builds to 'Kodi 20 Nexus'
 - Increased version to 20.0.0
-  - With start of Kodi 20 Nexus, takes addon as major the same version number as Kodi.
-    This done to know easier to which Kodi the addon works.
+- With start of Kodi 20 Nexus, takes addon as major the same version number as Kodi.
+  This done to know easier to which Kodi the addon works.
 
 v7.3.3
 - Translations updates from Weblate
-	- pl_pl
+- pl_pl
 
 v7.3.2
 - Fix for extra assets tag in addon.xml

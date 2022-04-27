@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2005-2021 Team Kodi (https://kodi.tv)
- *  Copyright (C) 2013-2021 Manuel Mausz
+ *  Copyright (C) 2005-2022 Team Kodi (https://kodi.tv)
+ *  Copyright (C) 2013-2022 Manuel Mausz
  *
  *  SPDX-License-Identifier: GPL-2.0-or-later
  *  See LICENSE.md for more information.
@@ -189,8 +189,8 @@ PVR_ERROR Dvb::GetCapabilities(kodi::addon::PVRCapabilities& capabilities)
   capabilities.SetSupportsChannelSettings(false);
   capabilities.SetHandlesInputStream(true);
   capabilities.SetHandlesDemuxing(false);
-  capabilities.SetSupportsRecordingPlayCount(false);
-  capabilities.SetSupportsLastPlayedPosition(false);
+  capabilities.SetSupportsRecordingPlayCount(true);
+  capabilities.SetSupportsLastPlayedPosition(true);
   capabilities.SetSupportsRecordingEdl(true);
   capabilities.SetSupportsRecordingsRename(false);
   capabilities.SetSupportsRecordingsLifetimeChange(false);
@@ -200,12 +200,6 @@ PVR_ERROR Dvb::GetCapabilities(kodi::addon::PVRCapabilities& capabilities)
   {
     if (IsGuest())
       capabilities.SetSupportsTimers(false);
-
-    if (HasKVStore())
-    {
-      capabilities.SetSupportsRecordingPlayCount(true);
-      capabilities.SetSupportsLastPlayedPosition(true);
-    }
   }
   return PVR_ERROR_NO_ERROR;
 }
@@ -720,13 +714,10 @@ PVR_ERROR Dvb::GetRecordings(bool deleted,
     recording.group = groups.emplace(group, 0).first;
     ++recording.group->second;
 
-    if (m_kvstore.IsSupported())
-    {
-      m_kvstore.Get<int>("recplaycount_" + recording.id,
-        recording.playCount, KVStore::Hint::FETCH_ALL);
-      m_kvstore.Get<int>("recplaypos_" + recording.id,
-        recording.lastPlayPosition, KVStore::Hint::FETCH_ALL);
-    }
+    m_kvstore.Get<int>("recplaycount_" + recording.id,
+      recording.playCount, KVStore::Hint::FETCH_ALL);
+    m_kvstore.Get<int>("recplaypos_" + recording.id,
+      recording.lastPlayPosition, KVStore::Hint::FETCH_ALL);
 
     recordings.push_back(recording);
   }
@@ -780,12 +771,6 @@ PVR_ERROR Dvb::DeleteRecording(const kodi::addon::PVRRecording& recording)
 {
   if (!IsConnected())
     return PVR_ERROR_SERVER_ERROR;
-
-  if (m_isguest)
-  {
-    kodi::QueueNotification(QUEUE_ERROR, "", kodi::addon::GetLocalizedString(30512));
-    return PVR_ERROR_REJECTED;
-  }
 
   std::unique_ptr<const httpResponse> res = GetFromAPI("api/recdelete.html?recid=%s&delfile=1",
       recording.GetRecordingId().c_str());
@@ -889,15 +874,6 @@ PVR_ERROR Dvb::GetRecordingEdl(const kodi::addon::PVRRecording& recinfo,
   if (!IsConnected())
     return PVR_ERROR_SERVER_ERROR;
 
-  if (m_backendVersion < DMS_VERSION_NUM(2, 1, 0, 0))
-  {
-    kodi::Log(ADDON_LOG_ERROR, "Backend server is too old. Disabling EDL support.");
-    kodi::QueueFormattedNotification(QUEUE_ERROR, kodi::addon::GetLocalizedString(30511).c_str(),
-      DMS_VERSION_STR(2, 1, 0, 0));
-    m_settings.m_edl.enabled = false;
-    return PVR_ERROR_NOT_IMPLEMENTED;
-  }
-
   std::unique_ptr<httpResponse> res = OpenFromAPI("api/sideload.html?rec=1&file=.edl"
     "&fileid=%s", recinfo.GetRecordingId().c_str());
   if (res->error)
@@ -946,8 +922,6 @@ PVR_ERROR Dvb::SetRecordingPlayCount(const kodi::addon::PVRRecording& recinfo,
 {
   if (!IsConnected())
     return PVR_ERROR_SERVER_ERROR;
-  if (!HasKVStore())
-    return PVR_ERROR_NOT_IMPLEMENTED;
 
   const std::string value = std::string("recplaycount_") + recinfo.GetRecordingId();
   return m_kvstore.Set(value, count)
@@ -959,8 +933,6 @@ PVR_ERROR Dvb::SetRecordingLastPlayedPosition(
 {
   if (!IsConnected())
     return PVR_ERROR_SERVER_ERROR;
-  if (!HasKVStore())
-    return PVR_ERROR_NOT_IMPLEMENTED;
 
   const std::string value = std::string("recplaypos_") + recinfo.GetRecordingId();
   return m_kvstore.Set<int>(value, lastplayedposition)
@@ -972,8 +944,6 @@ PVR_ERROR Dvb::GetRecordingLastPlayedPosition(
 {
   if (!IsConnected())
     return PVR_ERROR_SERVER_ERROR;
-  if (!HasKVStore())
-    return PVR_ERROR_NOT_IMPLEMENTED;
 
   const std::string value = std::string("recplaypos_") + recinfo.GetRecordingId();
   return m_kvstore.Get<int>(value, position)
@@ -1220,8 +1190,7 @@ void Dvb::Process()
         kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
 
         /* actually the DMS should do this itself... */
-        if (m_kvstore.IsSupported())
-          m_kvstore.Save();
+        m_kvstore.Save();
       }
     }
   }
@@ -1433,6 +1402,18 @@ bool Dvb::LoadChannels()
     }
   }
 
+  auto searchChannelByBackendId = [&](uint64_t backendId) -> DvbChannel* {
+    for (auto channel : m_channels)
+    {
+      bool found = (std::find(channel->backendIds.begin(),
+            channel->backendIds.end(), backendId)
+          != channel->backendIds.end());
+      if (found)
+        return channel;
+    }
+    return nullptr;
+  };
+
   if (m_settings.m_useFavourites && !m_settings.m_useFavouritesFile)
   {
     m_groups.clear();
@@ -1455,12 +1436,7 @@ bool Dvb::LoadChannels()
       {
         uint64_t backendId = 0;
         xChannel->QueryValueAttribute<uint64_t>("ID", &backendId);
-        DvbChannel *channel = GetChannel([&](const DvbChannel *channel)
-            {
-              return (std::find(channel->backendIds.begin(),
-                    channel->backendIds.end(), backendId)
-                  != channel->backendIds.end());
-            });
+        DvbChannel *channel = searchChannelByBackendId(backendId);
         if (!channel)
         {
           kodi::Log(ADDON_LOG_INFO, "Favourites contains unresolvable channel: %s."
@@ -1560,12 +1536,7 @@ bool Dvb::LoadChannels()
           channelName = ConvertToUtf8(channelName);
         }
 
-        DvbChannel *channel = GetChannel([&](const DvbChannel *channel)
-            {
-              return (std::find(channel->backendIds.begin(),
-                    channel->backendIds.end(), backendId)
-                  != channel->backendIds.end());
-            });
+        DvbChannel *channel = searchChannelByBackendId(backendId);
         if (!channel)
         {
           const char *descr = (channelName.empty()) ? xEntry->GetText()
@@ -1629,6 +1600,8 @@ DvbChannel *Dvb::GetChannel(std::function<bool (const DvbChannel*)> func)
 {
   for (auto channel : m_channels)
   {
+    if (channel->hidden)
+      continue;
     if (func(channel))
       return channel;
   }
