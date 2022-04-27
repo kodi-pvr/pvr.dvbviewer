@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2005-2021 Team Kodi (https://kodi.tv)
- *  Copyright (C) 2013-2021 Manuel Mausz
+ *  Copyright (C) 2005-2022 Team Kodi (https://kodi.tv)
+ *  Copyright (C) 2013-2022 Manuel Mausz
  *
  *  SPDX-License-Identifier: GPL-2.0-or-later
  *  See LICENSE.md for more information.
@@ -48,7 +48,6 @@ public:
   {};
   KVStore(const KVStore &kvstore) = delete;
 
-  bool IsSupported() const;
   bool IsErrorState() const;
   void Reset();
 

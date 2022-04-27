@@ -1,23 +1,27 @@
+v19.1.0
+- Require DMS 3.0.0 or higher
+- Make sure to only reference non-hidden channels
+
 v19.0.2
 - Translations updates from Weblate
-	- be_by, ca_es, da_dk, es_mx, et_ee, lt_lt, nl_nl, tr_tr, zh_tw
+- be_by, ca_es, da_dk, es_mx, et_ee, lt_lt, nl_nl, tr_tr, zh_tw
 
 v19.0.1
 - Translations updates from Weblate
-	- da_dk, eo, et_ee, ko_kr, pl_pl
+- da_dk, eo, et_ee, ko_kr, pl_pl
 
 v19.0.0
 - Translations updates from Weblate
-  - Korean (ko_kr), Esperanto, Danish (da_dk)
-  - Also allow addon.xml content update by Weblate
+- Korean (ko_kr), Esperanto, Danish (da_dk)
+- Also allow addon.xml content update by Weblate
 - Changed test builds to 'Kodi 19 Matrix'
 - Increased version to 19.0.0
-  - With start of Kodi 20 Nexus, takes addon as major the same version number as Kodi.
-    This done to know easier to which Kodi the addon works.
+- With start of Kodi 20 Nexus, takes addon as major the same version number as Kodi.
+  This done to know easier to which Kodi the addon works.
 
 v7.3.3
 - Translations updates from Weblate
-	- pl_pl
+- pl_pl
 
 v7.3.2
 - Fix for extra assets tag in addon.xml
