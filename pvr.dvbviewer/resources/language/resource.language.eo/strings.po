@@ -332,10 +332,6 @@ msgctxt "#30510"
 msgid "The time period cannot span more than 24 hours"
 msgstr ""
 
-msgctxt "#30511"
-msgid "EDL support requires DVBViewer Media Server %s or higher"
-msgstr ""
-
 msgctxt "#30512"
 msgid "PVR is running with guest permissions"
 msgstr ""

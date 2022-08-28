@@ -317,10 +317,6 @@ msgctxt "#30510"
 msgid "The time period cannot span more than 24 hours"
 msgstr "Tidsperiodens spann kan inte vara längre än 24 timmar"
 
-msgctxt "#30511"
-msgid "EDL support requires DVBViewer Media Server %s or higher"
-msgstr "EDL support kräver DVBViewer Media Server %s eller högre"
-
 msgctxt "#30512"
 msgid "PVR is running with guest permissions"
 msgstr "PVR körs med gästbehörigheter"
@@ -340,3 +336,7 @@ msgstr "Det gick inte att hämta användardata från backenden"
 msgctxt "#30516"
 msgid "Unable to parse user data from the backend"
 msgstr "Det gick inte att analysera användardata från backend"
+
+#~ msgctxt "#30511"
+#~ msgid "EDL support requires DVBViewer Media Server %s or higher"
+#~ msgstr "EDL support kräver DVBViewer Media Server %s eller högre"
