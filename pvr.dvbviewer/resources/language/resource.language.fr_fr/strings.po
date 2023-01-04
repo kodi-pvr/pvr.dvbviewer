@@ -7,15 +7,15 @@ msgstr ""
 "Project-Id-Version: KODI Main\n"
 "Report-Msgid-Bugs-To: translations@kodi.tv\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2022-05-31 15:14+0000\n"
-"Last-Translator: Christophe JOLY <skypichat@hotmail.fr>\n"
+"PO-Revision-Date: 2022-12-29 22:15+0000\n"
+"Last-Translator: skypichat <skypichat@hotmail.fr>\n"
 "Language-Team: French (France) <https://kodi.weblate.cloud/projects/kodi-add-ons-pvr-clients/pvr-dvbviewer/fr_fr/>\n"
 "Language: fr_fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Weblate 4.12.2\n"
+"X-Generator: Weblate 4.15\n"
 
 msgctxt "Addon Summary"
 msgid "Kodi's frontend for DVBViewer"
@@ -23,7 +23,7 @@ msgstr "Interface logicielle pour DVBViewer"
 
 msgctxt "Addon Description"
 msgid "DVBViewer Media Server; supporting streaming of Live TV & Recordings, EPG, Timers."
-msgstr "Serveur média DVBViewer. Gère la diffusion de la TV en direct, les enregistrements en direct, le guide électronique des programmes TV et la programmation."
+msgstr "DVBViewer Media Server gère la diffusion de la TV en direct, les enregistrements, le guide électronique des programmes (EPG) et la programmation."
 
 msgctxt "Addon Disclaimer"
 msgid "The authors are in no way responsible for failed recordings, incorrect timers, wasted hours, or any other undesirable effects."
@@ -31,7 +31,7 @@ msgstr "Les auteurs ne sont en aucun cas responsables de l'échec des enregistre
 
 msgctxt "#30000"
 msgid "DVBViewer Media Server IP Address"
-msgstr "Adresse IP du serveur média DVBViewer"
+msgstr "Adresse IP de DVBViewer Media Server"
 
 msgctxt "#30001"
 msgid "Webinterface Port"
@@ -71,7 +71,7 @@ msgstr "Sélectionner le fichier « favourites.xml »"
 
 msgctxt "#30020"
 msgid "Enable Timeshift"
-msgstr "Activer le différé"
+msgstr "Activer le différé (Timeshift)"
 
 msgctxt "#30021"
 msgid "Timeshift buffer path"
@@ -99,7 +99,7 @@ msgstr "Temporisation personnalisée pour la TV en direct (0 pour la valeur pré
 
 msgctxt "#30042"
 msgid "Stream read chunk size (0 for Kodi's default)"
-msgstr "Taille des blocs de flux de lecture (0 pour la prédéfinition de Kodi)"
+msgstr "Taille des blocs de flux de lecture (0 pour par défaut de Kodi)"
 
 msgctxt "#30050"
 msgid "Group recordings"
@@ -215,7 +215,7 @@ msgstr "Favoris"
 
 msgctxt "#30112"
 msgid "Timeshift"
-msgstr "Différé"
+msgstr "Différé (timeshift)"
 
 msgctxt "#30113"
 msgid "Edit Decision List"
@@ -263,7 +263,7 @@ msgstr "Désactivé"
 
 msgctxt "#30431"
 msgid "Record if EPG title differs"
-msgstr "Enregistrer si le titre du guide (EPG) diffère"
+msgstr "Enregistrer si le titre du guide (EPG) diffèrent"
 
 msgctxt "#30432"
 msgid "Record if EPG subtitle differs"
@@ -275,31 +275,31 @@ msgstr "Enregistrer si le titre et le sous-titre du guide (EPG) diffèrent"
 
 msgctxt "#30500"
 msgid "Unable to connect to the DVBViewer Media Server"
-msgstr "Impossible de se connecter au serveur média DVBViewer"
+msgstr "Impossible de se connecter à DVBViewer Media Server"
 
 msgctxt "#30501"
 msgid "DVBViewer Media Server version %s or higher required"
-msgstr "Serveur média DVBViewer version %s ou supérieure requis"
+msgstr "DVBViewer Media Server version %s ou supérieure requis"
 
 msgctxt "#30502"
 msgid "Unable to parse channel list"
-msgstr "Impossible d'analyser la liste des chaînes."
+msgstr "Impossible d'analyser la liste des chaînes"
 
 msgctxt "#30503"
 msgid "Check Kodi log for more information"
-msgstr "Consulter le journal de Kodi pour plus d'informations."
+msgstr "Consulter le journal de Kodi pour plus d'informations"
 
 msgctxt "#30504"
 msgid "Unable to open local favourites.xml"
-msgstr "Impossible d'ouvrir « favourites.xml » en local."
+msgstr "Impossible d'ouvrir « favourites.xml » en local"
 
 msgctxt "#30505"
 msgid "Unable to parse favourites list"
-msgstr "Impossible d'analyser la liste des favoris."
+msgstr "Impossible d'analyser la liste des favoris"
 
 msgctxt "#30506"
 msgid "Unable to parse timer list"
-msgstr "Impossible d'analyser la liste des programmations."
+msgstr "Impossible d'analyser la liste des programmations"
 
 msgctxt "#30507"
 msgid "Please reset the EPG database and restart Kodi afterwards"
@@ -307,7 +307,7 @@ msgstr "Merci de réinitialiser la base de données du guide TV et de relancer K
 
 msgctxt "#30508"
 msgid "Favourites contains unresolvable channel: %s"
-msgstr "Les favoris contiennent une chaîne non résoluble : %s"
+msgstr "Les favoris contiennent une chaîne irrésolvable : %s"
 
 msgctxt "#30509"
 msgid "Favourites enabled but none defined"
