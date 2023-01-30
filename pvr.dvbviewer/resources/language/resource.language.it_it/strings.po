@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: KODI Main\n"
 "Report-Msgid-Bugs-To: translations@kodi.tv\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2022-08-18 11:14+0000\n"
+"PO-Revision-Date: 2023-01-22 18:15+0000\n"
 "Last-Translator: Massimo Pissarello <mapi68@gmail.com>\n"
 "Language-Team: Italian <https://kodi.weblate.cloud/projects/kodi-add-ons-pvr-clients/pvr-dvbviewer/it_it/>\n"
 "Language: it_it\n"
@@ -15,7 +15,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 4.13\n"
+"X-Generator: Weblate 4.15.1\n"
 
 msgctxt "Addon Summary"
 msgid "Kodi's frontend for DVBViewer"
@@ -23,11 +23,11 @@ msgstr "Frontend Kodi per DVBViewer"
 
 msgctxt "Addon Description"
 msgid "DVBViewer Media Server; supporting streaming of Live TV & Recordings, EPG, Timers."
-msgstr "Server multimediale DVBViewer; supporta lo streaming di TV in diretta e registrazioni, EPG, timer."
+msgstr "Server multimediale DVBViewer; supporta lo stream e la registrazione di Live TV, EPG, timer."
 
 msgctxt "Addon Disclaimer"
 msgid "The authors are in no way responsible for failed recordings, incorrect timers, wasted hours, or any other undesirable effects."
-msgstr "Questo software non è stabile! Gli autori non sono responsabili per registrazioni fallite, timer non corretti, ore perse, o altri effetti indesiderati."
+msgstr "Gli autori non sono in alcun modo responsabili per registrazioni fallite, timer errati, ore sprecate o qualsiasi altro effetto indesiderato."
 
 # settings labels
 msgctxt "#30000"
@@ -96,7 +96,7 @@ msgstr "Abilita modalità a basse prestazioni (disabilita loghi e miniature)"
 
 msgctxt "#30041"
 msgid "Custom Live TV timeout (0 to use default)"
-msgstr "Timeout TV in diretta personalizzato (impostazione predefinita 0)"
+msgstr "Timeout Live TV personalizzato (impostazione predefinita 0)"
 
 msgctxt "#30042"
 msgid "Stream read chunk size (0 for Kodi's default)"
@@ -233,11 +233,11 @@ msgstr "Predefinito"
 
 msgctxt "#30401"
 msgid "Unimportant (Lowest)"
-msgstr "Non importante (più basso)"
+msgstr "Non importante (più bassa)"
 
 msgctxt "#30402"
 msgid "Low"
-msgstr "Basso"
+msgstr "Bassa"
 
 msgctxt "#30403"
 msgid "Normal"
@@ -245,11 +245,11 @@ msgstr "Normale"
 
 msgctxt "#30404"
 msgid "High"
-msgstr "Alto"
+msgstr "Alta"
 
 msgctxt "#30405"
 msgid "Important (Highest)"
-msgstr "Importante (più alto)"
+msgstr "Importante (più alta)"
 
 msgctxt "#30410"
 msgid "Automatic"
