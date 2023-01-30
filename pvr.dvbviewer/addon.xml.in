@@ -96,7 +96,7 @@
     <description lang="hu_HU">DVBViewer felvétel szolgáltatás előtét, ami támogatja az élő TV adásokat, felvételeket EPG-vel és időzítéssel.</description>
     <description lang="id_ID">Frontend Layanan Perekaman DVBViewer; Mendukung pengaliran TV secara langsung, Timer, Perekaman dan EPG. Untuk mengolah keluaran XML dari antar-muka web RS, akan menggunakan pustaka xmlParser yang dikembangkan oleh Frank Vanden Berghen (http://www.applied-mathematics.net/tools/xmlParser.html). Terimakasih untuk hal tersebut!</description>
     <description lang="is_IS">Framendi fyrir upptökuþjónustu DVBViewer; styður streymingu á beinum útsendingum, tímatöku-upptökur og rafræna sjónvarpsvísa (EPG).</description>
-    <description lang="it_IT">Server multimediale DVBViewer; supporta lo streaming di TV in diretta e registrazioni, EPG, timer.</description>
+    <description lang="it_IT">Server multimediale DVBViewer; supporta lo stream e la registrazione di Live TV, EPG, timer.</description>
     <description lang="ja_JP">DVBViewer 録画サービスのフロントエンドです。LiveTV のストリーミング視聴、タイマー、録画、EPG をサポートしています。RS web インターフェースの XML 出力の読み込みには Frank Vanden Berghen 氏の開発した xmlParser ライブラリ (http://www.applied-mathematics.net/tools/xmlParser.html) を使用しています。ありがとうございます！</description>
     <description lang="ko_KR">DVBViewer 미디어 서버; 라이브 TV &amp; 녹음, EPG, 타이머.</description>
     <description lang="lt_LT">DVBViewer įrašymo paslaugų sąsajos; remia transliaciją LiveTV, Taimeriai, įrašų ir EPG.</description>
@@ -152,7 +152,7 @@
     <disclaimer lang="hy_AM">Սա անկայուն ծրագրային ապահովում է: Հեղինակները պատասխանատու չեն վատ ձայնագրումների, սխալ ժամանակացույցերի, կորած ժամանակի կամ այլ ոչ ցանկալի երևույթների համար:</disclaimer>
     <disclaimer lang="id_ID">Ini merupakan software yang tidak stabil! Penulis tidak bertanggung jawab untuk rekaman gagal, timer salah, waktu terbuang, atau efek tak diinginkan lainnya.</disclaimer>
     <disclaimer lang="is_IS">Þetta er óstöðugur hugbúnaður! Höfundarnir eru á engan hátt ábyrgir fyrir misheppnuðum upptökum, röngum upptökutímum, klukkustundum sem að fóru í súginn eða nokkrum öðrum óæskilegum áhrifum.</disclaimer>
-    <disclaimer lang="it_IT">Questo software non è stabile! Gli autori non sono responsabili per registrazioni fallite, timer non corretti, ore perse, o altri effetti indesiderati.</disclaimer>
+    <disclaimer lang="it_IT">Gli autori non sono in alcun modo responsabili per registrazioni fallite, timer errati, ore sprecate o qualsiasi altro effetto indesiderato.</disclaimer>
     <disclaimer lang="ja_JP">これは不安定なソフトウェアです！本プログラムの作者は、録画の失敗、正確に作動しなかったタイマー、無駄にした時間、その他あらゆる好ましくない結果について責任を負わないものとします。</disclaimer>
     <disclaimer lang="ko_KR">이 소프트웨어는 불안정합니다! 제작자는 녹화 실패, 부정확한 타이머, 시간 낭비 및 기타 예상하지 못한 결과에 대해 책임지지 않습니다.</disclaimer>
     <disclaimer lang="lt_LT">Autoriai jokiu būdu neatsako už nepavykusius įrašus, neteisingus laikmačius, sugaištas valandas ar bet kokius kitus nepageidaujamus padarinius.</disclaimer>
