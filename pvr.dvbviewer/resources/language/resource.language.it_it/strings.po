@@ -5,16 +5,17 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: KODI Main\n"
-"Report-Msgid-Bugs-To: https://github.com/xbmc/xbmc/issues/\n"
+"Report-Msgid-Bugs-To: translations@kodi.tv\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: Kodi Translation Team\n"
-"Language-Team: Italian (Italy) (http://www.transifex.com/projects/p/kodi-main/language/it_IT/)\n"
-"Language: it_IT\n"
+"PO-Revision-Date: 2023-01-22 18:15+0000\n"
+"Last-Translator: Massimo Pissarello <mapi68@gmail.com>\n"
+"Language-Team: Italian <https://kodi.weblate.cloud/projects/kodi-add-ons-pvr-clients/pvr-dvbviewer/it_it/>\n"
+"Language: it_it\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 4.15.1\n"
 
 msgctxt "Addon Summary"
 msgid "Kodi's frontend for DVBViewer"
@@ -22,20 +23,20 @@ msgstr "Frontend Kodi per DVBViewer"
 
 msgctxt "Addon Description"
 msgid "DVBViewer Media Server; supporting streaming of Live TV & Recordings, EPG, Timers."
-msgstr "Frontend del servizio di registrazione DVBViewer; supporta lo streaming LiveTV, i timer, la registrazione e l'EPG. Per scansionare l'output XML dell'interfaccia web RS viene utilizzata la libreria xmlParser sviluppata da Frank Vanden Berghen (http://www.applied-mathematics.net/tools/xmlParser.html). Molte grazie per questo!"
+msgstr "Server multimediale DVBViewer; supporta lo stream e la registrazione di Live TV, EPG, timer."
 
 msgctxt "Addon Disclaimer"
 msgid "The authors are in no way responsible for failed recordings, incorrect timers, wasted hours, or any other undesirable effects."
-msgstr "Questo software è instabile! Gli autori non sono in alcun modo responsabili per registrazioni fallite, timers incorretti, ore perse, o qualsiasi altro effetto indesiderato."
+msgstr "Gli autori non sono in alcun modo responsabili per registrazioni fallite, timer errati, ore sprecate o qualsiasi altro effetto indesiderato."
 
 # settings labels
 msgctxt "#30000"
 msgid "DVBViewer Media Server IP Address"
-msgstr ""
+msgstr "Indirizzo IP del server multimediale DVBViewer"
 
 msgctxt "#30001"
 msgid "Webinterface Port"
-msgstr "Porta dell'interfaccia web"
+msgstr "Porta interfaccia web"
 
 msgctxt "#30002"
 msgid "Username"
@@ -47,7 +48,7 @@ msgstr "Password"
 
 msgctxt "#30004"
 msgid "Use Wake-on-LAN to wake up service"
-msgstr "Usa il Wake-on-LAN per avviare il servizio"
+msgstr "Usa Wake-on-LAN per riattivare il servizio"
 
 msgctxt "#30005"
 msgid "MAC address"
@@ -55,31 +56,31 @@ msgstr "Indirizzo MAC"
 
 msgctxt "#30006"
 msgid "Profile ID"
-msgstr ""
+msgstr "ID profilo"
 
 msgctxt "#30010"
 msgid "Use favourites instead of channel list"
-msgstr "Utilizza i preferiti invece della lista canali"
+msgstr "Usa i preferiti invece dell'elenco dei canali"
 
 msgctxt "#30011"
 msgid "Use local favourites file"
-msgstr "Utilizza file dei preferiti locali"
+msgstr "Usa il file dei preferiti locali"
 
 msgctxt "#30012"
 msgid "Select the favourites.xml file"
-msgstr "Seleziona il file favourites.xml"
+msgstr "Scegli il file favourites.xml"
 
 msgctxt "#30020"
 msgid "Enable Timeshift"
-msgstr "Abilita Timeshift"
+msgstr "Abilita timeshift"
 
 msgctxt "#30021"
 msgid "Timeshift buffer path"
-msgstr "Path per il buffer del timeshift"
+msgstr "Percorso buffer timeshift"
 
 msgctxt "#30025"
 msgid "Off"
-msgstr "Off"
+msgstr "Spento"
 
 msgctxt "#30026"
 msgid "On playback"
@@ -91,15 +92,15 @@ msgstr "In pausa"
 
 msgctxt "#30040"
 msgid "Enable low performance mode (disables logos & thumbnails)"
-msgstr "Abilità modalità leggera (disabilita loghi e anteprime)"
+msgstr "Abilita modalità a basse prestazioni (disabilita loghi e miniature)"
 
 msgctxt "#30041"
 msgid "Custom Live TV timeout (0 to use default)"
-msgstr ""
+msgstr "Timeout Live TV personalizzato (impostazione predefinita 0)"
 
 msgctxt "#30042"
 msgid "Stream read chunk size (0 for Kodi's default)"
-msgstr ""
+msgstr "Dimensione blocco di lettura stream (impostazione predefinita di Kodi 0)"
 
 msgctxt "#30050"
 msgid "Group recordings"
@@ -159,7 +160,7 @@ msgstr "Abilita transcodifica"
 
 msgctxt "#30071"
 msgid "Off"
-msgstr "Off"
+msgstr "Spento"
 
 msgctxt "#30072"
 msgid "TS"
@@ -180,15 +181,15 @@ msgstr "Transcodifica parametri URL"
 # empty strings from id 30078 to 30079
 msgctxt "#30080"
 msgid "Enable EDL support"
-msgstr ""
+msgstr "Abilita supporto EDL"
 
 msgctxt "#30081"
 msgid "Start time padding"
-msgstr ""
+msgstr "Avvia riempimento tempo"
 
 msgctxt "#30082"
 msgid "Stop time padding"
-msgstr ""
+msgstr "Ferma riempimento tempo"
 
 msgctxt "#30100"
 msgid "General"
@@ -220,11 +221,11 @@ msgstr "Timeshift"
 
 msgctxt "#30113"
 msgid "Edit Decision List"
-msgstr ""
+msgstr "Modifica elenco decisioni"
 
 msgctxt "#30114"
 msgid "Transcoding"
-msgstr ""
+msgstr "Transcodifica"
 
 msgctxt "#30400"
 msgid "Default"
@@ -232,7 +233,7 @@ msgstr "Predefinito"
 
 msgctxt "#30401"
 msgid "Unimportant (Lowest)"
-msgstr "Meno importante (Minore)"
+msgstr "Non importante (più bassa)"
 
 msgctxt "#30402"
 msgid "Low"
@@ -248,7 +249,7 @@ msgstr "Alta"
 
 msgctxt "#30405"
 msgid "Important (Highest)"
-msgstr "Importante (Maggiore)"
+msgstr "Importante (più alta)"
 
 msgctxt "#30410"
 msgid "Automatic"
@@ -257,7 +258,7 @@ msgstr "Automatico"
 # empty strings from id 30411 to 30419
 msgctxt "#30420"
 msgid "One time (Scheduled by guide-based timer rule)"
-msgstr ""
+msgstr "Una volta (in base alla regola del timer basato su guida)"
 
 msgctxt "#30430"
 msgid "Disabled"
@@ -265,33 +266,33 @@ msgstr "Disabilitato"
 
 msgctxt "#30431"
 msgid "Record if EPG title differs"
-msgstr ""
+msgstr "Registra se il titolo EPG è diverso"
 
 msgctxt "#30432"
 msgid "Record if EPG subtitle differs"
-msgstr ""
+msgstr "Registra se i sottotitoli EPG sono diversi"
 
 msgctxt "#30433"
 msgid "Record if EPG title and subtitle differs"
-msgstr ""
+msgstr "Registra se il titolo EPG e i sottotitoli sono diversi"
 
 # empty strings from id 30434 to 30499
 # notifications
 msgctxt "#30500"
 msgid "Unable to connect to the DVBViewer Media Server"
-msgstr ""
+msgstr "Impossibile connettersi al server multimediale DVBViewer"
 
 msgctxt "#30501"
 msgid "DVBViewer Media Server version %s or higher required"
-msgstr ""
+msgstr "DVBViewer Media Server richiesta versione %s o successiva"
 
 msgctxt "#30502"
 msgid "Unable to parse channel list"
-msgstr "Impossibile analizzare la lista canali"
+msgstr "Impossibile analizzare l'elenco dei canali"
 
 msgctxt "#30503"
 msgid "Check Kodi log for more information"
-msgstr "Controlla il log Kodi per maggiori informazioni"
+msgstr "Controlla il registro di Kodi per ulteriori informazioni"
 
 msgctxt "#30504"
 msgid "Unable to open local favourites.xml"
@@ -299,48 +300,44 @@ msgstr "Impossibile aprire favourites.xml locale"
 
 msgctxt "#30505"
 msgid "Unable to parse favourites list"
-msgstr "Impossibile analizzare la lista preferiti"
+msgstr "Impossibile analizzare l'elenco dei preferiti"
 
 msgctxt "#30506"
 msgid "Unable to parse timer list"
-msgstr "Impossibile analizzare la lista timer"
+msgstr "Impossibile analizzare l'elenco dei timer"
 
 msgctxt "#30507"
 msgid "Please reset the EPG database and restart Kodi afterwards"
-msgstr "Per favore resetta il database EPG e in seguito riavvia Kodi"
+msgstr "Ripristina il database EPG e in seguito riavvia Kodi"
 
 msgctxt "#30508"
 msgid "Favourites contains unresolvable channel: %s"
-msgstr "La lista dei preferiti contiene canali irraggiungibili: %s"
+msgstr "I preferiti contengono un canale irrisolvibile: %s"
 
 msgctxt "#30509"
 msgid "Favourites enabled but none defined"
-msgstr "Lista dei preferiti abilitata ba nessun preferito definito"
+msgstr "Preferiti abilitati ma nessuno definito"
 
 msgctxt "#30510"
 msgid "The time period cannot span more than 24 hours"
-msgstr ""
-
-msgctxt "#30511"
-msgid "EDL support requires DVBViewer Media Server %s or higher"
-msgstr ""
+msgstr "Il periodo di tempo non può superare le 24 ore"
 
 msgctxt "#30512"
 msgid "PVR is running with guest permissions"
-msgstr ""
+msgstr "PVR è in esecuzione con autorizzazioni guest"
 
 msgctxt "#30513"
 msgid "Search phrase cannot be empty"
-msgstr ""
+msgstr "La frase di ricerca non può essere vuota"
 
 msgctxt "#30514"
 msgid "Timeshift buffer path does not exist"
-msgstr ""
+msgstr "Il percorso del buffer timeshift non esiste"
 
 msgctxt "#30515"
 msgid "Unable to retrieve user data from the backend"
-msgstr ""
+msgstr "Impossibile recuperare i dati utente dal backend"
 
 msgctxt "#30516"
 msgid "Unable to parse user data from the backend"
-msgstr ""
+msgstr "Impossibile analizzare i dati utente dal backend"

@@ -316,10 +316,6 @@ msgctxt "#30510"
 msgid "The time period cannot span more than 24 hours"
 msgstr "Az időtartam nem haladhatja meg a 24 órát"
 
-msgctxt "#30511"
-msgid "EDL support requires DVBViewer Media Server %s or higher"
-msgstr "Az EDL támogatáshoz DVBViewer Media Server %s vagy újabb szükséges"
-
 msgctxt "#30512"
 msgid "PVR is running with guest permissions"
 msgstr "A PVR vendégmegjelenítéssel fut"
@@ -339,3 +335,7 @@ msgstr "Nem sikerült lekérni a felhasználói adatokat a háttérből"
 msgctxt "#30516"
 msgid "Unable to parse user data from the backend"
 msgstr "A felhasználói adatok elemzése a háttérből nem sikerült"
+
+#~ msgctxt "#30511"
+#~ msgid "EDL support requires DVBViewer Media Server %s or higher"
+#~ msgstr "Az EDL támogatáshoz DVBViewer Media Server %s vagy újabb szükséges"
