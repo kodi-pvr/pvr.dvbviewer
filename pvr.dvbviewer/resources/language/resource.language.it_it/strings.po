@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: KODI Main\n"
 "Report-Msgid-Bugs-To: translations@kodi.tv\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2023-01-22 18:15+0000\n"
+"PO-Revision-Date: 2023-04-02 03:16+0000\n"
 "Last-Translator: Massimo Pissarello <mapi68@gmail.com>\n"
 "Language-Team: Italian <https://kodi.weblate.cloud/projects/kodi-add-ons-pvr-clients/pvr-dvbviewer/it_it/>\n"
 "Language: it_it\n"
@@ -15,7 +15,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 4.15.1\n"
+"X-Generator: Weblate 4.15.2\n"
 
 msgctxt "Addon Summary"
 msgid "Kodi's frontend for DVBViewer"
@@ -80,7 +80,7 @@ msgstr "Percorso buffer timeshift"
 
 msgctxt "#30025"
 msgid "Off"
-msgstr "Spento"
+msgstr "Off"
 
 msgctxt "#30026"
 msgid "On playback"
@@ -96,11 +96,11 @@ msgstr "Abilita modalità a basse prestazioni (disabilita loghi e miniature)"
 
 msgctxt "#30041"
 msgid "Custom Live TV timeout (0 to use default)"
-msgstr "Timeout Live TV personalizzato (impostazione predefinita 0)"
+msgstr "Timeout Live TV personalizzato (predefinito 0)"
 
 msgctxt "#30042"
 msgid "Stream read chunk size (0 for Kodi's default)"
-msgstr "Dimensione blocco di lettura stream (impostazione predefinita di Kodi 0)"
+msgstr "Dimensione blocco di lettura flusso (predefinito di Kodi 0)"
 
 msgctxt "#30050"
 msgid "Group recordings"
@@ -132,11 +132,11 @@ msgstr "per serie"
 
 msgctxt "#30057"
 msgid "by title"
-msgstr "Per titolo"
+msgstr "per titolo"
 
 msgctxt "#30060"
 msgid "Put outline (e.g. subtitles) before plot"
-msgstr "Metti un contorno (es. sottotitoli) prima della trama"
+msgstr "Metti la sinossi (es. sottotitoli) prima della trama"
 
 msgctxt "#30061"
 msgid "Never"
@@ -148,7 +148,7 @@ msgstr "Solo in EPG"
 
 msgctxt "#30063"
 msgid "In recordings only"
-msgstr "Solo in registrazione"
+msgstr "Solo nelle registrazioni"
 
 msgctxt "#30064"
 msgid "Always"
@@ -160,7 +160,7 @@ msgstr "Abilita transcodifica"
 
 msgctxt "#30071"
 msgid "Off"
-msgstr "Spento"
+msgstr "Off"
 
 msgctxt "#30072"
 msgid "TS"
@@ -176,7 +176,7 @@ msgstr "FLV"
 
 msgctxt "#30077"
 msgid "Transcoding URL parameters"
-msgstr "Transcodifica parametri URL"
+msgstr "URL parametri transcodifica"
 
 # empty strings from id 30078 to 30079
 msgctxt "#30080"
@@ -197,7 +197,7 @@ msgstr "Generale"
 
 msgctxt "#30101"
 msgid "Advanced"
-msgstr "Avanzato"
+msgstr "Avanzate"
 
 msgctxt "#30102"
 msgid "Recordings"
@@ -205,7 +205,7 @@ msgstr "Registrazioni"
 
 msgctxt "#30103"
 msgid "Live TV"
-msgstr "TV"
+msgstr "Live TV"
 
 msgctxt "#30110"
 msgid "Wake-on-LAN"
@@ -258,7 +258,7 @@ msgstr "Automatico"
 # empty strings from id 30411 to 30419
 msgctxt "#30420"
 msgid "One time (Scheduled by guide-based timer rule)"
-msgstr "Una volta (in base alla regola del timer basato su guida)"
+msgstr "Una volta (in base alla regola del timer basato sulla guida)"
 
 msgctxt "#30430"
 msgid "Disabled"
@@ -284,7 +284,7 @@ msgstr "Impossibile connettersi al server multimediale DVBViewer"
 
 msgctxt "#30501"
 msgid "DVBViewer Media Server version %s or higher required"
-msgstr "DVBViewer Media Server richiesta versione %s o successiva"
+msgstr "È richiesta la versione %s o successiva del server multimediale DVBViewer"
 
 msgctxt "#30502"
 msgid "Unable to parse channel list"
@@ -308,11 +308,11 @@ msgstr "Impossibile analizzare l'elenco dei timer"
 
 msgctxt "#30507"
 msgid "Please reset the EPG database and restart Kodi afterwards"
-msgstr "Ripristina il database EPG e in seguito riavvia Kodi"
+msgstr "Reimposta il database EPG e in seguito riavvia Kodi"
 
 msgctxt "#30508"
 msgid "Favourites contains unresolvable channel: %s"
-msgstr "I preferiti contengono un canale irrisolvibile: %s"
+msgstr "I preferiti contengono un canale non risolvibile: %s"
 
 msgctxt "#30509"
 msgid "Favourites enabled but none defined"
@@ -324,7 +324,7 @@ msgstr "Il periodo di tempo non può superare le 24 ore"
 
 msgctxt "#30512"
 msgid "PVR is running with guest permissions"
-msgstr "PVR è in esecuzione con autorizzazioni guest"
+msgstr "PVR in esecuzione con autorizzazioni ospite"
 
 msgctxt "#30513"
 msgid "Search phrase cannot be empty"
