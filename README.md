@@ -3,7 +3,6 @@
 [![Build 
 Status](https://dev.azure.com/teamkodi/kodi-pvr/_apis/build/status/kodi-pvr.pvr.dvbviewer?branchName=Omega)](https://dev.azure.com/teamkodi/kodi-pvr/_build/latest?definitionId=62&branchName=Omega)
 [![Build Status](https://jenkins.kodi.tv/view/Addons/job/kodi-pvr/job/pvr.dvbviewer/job/Omega/badge/icon)](https://jenkins.kodi.tv/blue/organizations/jenkins/kodi-pvr%2Fpvr.dvbviewer/branches/)
-[![Coverity Scan Build Status](https://scan.coverity.com/projects/5120/badge.svg)](https://scan.coverity.com/projects/5120)
 
 # DVBViewer PVR
 DVBViewer PVR client addon for [Kodi](https://kodi.tv)
