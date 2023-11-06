@@ -1,10 +1,12 @@
 variables:
-  app_id: 'pvr.vuplus'
+  app_id: 'pvr.dvbviewer'
 
 trigger:
   branches:
     include:
+    - Matrix
     - Nexus
+    - Omega
     - releases/*
   paths:
     include:
