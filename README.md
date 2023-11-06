@@ -2,7 +2,6 @@
 [![Build and run tests](https://github.com/kodi-pvr/pvr.dvbviewer/actions/workflows/build.yml/badge.svg?branch=Nexus)](https://github.com/kodi-pvr/pvr.dvbviewer/actions/workflows/build.yml)
 [![Build Status](https://ci.appveyor.com/api/projects/status/github/manuelm/pvr.dvbviewer?svg=true)](https://ci.appveyor.com/project/manuelm/pvr.dvbviewer)
 [![Build Status](https://jenkins.kodi.tv/view/Addons/job/kodi-pvr/job/pvr.dvbviewer/job/Nexus/badge/icon)](https://jenkins.kodi.tv/blue/organizations/jenkins/kodi-pvr%2Fpvr.dvbviewer/branches/)
-[![Coverity Scan Build Status](https://scan.coverity.com/projects/5120/badge.svg)](https://scan.coverity.com/projects/5120)
 
 # DVBViewer PVR
 DVBViewer PVR client addon for [Kodi](https://kodi.tv)
