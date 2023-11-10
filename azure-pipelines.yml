@@ -1,5 +1,5 @@
 variables:
-  app_id: 'pvr.vuplus'
+  app_id: 'pvr.dvbviewer'
 
 trigger:
   branches:
