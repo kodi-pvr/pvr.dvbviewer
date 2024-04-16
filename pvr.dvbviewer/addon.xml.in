@@ -110,7 +110,7 @@
     <description lang="pt_BR">Frontend para o serviço de gravação DVBViewer; permite transmissão de TV em directo, temporizadores, gravações e EPG.</description>
     <description lang="pt_PT">Frontend para o serviço de gravação DVBViewer; permite transmissão de TV em directo, temporizadores, gravações e EPG.</description>
     <description lang="ro_RO">Partea din față pentru serviciul de înregistrare alDVBViewer; suportă difuzarea î flux a televiziunii în direct și a înregistrărilor, EPG, Cronometre</description>
-    <description lang="ru_RU">Фронтэнд сервиса записи DVBViewer; поддерживает потоковое вещание ТВ, таймеры, запись и ЕПГ. Для разбора XML-вывода RS-интерфейса использует библиотеку xmlParser, написанную Frank Vanden Berghen (http://www.applied-mathematics.net/tools/xmlParser.html). За что благодарим его!⏎</description>
+    <description lang="ru_RU">Сервер DVBViewer Media; поддержка потокового телевидения и записей, EPG, таймеры.</description>
     <description lang="sk_SK">Rozhranie pre spoluprácu s nahrávacou službou aplikácie DVBViewer; podporuje streamovanie živej televízie, časovače, nahrávky a EPG. Na získavanie dát zo XML výstupu z RS webového rozhrania používa knižnicu xmlParser, ktorú vyvinul Frank Vanden Berghen (http://www.applied-mathematics.net/tools/xmlParser.html). Za to mu veľmi ďakujeme!</description>
     <description lang="sl_SI">Vmesnik za DVBViewer; podpira pretakanje televizije v živo, časovnike, snemanje &amp; EPG.</description>
     <description lang="sq_AL">DVBViewer Media Server frontend; përkrahën transmetimin té LiveTV, Orarin, Regjistrime &amp; EPG. Për të bërë &quot;parsing&quot; i XML prej RS &quot;webinterface&apos;it&quot; ky përdorën bibliotekën të &quot;xmlParser&apos;it&quot; që është zhvilluar nga Frank van den Berghen (http://www.applied-mathematics.net/tools/xmlParser.html). Many thanks for this!. Shum i falemnderohemi!</description>
@@ -142,7 +142,7 @@
     <disclaimer lang="es_MX">¡Esto es software inestable! Los autores no son de ninguna manera responsables por grabaciones fallidas, temporizadores incorrectos, horas perdidas o cualquier otro efecto no deseado.</disclaimer>
     <disclaimer lang="et_EE">See on ebastabiilne tarkvara! Autorid ei ole kuidagi moodi vastutavad nurjunud salvestiste, ebaõige aegrelee, raisatud tundide ega muude soovimatute asjade eest.</disclaimer>
     <disclaimer lang="eu_ES">Egilea ez da arduratzen grabazioa erroreetaz, kronometro erroreetaz, ordu galduetaz edo beste edozein ondorio ezerosotaz.</disclaimer>
-    <disclaimer lang="fi_FI">Tämä on epävakaa ohjelma! Sen kehittäjät eivät ole mitenkään vastuussa epäonnistuneista tallennuksista, virheellisistä ajastuksista, hukatusta ajasta, verenpaineen noususta tai mistään muistakaan ei-toivotuista seurauksista.</disclaimer>
+    <disclaimer lang="fi_FI">Tämä on epävakaa ohjelmisto! Sen kehittäjät eivät ole millään tavoin vastuussa epäonnistuneista tallennuksista, virheellisistä ajastuksista, hukatusta ajasta tai mistään muistakaan ei-toivotuista seurauksista.</disclaimer>
     <disclaimer lang="fr_CA">Ce logiciel est instable ! Les auteurs ne sont aucunement responsables des enregistrements défaillants, des minuteries erronées, des heures perdues ou tout autre effet indésirable.</disclaimer>
     <disclaimer lang="fr_FR">Les auteurs ne sont en aucun cas responsables de l&apos;échec des enregistrements, programmations défectueuses, temps perdu ou autres effets indésirables.</disclaimer>
     <disclaimer lang="gl_ES">Este é software non estable, os autores non se fan responsábeis dos erros na gravacións, temporizadores incorrectos, e outros efectos non desexados.</disclaimer>
@@ -167,7 +167,7 @@
     <disclaimer lang="pt_BR">Este software é instável! Os autores não são de forma alguma responsáveis por gravações falhadas, temporizadores incorretos, horas desperdiçadas ou qualquer outro tipo de efeitos indesejáveis.</disclaimer>
     <disclaimer lang="pt_PT">Este software é instável! Os autores não são de forma alguma responsáveis por gravações falhadas, temporizadores incorretos, horas desperdiçadas ou qualquer outro tipo de efeitos indesejáveis.</disclaimer>
     <disclaimer lang="ro_RO">Acesta nu este o aplicație definitivă! Autorii nu sunt în nici un fel responsabili pentru înregistrări eșuate, cronometre incorecte, ore pierdute, sau orice alte efecte nedorite.</disclaimer>
-    <disclaimer lang="ru_RU">Это нестабильная программа! Авторы не несут ответственности за неудачные записи, неверные таймеры, потраченное время и прочие нежелательные эффекты.</disclaimer>
+    <disclaimer lang="ru_RU">Авторы не несут ответственности за неудачные записи, неверные таймеры, потраченное время и прочие нежелательные эффекты.</disclaimer>
     <disclaimer lang="si_LK">මෙය අස්ථිර මෘදුකාංගයකි! මෙහි සිදුවන පටිගත කිරීම් අසාර්ථක වීම්, සාවද්‍ය මුහුර්තක, නාස්ති වූ කාලයන්, හෝ වෙනත් යමිකිසි නුසුදුසු බලපෑම් සඳහා කතෘ වග කියනු නොලැබේ.</disclaimer>
     <disclaimer lang="sk_SK">Tento softvér nie je stabilný! Autori nenesú žiadnu zodpovednosť za chybné nahrávky vysielania, nesprávne časovače alebo iné neželané udalosti spôsobené týmto softvérom.</disclaimer>
     <disclaimer lang="sl_SI">To je nestabilna programska oprema! Avtorji niso odgovorni za neuspela snemanja, nepravilne časovnike, zapravljen čas in katerikoli drug neželen učinek.</disclaimer>
