@@ -316,10 +316,6 @@ msgctxt "#30510"
 msgid "The time period cannot span more than 24 hours"
 msgstr "La durée ne peut pas dépasser 24 heures"
 
-msgctxt "#30511"
-msgid "EDL support requires DVBViewer Media Server %s or higher"
-msgstr "Le serveur multimédia DVBViewer %s ou ultérieur est exigé pour la prise en charge des listes de montage"
-
 msgctxt "#30512"
 msgid "PVR is running with guest permissions"
 msgstr "Le numériscope fonctionne avec des permissions d’invité"
@@ -339,3 +335,7 @@ msgstr "Impossible de récupérer les données d’utilisateur provenant de la d
 msgctxt "#30516"
 msgid "Unable to parse user data from the backend"
 msgstr "Impossible d’analyser les données d’utilisateur provenant de la dorsale du numériscope"
+
+#~ msgctxt "#30511"
+#~ msgid "EDL support requires DVBViewer Media Server %s or higher"
+#~ msgstr "Le serveur multimédia DVBViewer %s ou ultérieur est exigé pour la prise en charge des listes de montage"
