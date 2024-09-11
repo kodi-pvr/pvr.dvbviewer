@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: KODI Main\n"
 "Report-Msgid-Bugs-To: translations@kodi.tv\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2024-05-25 04:13+0000\n"
+"PO-Revision-Date: 2024-09-11 09:27+0000\n"
 "Last-Translator: roliverosc <roliverosc@hotmail.com>\n"
 "Language-Team: Spanish (Spain) <https://kodi.weblate.cloud/projects/kodi-add-ons-pvr-clients/pvr-dvbviewer/es_es/>\n"
 "Language: es_es\n"
@@ -15,7 +15,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.5.4\n"
+"X-Generator: Weblate 5.7.2\n"
 
 msgctxt "Addon Summary"
 msgid "Kodi's frontend for DVBViewer"
@@ -27,7 +27,7 @@ msgstr "DVBViewer Media Server; soporta transmisión de TV en directo y grabacio
 
 msgctxt "Addon Disclaimer"
 msgid "The authors are in no way responsible for failed recordings, incorrect timers, wasted hours, or any other undesirable effects."
-msgstr "Los autores no se responsabilizan en modo alguno de grabaciones fallidas, temporizadores incorrectos, horas perdidas o cualquier otro efecto no deseado."
+msgstr "Los autores no se responsabilizan en modo alguno de grabaciones erroneas, temporizadores incorrectos, horas perdidas o cualquier otro efecto no deseado."
 
 msgctxt "#30000"
 msgid "DVBViewer Media Server IP Address"
@@ -35,7 +35,7 @@ msgstr "Dirección IP del servidor de contenido DVBViewer"
 
 msgctxt "#30001"
 msgid "Webinterface Port"
-msgstr "Puerto interfaz web"
+msgstr "Puerto de interfaz web"
 
 msgctxt "#30002"
 msgid "Username"
@@ -55,7 +55,7 @@ msgstr "Dirección MAC"
 
 msgctxt "#30006"
 msgid "Profile ID"
-msgstr "ID Perfil"
+msgstr "ID de perfil"
 
 msgctxt "#30010"
 msgid "Use favourites instead of channel list"
@@ -67,7 +67,7 @@ msgstr "Usar archivo local de favoritos"
 
 msgctxt "#30012"
 msgid "Select the favourites.xml file"
-msgstr "Elegir el archivo favourites.xml"
+msgstr "Seleccionar archivo favourites.xml"
 
 msgctxt "#30020"
 msgid "Enable Timeshift"
@@ -75,7 +75,7 @@ msgstr "Activar TimeShift"
 
 msgctxt "#30021"
 msgid "Timeshift buffer path"
-msgstr "Ruta para búfer timeshift"
+msgstr "Ruta del búfer para Timeshift"
 
 msgctxt "#30025"
 msgid "Off"
@@ -91,11 +91,11 @@ msgstr "Pausado"
 
 msgctxt "#30040"
 msgid "Enable low performance mode (disables logos & thumbnails)"
-msgstr "Activar modo de bajo rendimiento (desactiva logos y miniaturas)"
+msgstr "Activar modo bajo rendimiento (desactiva logos y miniaturas)"
 
 msgctxt "#30041"
 msgid "Custom Live TV timeout (0 to use default)"
-msgstr "Temporizador de TV en Directo personalizado (0 por defecto)"
+msgstr "Temporizador de TV en directo personalizado (0 por defecto)"
 
 msgctxt "#30042"
 msgid "Stream read chunk size (0 for Kodi's default)"
@@ -123,7 +123,7 @@ msgstr "por primera letra"
 
 msgctxt "#30055"
 msgid "by tv channel"
-msgstr "por canales de tv"
+msgstr "por canal de tv"
 
 msgctxt "#30056"
 msgid "by series"
@@ -143,11 +143,11 @@ msgstr "Nunca"
 
 msgctxt "#30062"
 msgid "In EPG only"
-msgstr "Solo en EPG"
+msgstr "Sólo en EPG"
 
 msgctxt "#30063"
 msgid "In recordings only"
-msgstr "Solo en grabaciones"
+msgstr "Sólo en grabaciones"
 
 msgctxt "#30064"
 msgid "Always"
@@ -179,7 +179,7 @@ msgstr "Parámetros de transcodificación de URL"
 
 msgctxt "#30080"
 msgid "Enable EDL support"
-msgstr "Activar compatibilidad EDL"
+msgstr "Activar compatibilidad con EDL"
 
 msgctxt "#30081"
 msgid "Start time padding"
@@ -275,11 +275,11 @@ msgstr "Grabar si el título y el subtítulo en EPG difiere"
 
 msgctxt "#30500"
 msgid "Unable to connect to the DVBViewer Media Server"
-msgstr "No se puede conectar al Servidor DVBViewer"
+msgstr "No se puede conectar al servidor DVBViewer"
 
 msgctxt "#30501"
 msgid "DVBViewer Media Server version %s or higher required"
-msgstr "Se requiere versión %s o superior del servidor DVBViewer"
+msgstr "Se requiere la versión %s o superior del servidor DVBViewer"
 
 msgctxt "#30502"
 msgid "Unable to parse channel list"
@@ -303,11 +303,11 @@ msgstr "No se puede leer el listado de temporizadores"
 
 msgctxt "#30507"
 msgid "Please reset the EPG database and restart Kodi afterwards"
-msgstr "Por favor, restablece la base de datos EPG y reinicie Kodi después"
+msgstr "Por favor, restablezca la base de datos EPG y reinicie Kodi después"
 
 msgctxt "#30508"
 msgid "Favourites contains unresolvable channel: %s"
-msgstr "Favoritos contiene un canal irresoluble: %s"
+msgstr "Favoritos contiene un canal que no se puede resolver: %s"
 
 msgctxt "#30509"
 msgid "Favourites enabled but none defined"
@@ -327,15 +327,15 @@ msgstr "La búsqueda no puede estar vacía"
 
 msgctxt "#30514"
 msgid "Timeshift buffer path does not exist"
-msgstr "La ruta del búfer de timeshift no existe"
+msgstr "La ruta del búfer para Timeshift no existe"
 
 msgctxt "#30515"
 msgid "Unable to retrieve user data from the backend"
-msgstr "Imposible obtener los datos de usuario del servidor"
+msgstr "No se pueden recuperar los datos del usuario desde el backend"
 
 msgctxt "#30516"
 msgid "Unable to parse user data from the backend"
-msgstr "Imposible entender los datos de usuario del servidor"
+msgstr "No se pueden analizar los datos del usuario desde el backend"
 
 #~ msgctxt "#30511"
 #~ msgid "EDL support requires DVBViewer Media Server %s or higher"
