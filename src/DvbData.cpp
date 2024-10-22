@@ -790,7 +790,7 @@ PVR_ERROR Dvb::GetRecordingsAmount(bool deleted, int& amount)
   return PVR_ERROR_NO_ERROR;
 }
 
-bool Dvb::OpenRecordedStream(const kodi::addon::PVRRecording& recinfo)
+bool Dvb::OpenRecordedStream(const kodi::addon::PVRRecording& recinfo, int64_t& streamId)
 {
   std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -835,13 +835,13 @@ bool Dvb::OpenRecordedStream(const kodi::addon::PVRRecording& recinfo)
   return m_recReader->Start();
 }
 
-void Dvb::CloseRecordedStream()
+void Dvb::CloseRecordedStream(int64_t streamId)
 {
   if (m_recReader)
     SafeDelete(m_recReader);
 }
 
-int Dvb::ReadRecordedStream(unsigned char* buffer, unsigned int size)
+int Dvb::ReadRecordedStream(int64_t streamId, unsigned char* buffer, unsigned int size)
 {
   if (!m_recReader)
     return 0;
@@ -849,7 +849,7 @@ int Dvb::ReadRecordedStream(unsigned char* buffer, unsigned int size)
   return static_cast<int>(m_recReader->ReadData(buffer, size));
 }
 
-int64_t Dvb::SeekRecordedStream(int64_t position, int whence)
+int64_t Dvb::SeekRecordedStream(int64_t streamId, int64_t position, int whence)
 {
   if (!m_recReader)
     return 0;
@@ -857,7 +857,7 @@ int64_t Dvb::SeekRecordedStream(int64_t position, int whence)
   return m_recReader->Seek(position, whence);
 }
 
-int64_t Dvb::LengthRecordedStream()
+int64_t Dvb::LengthRecordedStream(int64_t streamId)
 {
   if (!m_recReader)
     return -1;
