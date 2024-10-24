@@ -190,11 +190,11 @@ public:
   PVR_ERROR DeleteRecording(
       const kodi::addon::PVRRecording& recording) override;
   PVR_ERROR GetRecordingsAmount(bool deleted, int& amount) override;
-  bool OpenRecordedStream(const kodi::addon::PVRRecording& recinfo) override;
-  void CloseRecordedStream() override;
-  int ReadRecordedStream(unsigned char* buffer, unsigned int size) override;
-  int64_t SeekRecordedStream(int64_t position, int whence) override;
-  int64_t LengthRecordedStream() override;
+  bool OpenRecordedStream(const kodi::addon::PVRRecording& recinfo, int64_t& streamId) override;
+  void CloseRecordedStream(int64_t streamId) override;
+  int ReadRecordedStream(int64_t streamId, unsigned char* buffer, unsigned int size) override;
+  int64_t SeekRecordedStream(int64_t streamId, int64_t position, int whence) override;
+  int64_t LengthRecordedStream(int64_t streamId) override;
   PVR_ERROR GetRecordingEdl(const kodi::addon::PVRRecording& recinfo,
         std::vector<kodi::addon::PVREDLEntry>& edl) override;
   PVR_ERROR SetRecordingPlayCount(const kodi::addon::PVRRecording& recinfo,
