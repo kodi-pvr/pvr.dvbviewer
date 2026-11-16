@@ -154,6 +154,7 @@ public:
   PVR_ERROR GetBackendHostname(std::string& hostname) override;
   PVR_ERROR GetConnectionString(std::string& connection) override;
   PVR_ERROR GetDriveSpace(uint64_t& total, uint64_t& used) override;
+  PVR_ERROR OnSystemWake() override;
 
   unsigned int GetBackendVersion();
   bool IsGuest()
@@ -252,7 +253,7 @@ private:
   std::string BuildURL(const char* path, ...);
   const std::string GetLiveStreamURL(
       const kodi::addon::PVRChannel& channelinfo);
-  void SleepMs(uint32_t ms);
+  uint32_t SleepMs(uint32_t ms);
 
 private:
   std::atomic<PVR_CONNECTION_STATE> m_state = { PVR_CONNECTION_STATE_UNKNOWN };
@@ -286,6 +287,7 @@ private:
   Settings m_settings;
 
   std::atomic<bool> m_running = {false};
+  std::atomic<bool> m_systemWake = {false};
   std::thread m_thread;
   std::mutex m_mutex;
 };

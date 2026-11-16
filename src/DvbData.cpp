@@ -243,6 +243,12 @@ PVR_ERROR Dvb::GetDriveSpace(uint64_t& total, uint64_t& used)
   return PVR_ERROR_NO_ERROR;
 }
 
+PVR_ERROR Dvb::OnSystemWake()
+{
+  m_systemWake = true;
+  return PVR_ERROR_NO_ERROR;
+}
+
 unsigned int Dvb::GetBackendVersion()
 {
   return m_backendVersion;
@@ -1098,24 +1104,28 @@ PVR_ERROR Dvb::GetStreamReadChunkSize(int& chunksize)
 /***************************************************************************
  * Internal
  **************************************************************************/
-void Dvb::SleepMs(uint32_t ms)
+uint32_t Dvb::SleepMs(uint32_t ms)
 {
   while (ms >= 100)
   {
     ms -= 100;
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     if (!m_running)
-      break;
+      return 0;
+    if (m_systemWake.exchange(false))
+      return ms;
   }
 
   if (m_running && ms > 0)
     std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+  return 0;
 }
 
 void Dvb::Process()
 {
   kodi::Log(ADDON_LOG_DEBUG, "%s: Running...", __FUNCTION__);
   int update = 0;
+  uint32_t retryMs = 0;
   int interval = (!m_settings.m_lowPerformance) ? 60 : 300;
 
   // set PVR_CONNECTION_STATE_CONNECTING only once!
@@ -1139,6 +1149,7 @@ void Dvb::Process()
         m_kvstore.Reset();
 
         kodi::Log(ADDON_LOG_INFO, "Connection to the backend server successful.");
+        retryMs = 0;
         SetConnectionState(PVR_CONNECTION_STATE_CONNECTED);
 
         {
@@ -1150,9 +1161,10 @@ void Dvb::Process()
       }
       else
       {
+        const uint32_t waitMs = retryMs ? retryMs : 10000;
         kodi::Log(ADDON_LOG_INFO, "Connection to the backend server failed."
-          " Retrying in 10 seconds...");
-        SleepMs(10000);
+          " Retrying in %u milliseconds...", waitMs);
+        retryMs = SleepMs(waitMs);
       }
     }
     else
