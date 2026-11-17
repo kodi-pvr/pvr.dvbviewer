@@ -40,6 +40,7 @@ bool Timer::updateFrom(const Timer &other)
   TIMER_UPDATE_MEMBER(marginStart);
   TIMER_UPDATE_MEMBER(marginEnd);
   TIMER_UPDATE_MEMBER(weekdays);
+  TIMER_UPDATE_MEMBER(realStart);
   TIMER_UPDATE_MEMBER(state);
   return updated;
 }
