@@ -42,6 +42,7 @@ bool Timer::updateFrom(const Timer &other)
   TIMER_UPDATE_MEMBER(weekdays);
   TIMER_UPDATE_MEMBER(realStart);
   TIMER_UPDATE_MEMBER(state);
+  TIMER_UPDATE_MEMBER(recId);
   return updated;
 }
 
@@ -513,6 +514,7 @@ Timers::Error Timers::ParseTimerFrom(const TiXmlElement *xml, unsigned int pos,
     startDate = stat->Attribute("StartTime");
     timer.realStart = ParseDateTime(startDate, false);
   }
+  XMLUtils::GetString(xml, "RecID", timer.recId);
 
   xml->QueryUnsignedAttribute("PreEPG",  &timer.marginStart);
   xml->QueryUnsignedAttribute("PostEPG", &timer.marginEnd);

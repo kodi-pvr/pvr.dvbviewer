@@ -829,10 +829,18 @@ bool Dvb::OpenRecordedStream(const kodi::addon::PVRRecording& recinfo, int64_t& 
   {
     std::time_t now = std::time(nullptr);
     const std::string channelName = recinfo.GetChannelName();
+    const std::string recordingId = recinfo.GetRecordingId();
     auto timer = m_timers.GetTimer([&](const Timer &timer)
         {
-          return timer.isRunning(&now, &channelName);
+          return timer.isRunning(&now, &channelName)
+            && timer.recId == recordingId;
         });
+    if (!timer)
+      timer = m_timers.GetTimer([&](const Timer &timer)
+          {
+            return timer.isRunning(&now, &channelName)
+              && timer.recId.empty();
+          });
     if (timer)
       startEndTimes = std::make_pair(timer->realStart, timer->end);
   }

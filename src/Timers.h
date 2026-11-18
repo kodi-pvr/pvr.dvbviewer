@@ -83,6 +83,7 @@ public:
   unsigned int weekdays;
   std::time_t  realStart = 0; // real start time. only available if timer is running.
                               // might differ from start if added in the middle of a show
+  std::string  recId; // id of the recording written by this timer
 
   std::string source; // holds autotimer.title if created by an autotimer
 
